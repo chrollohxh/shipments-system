@@ -4909,10 +4909,8 @@ async function bootData(){
       fails.push(name + ' → ' + ((e&&e.message)||'خطأ غير معروف'));
     }
   };
-  // كل هذه الخطوات مستقلة عن بعضها (جداول منفصلة) — تُجلب بالتوازي بدل التتابع لتسريع الدخول
+  // بيانات خفيفة وضرورية فوراً لفتح الشاشة — تُنتظَر قبل unlockApp()
   await Promise.all([
-    step('الهوية والألوان', loadBranding),
-    step('إعدادات الشركة', loadCompany),
     step('أماكن حقول النماذج', loadTemplatePositions),
     step('المستخدمون', loadUsers),
     step('عناوين البنوك', loadBankBook),
@@ -4921,11 +4919,17 @@ async function bootData(){
     step('الشحنات', loadRecords),
     step('المهام', loadTasks),
     step('الدفعات', loadPayments),
-    step('الشركات', loadCompanies),
-    step('حسابات العملاء', loadLedger),
-    step('نماذج البوالص', loadBolTemplates)
+    step('حسابات العملاء', loadLedger)
   ]);
-  try{ applyBranding(); }catch(e){ console.error(e); }
+  // بيانات ثقيلة (شعارات وأختام وصور نماذج مضمَّنة base64) — تُحمَّل في الخلفية بلا
+  // انتظار، عشان الشحنات والمهام تفتح فوراً حتى لو الصور لسه بتنزل على نت بطيء.
+  // كل دالة منها بترسم واجهتها بنفسها فور اكتمالها (applyBranding/fillBolPicker/applyActiveCompany)
+  Promise.all([
+    step('الهوية والألوان', loadBranding),
+    step('إعدادات الشركة', loadCompany),
+    step('الشركات', loadCompanies),
+    step('نماذج البوالص', loadBolTemplates)
+  ]).then(()=>{ try{ applyBranding(); }catch(e){ console.error(e); } });
   try{ fillLookupSelects(); renderBankOptions(''); }catch(e){ console.error(e); }
   try{ fillCertPicker(); }catch(e){ console.error(e); }
   try{ renderDrafts(); renderIssued(); renderSea(); }catch(e){ console.error(e); }
