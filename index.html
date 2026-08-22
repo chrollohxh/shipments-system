@@ -235,6 +235,49 @@ body{padding-right:230px;}
 .pf-photo-acts{margin-top:8px;}
 .pf-msg{font-size:13.5px;font-weight:700;min-height:22px;margin-top:8px;}
 .pf-msg.ok{color:var(--ok);}
+
+/* ===== داشبورد بروفايل (عميل / مستخدم) — بانر + معلومات + سجل نشاط ===== */
+.pd-banner{
+  height:110px;background:linear-gradient(120deg,var(--brand) 0%,var(--brand2) 55%,#B8BAFF 100%);
+}
+.pd-headrow{display:flex;align-items:flex-end;gap:18px;padding:0 26px 18px;margin-top:-46px;position:relative;flex-wrap:wrap;}
+.pd-photo{
+  width:100px;height:100px;border-radius:16px;background:var(--brand);color:#fff;
+  display:flex;align-items:center;justify-content:center;font-weight:800;font-size:36px;
+  border:4px solid var(--white);box-shadow:0 6px 16px rgba(0,0,0,.18);overflow:hidden;flex-shrink:0;
+}
+.pd-photo img{width:100%;height:100%;object-fit:cover;}
+.pd-headinfo{flex:1;min-width:200px;padding-bottom:2px;}
+.pd-name{font-size:20px;font-weight:800;color:var(--ink);}
+.pd-meta{display:flex;flex-wrap:wrap;gap:14px;margin-top:6px;font-size:12.5px;color:var(--muted);}
+.pd-meta span{display:flex;align-items:center;gap:5px;}
+.pd-headacts{padding-bottom:4px;}
+.pd-body{display:grid;grid-template-columns:290px 1fr;gap:20px;padding:4px 26px 26px;align-items:start;}
+.pd-card{border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px 18px;margin-bottom:16px;background:var(--white);}
+.pd-card-title{font-size:11.5px;font-weight:800;color:var(--muted);letter-spacing:.4px;text-transform:uppercase;margin-bottom:12px;}
+.pd-stats{display:flex;gap:10px;flex-wrap:wrap;}
+.pd-stat{flex:1;min-width:80px;text-align:center;}
+.pd-stat b{display:block;font-size:19px;color:var(--ink);}
+.pd-stat span{font-size:11.5px;color:var(--muted);}
+.pd-about{display:flex;flex-direction:column;gap:11px;}
+.pd-about-row{display:flex;gap:8px;font-size:13px;align-items:flex-start;}
+.pd-about-row .ic{color:var(--brand);margin-top:2px;flex-shrink:0;}
+.pd-about-row b{color:var(--muted);font-weight:700;min-width:70px;}
+.pd-about-row span{color:var(--ink);word-break:break-word;}
+.pd-card-acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;}
+.pd-timeline{display:flex;flex-direction:column;}
+.pd-tl-item{display:flex;gap:12px;padding-bottom:18px;position:relative;}
+.pd-tl-item:not(:last-child)::before{
+  content:'';position:absolute;right:5px;top:16px;bottom:0;width:1.5px;background:var(--border);
+}
+.pd-tl-dot{width:11px;height:11px;border-radius:50%;background:var(--brand);margin-top:4px;flex-shrink:0;position:relative;z-index:1;}
+.pd-tl-dot.ok{background:var(--ok);}
+.pd-tl-body{flex:1;}
+.pd-tl-title{font-size:13.5px;font-weight:700;color:var(--ink);display:flex;justify-content:space-between;gap:10px;}
+.pd-tl-title time{font-size:11px;font-weight:400;color:var(--muted);white-space:nowrap;}
+.pd-tl-sub{font-size:12px;color:var(--muted);margin-top:2px;}
+.pd-empty{font-size:13px;color:var(--muted);text-align:center;padding:20px 0;}
+@media (max-width:760px){ .pd-body{grid-template-columns:1fr;} }
 .pf-msg.err{color:var(--brand);}
 
 /* ===== شريط التحكم ===== */
@@ -4042,9 +4085,58 @@ SWIFT: NBEGEGCX"></textarea>
       </div>
       <div class="pf-msg" id="pfMsg"></div>
 
+      <div class="section-title">آخر نشاطك</div>
+      <div class="pd-timeline" id="pfTimeline" style="max-height:220px;overflow-y:auto;margin-bottom:16px;"></div>
+
       <div class="detail-actions">
         <button class="btn btn-primary" id="pfSaveBtn">حفظ التغييرات</button>
         <button class="btn btn-ghost" id="pfCancelBtn">إغلاق</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="clientDashOverlay">
+  <div class="detail-card" style="max-width:920px;overflow-y:auto;max-height:90vh;">
+    <button class="close-x" id="cdCloseX" data-ic="close" style="position:absolute;top:16px;left:16px;z-index:3;"></button>
+    <div class="pd-banner"></div>
+    <div class="pd-headrow">
+      <div class="pd-photo" id="cdPhoto">?</div>
+      <div class="pd-headinfo">
+        <div class="pd-name" id="cdName">—</div>
+        <div class="pd-meta">
+          <span id="cdStatus"></span>
+          <span id="cdPhone"></span>
+          <span id="cdJoined"></span>
+        </div>
+      </div>
+      <div class="pd-headacts">
+        <button class="btn btn-ghost btn-small" id="cdEditBtn">تعديل البيانات</button>
+      </div>
+    </div>
+    <div class="pd-body">
+      <div class="pd-col">
+        <div class="pd-card">
+          <div class="pd-card-title">نظرة عامة</div>
+          <div class="pd-stats" id="cdStats"></div>
+        </div>
+        <div class="pd-card">
+          <div class="pd-card-title">البيانات</div>
+          <div class="pd-about" id="cdAbout"></div>
+        </div>
+        <div class="pd-card">
+          <div class="pd-card-title">الرصيد</div>
+          <div class="pd-about" id="cdBalance"></div>
+          <div class="pd-card-acts">
+            <button class="btn btn-primary btn-small" id="cdOpenLedger">فتح كشف الحساب</button>
+          </div>
+        </div>
+      </div>
+      <div class="pd-col">
+        <div class="pd-card">
+          <div class="pd-card-title">سجل الحركات</div>
+          <div class="pd-timeline" id="cdTimeline"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -4330,7 +4422,8 @@ const BOXICON_MAP = {
   bank:'bx-buildings', shield:'bx-shield', warning:'bx-error', anchor:'bx-anchor',
   plane:'bx-paper-plane', building:'bx-building', clipboard:'bx-clipboard', globe:'bx-globe',
   gear:'bx-cog', chart:'bx-bar-chart-alt-2', tag:'bx-tag', folder:'bx-folder',
-  briefcase:'bx-briefcase', arrowLeft:'bx-left-arrow-alt', ship:'bx-water'
+  briefcase:'bx-briefcase', arrowLeft:'bx-left-arrow-alt', ship:'bx-water',
+  phone:'bx-phone', mail:'bx-envelope', calendarIcon:'bx-calendar', mapPin:'bx-map-pin', history:'bx-history'
 };
 function icon(name, size){
   const sz = size || 18;
@@ -4600,7 +4693,7 @@ async function loadLog(){
     const {data, error} = await sb.from('activity_log')
       .select('*').order('created_at', {ascending:false}).limit(200);
     if(error) throw error;
-    activityLog = (data||[]).map(l=>({type:l.type, text:l.text, ts:new Date(l.created_at).getTime()}));
+    activityLog = (data||[]).map(l=>({type:l.type, text:l.text, ts:new Date(l.created_at).getTime(), userId:l.user_id}));
   }catch(e){ activityLog = []; }
 }
 async function saveLog(){ /* يُكتب مباشرة عند التسجيل */ }
@@ -5254,6 +5347,15 @@ function openProfile(){
   ['pf_oldPass','pf_newPass','pf_newPass2'].forEach(id=>document.getElementById(id).value='');
   const m = document.getElementById('pfMsg'); m.textContent=''; m.className='pf-msg';
   document.querySelector('#pfStrength span').style.width='0';
+  const myLog = activityLog.filter(l=>l.userId===currentUser.id).slice(0,10);
+  document.getElementById('pfTimeline').innerHTML = myLog.length
+    ? myLog.map(l=>`<div class="pd-tl-item">
+        <div class="pd-tl-dot"></div>
+        <div class="pd-tl-body">
+          <div class="pd-tl-title">${escapeHtml(l.text)}<time>${escapeHtml(timeAgo(l.ts))}</time></div>
+        </div>
+      </div>`).join('')
+    : '<div class="pd-empty">لا يوجد نشاط مسجَّل بعد</div>';
   document.getElementById('pfStrengthTxt').textContent='';
   profileOverlay.classList.add('open');
 }
@@ -6700,6 +6802,8 @@ function renderClientsAdmin(){
 
   el.querySelectorAll('.cl-card').forEach(card=>{
     const id = card.dataset.id;
+    card.querySelector('.cl-avatar').style.cursor = 'pointer';
+    card.querySelector('.cl-avatar').addEventListener('click', ()=> openClientDashboard(id));
     card.querySelector('.cl-ledger').addEventListener('click', ()=>{
       switchView('money'); moneyTab='ledger';
       document.querySelectorAll('.money-tab').forEach(x=>x.classList.toggle('active', x.dataset.mtab==='ledger'));
@@ -6708,6 +6812,66 @@ function renderClientsAdmin(){
     card.querySelector('.cl-edit').addEventListener('click', ()=> openClientModal(id));
   });
 }
+
+// ===== داشبورد العميل (بانر + نظرة عامة + سجل حركات) =====
+function openClientDashboard(id){
+  const c = clientById(id);
+  if(!c) return;
+  document.getElementById('cdPhoto').innerHTML = c.photo ? `<img src="${c.photo}" alt="">` : escapeHtml((c.name||'?').charAt(0));
+  document.getElementById('cdName').textContent = c.name || '—';
+  document.getElementById('cdStatus').innerHTML = c.active ? `${icon('checkCircle',14)} نشط` : `${icon('warning',14)} موقوف`;
+  document.getElementById('cdPhone').innerHTML = c.phone ? `${icon('phone',14)} ${escapeHtml(c.phone)}` : '';
+  document.getElementById('cdJoined').innerHTML = c.created_at ? `${icon('calendarIcon',14)} انضم ${fmtDate((c.created_at||'').slice(0,10))}` : '';
+
+  const shipCount = records.filter(r=>(r.consignee||'').trim() === (c.name||'').trim()).length;
+  document.getElementById('cdStats').innerHTML = `
+    <div class="pd-stat"><b>${shipCount}</b><span>شحنة</span></div>
+    <div class="pd-stat"><b>${entriesOf(id).length}</b><span>حركة</span></div>
+  `;
+
+  const aboutRows = [];
+  if(c.phone) aboutRows.push(['phone','الهاتف',c.phone]);
+  if(c.email) aboutRows.push(['mail','البريد',c.email]);
+  if(c.address) aboutRows.push(['mapPin','العنوان',c.address]);
+  if(c.note) aboutRows.push(['clipboard','ملاحظة',c.note]);
+  document.getElementById('cdAbout').innerHTML = aboutRows.length
+    ? aboutRows.map(([ic,lbl,val])=>`<div class="pd-about-row">${icon(ic,15)}<b>${lbl}:</b><span>${escapeHtml(val)}</span></div>`).join('')
+    : '<div class="pd-empty">لا توجد بيانات إضافية</div>';
+
+  const sdgBal = balanceOf(id,'SDG');
+  const aedBal = balanceOf(id,'AED');
+  const line = (bal,cur)=> bal === 0 ? `${CUR_SUFFIX[cur]} مسوّى`
+    : (bal > 0 ? `<b style="color:var(--brand)">عليه ${fmtCur(bal,cur)}</b>` : `<b style="color:var(--ok)">له رصيد ${fmtCur(-bal,cur)}</b>`);
+  document.getElementById('cdBalance').innerHTML = `
+    <div class="pd-about-row">${icon('bank',15)}<span>${line(sdgBal,'SDG')}</span></div>
+    ${entriesOf(id,'AED').length ? `<div class="pd-about-row">${icon('bank',15)}<span>${line(aedBal,'AED')}</span></div>` : ''}
+  `;
+
+  const entries = entriesOf(id).slice().reverse().slice(0,15);
+  document.getElementById('cdTimeline').innerHTML = entries.length
+    ? entries.map(e=>{
+        const isCredit = (e.kind==='payment'||e.kind==='credit');
+        const label = e.service || KIND_AR[e.kind] || '';
+        return `<div class="pd-tl-item">
+          <div class="pd-tl-dot ${isCredit?'ok':''}"></div>
+          <div class="pd-tl-body">
+            <div class="pd-tl-title">${escapeHtml(label)}<time>${escapeHtml(fmtDate(e.entry_date))}</time></div>
+            <div class="pd-tl-sub">${isCredit?'دفعة':'رسوم'} — ${fmtCur(e.amount, e.currency||'SDG')}${e.description?' · '+escapeHtml(e.description):''}</div>
+          </div>
+        </div>`;
+      }).join('')
+    : '<div class="pd-empty">لا توجد حركات بعد</div>';
+
+  document.getElementById('cdEditBtn').onclick = ()=>{ closeAllOverlays(); openClientModal(id); };
+  document.getElementById('cdOpenLedger').onclick = ()=>{ closeAllOverlays(); openLedger(id); };
+
+  closeAllOverlays();
+  document.getElementById('clientDashOverlay').classList.add('open');
+}
+document.getElementById('cdCloseX').addEventListener('click', ()=> document.getElementById('clientDashOverlay').classList.remove('open'));
+document.getElementById('clientDashOverlay').addEventListener('click', e=>{
+  if(e.target.id==='clientDashOverlay') document.getElementById('clientDashOverlay').classList.remove('open');
+});
 
 // ===== نافذة إضافة/تعديل عميل =====
 let clEditId = null;
