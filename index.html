@@ -1385,7 +1385,7 @@ body.role-staff #backTop{display:none !important;}
 .user-av{
   width:42px;height:42px;border-radius:50%;flex-shrink:0;background:var(--brand-light);
   color:var(--brand);display:flex;align-items:center;justify-content:center;
-  font-weight:800;font-size:16px;overflow:hidden;
+  font-weight:800;font-size:16px;overflow:hidden;cursor:pointer;
 }
 .user-av img{width:100%;height:100%;object-fit:cover;}
 .user-info{flex:1;min-width:150px;}
@@ -4142,6 +4142,42 @@ SWIFT: NBEGEGCX"></textarea>
   </div>
 </div>
 
+<div class="overlay" id="userDashOverlay">
+  <div class="detail-card" style="max-width:920px;overflow-y:auto;max-height:90vh;">
+    <button class="close-x" id="udCloseX" data-ic="close" style="position:absolute;top:16px;left:16px;z-index:3;"></button>
+    <div class="pd-banner"></div>
+    <div class="pd-headrow">
+      <div class="pd-photo" id="udPhoto">?</div>
+      <div class="pd-headinfo">
+        <div class="pd-name" id="udName">—</div>
+        <div class="pd-meta">
+          <span id="udStatus"></span>
+          <span id="udRole"></span>
+          <span id="udLast"></span>
+        </div>
+      </div>
+    </div>
+    <div class="pd-body">
+      <div class="pd-col">
+        <div class="pd-card">
+          <div class="pd-card-title">نظرة عامة</div>
+          <div class="pd-stats" id="udStats"></div>
+        </div>
+        <div class="pd-card">
+          <div class="pd-card-title">البيانات</div>
+          <div class="pd-about" id="udAbout"></div>
+        </div>
+      </div>
+      <div class="pd-col">
+        <div class="pd-card">
+          <div class="pd-card-title">سجل النشاط</div>
+          <div class="pd-timeline" id="udTimeline"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="clientOverlay">
   <div class="detail-card" style="max-width:520px;">
     <div class="dh">
@@ -5573,6 +5609,8 @@ document.getElementById('usersList').addEventListener('click', async (e)=>{
   const u = users.find(x=>x.id===row.dataset.uid);
   if(!u) return;
 
+  if(e.target.closest('.user-av')){ openUserDashboard(u.id); return; }
+
   if(e.target.classList.contains('act-pass')){
     if(!confirm(`إرسال رابط إعادة تعيين كلمة المرور إلى ${u.email}؟`)) return;
     try{
@@ -6871,6 +6909,44 @@ function openClientDashboard(id){
 document.getElementById('cdCloseX').addEventListener('click', ()=> document.getElementById('clientDashOverlay').classList.remove('open'));
 document.getElementById('clientDashOverlay').addEventListener('click', e=>{
   if(e.target.id==='clientDashOverlay') document.getElementById('clientDashOverlay').classList.remove('open');
+});
+
+// ===== داشبورد المستخدم (بوابة المستخدمين) — نفس فكرة داشبورد العميل =====
+function openUserDashboard(id){
+  const u = users.find(x=>x.id===id);
+  if(!u) return;
+  document.getElementById('udPhoto').innerHTML = avatarHtml(u, true);
+  document.getElementById('udName').textContent = u.displayName || u.username || '—';
+  document.getElementById('udStatus').innerHTML = u.active!==false ? `${icon('checkCircle',14)} نشط` : `${icon('warning',14)} موقوف`;
+  document.getElementById('udRole').innerHTML = `${icon('shield',14)} ${ROLE_AR[u.role]||u.role}`;
+  document.getElementById('udLast').innerHTML = `${icon('history',14)} آخر دخول: ${u.lastLogin ? timeAgo(u.lastLogin) : '—'}`;
+
+  const myActs = activityLog.filter(l=>l.userId===u.id);
+  document.getElementById('udStats').innerHTML = `<div class="pd-stat"><b>${myActs.length}</b><span>عملية</span></div>`;
+
+  const aboutRows = [];
+  if(u.email) aboutRows.push(['mail','البريد',u.email]);
+  aboutRows.push(['shield','الصلاحية', ROLE_AR[u.role]||u.role]);
+  if(u.createdAt) aboutRows.push(['calendarIcon','انضم', fmtDate(new Date(u.createdAt).toISOString().slice(0,10))]);
+  document.getElementById('udAbout').innerHTML = aboutRows
+    .map(([ic,lbl,val])=>`<div class="pd-about-row">${icon(ic,15)}<b>${lbl}:</b><span>${escapeHtml(String(val))}</span></div>`).join('');
+
+  const entries = myActs.slice(0,15);
+  document.getElementById('udTimeline').innerHTML = entries.length
+    ? entries.map(l=>`<div class="pd-tl-item">
+        <div class="pd-tl-dot"></div>
+        <div class="pd-tl-body">
+          <div class="pd-tl-title">${escapeHtml(l.text)}<time>${escapeHtml(timeAgo(l.ts))}</time></div>
+        </div>
+      </div>`).join('')
+    : '<div class="pd-empty">لا يوجد نشاط مسجَّل بعد</div>';
+
+  closeAllOverlays();
+  document.getElementById('userDashOverlay').classList.add('open');
+}
+document.getElementById('udCloseX').addEventListener('click', ()=> document.getElementById('userDashOverlay').classList.remove('open'));
+document.getElementById('userDashOverlay').addEventListener('click', e=>{
+  if(e.target.id==='userDashOverlay') document.getElementById('userDashOverlay').classList.remove('open');
 });
 
 // ===== نافذة إضافة/تعديل عميل =====
