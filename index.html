@@ -623,6 +623,12 @@ body{padding-right:230px;}
 .radial-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
 .radial-center b{font-size:22px;color:var(--ink);}
 .radial-center span{font-size:11px;color:var(--muted);}
+.donut-wrap{display:flex;align-items:center;gap:24px;padding:22px;flex-wrap:wrap;}
+.donut{width:120px;height:120px;border-radius:50%;flex-shrink:0;position:relative;transition:background 1s var(--ease);}
+.donut::after{content:'';position:absolute;inset:20px;background:var(--white);border-radius:50%;}
+.donut-legend{display:flex;flex-direction:column;gap:10px;font-size:13px;color:var(--ink);}
+.donut-legend-item{display:flex;align-items:center;gap:8px;}
+.donut-legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
 .docbar-row{margin-bottom:16px;}
 .docbar-row:last-child{margin-bottom:0;}
 .docbar-head{display:flex;justify-content:space-between;font-size:13.5px;margin-bottom:6px;font-weight:600;color:var(--ink);}
@@ -1842,6 +1848,14 @@ table.doc-items td.num{font-family:'IBM Plex Mono',monospace;text-align:left;}
       <div class="dash-card">
         <h3>الشحنات آخر 6 شهور</h3>
         <div id="monthChart"></div>
+      </div>
+    </div>
+
+    <div class="dash-card" style="margin-bottom:22px;">
+      <h3>توزيع الشحنات</h3>
+      <div class="donut-wrap">
+        <div class="donut" id="shipDonut"></div>
+        <div class="donut-legend" id="shipDonutLegend"></div>
       </div>
     </div>
 
@@ -10473,6 +10487,22 @@ function renderDashboard(){
   const ringCirc = 2*Math.PI*52;
   const ringOffset = ringCirc * (1 - pctDocs/100);
   document.getElementById('docRingCircle').setAttribute('stroke-dashoffset', ringOffset);
+
+  // توزيع الشحنات (بري/بحري)
+  const landCount = records.filter(r=>!isSea(r)).length;
+  const seaCount = records.filter(r=>isSea(r)).length;
+  const totalShip = landCount + seaCount;
+  const landPct = totalShip ? Math.round(landCount/totalShip*100) : 0;
+  const donutEl = document.getElementById('shipDonut');
+  if(donutEl){
+    donutEl.style.background = totalShip
+      ? `conic-gradient(var(--brand) 0% ${landPct}%, var(--brand2) ${landPct}% 100%)`
+      : 'var(--border)';
+    document.getElementById('shipDonutLegend').innerHTML = totalShip ? `
+      <div class="donut-legend-item"><span class="donut-legend-dot" style="background:var(--brand)"></span> بري (${landCount} — ${landPct}%)</div>
+      <div class="donut-legend-item"><span class="donut-legend-dot" style="background:var(--brand2)"></span> بحري (${seaCount} — ${100-landPct}%)</div>
+    ` : '<div class="dash-empty">لا توجد شحنات بعد</div>';
+  }
 
   // متوسط مدة التنفيذ: من الإنشاء حتى الاعتماد (الشحنات الصادرة فقط)
   const sentRecs = records.filter(r=>recStatus(r)==='sent' && r.createdAt && r.updatedAt);
