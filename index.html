@@ -4,8 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>سجل الشحنات والمستندات</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap"></noscript>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap');
 
 :root{
   /* ===== ستايل المتاجر (جرير) ===== */
@@ -4906,21 +4909,24 @@ async function bootData(){
       fails.push(name + ' → ' + ((e&&e.message)||'خطأ غير معروف'));
     }
   };
-  await step('الهوية والألوان', loadBranding);
+  // كل هذه الخطوات مستقلة عن بعضها (جداول منفصلة) — تُجلب بالتوازي بدل التتابع لتسريع الدخول
+  await Promise.all([
+    step('الهوية والألوان', loadBranding),
+    step('إعدادات الشركة', loadCompany),
+    step('أماكن حقول النماذج', loadTemplatePositions),
+    step('المستخدمون', loadUsers),
+    step('عناوين البنوك', loadBankBook),
+    step('القوائم الجاهزة', loadLookups),
+    step('سجل العمليات', loadLog),
+    step('الشحنات', loadRecords),
+    step('المهام', loadTasks),
+    step('الدفعات', loadPayments),
+    step('الشركات', loadCompanies),
+    step('حسابات العملاء', loadLedger),
+    step('نماذج البوالص', loadBolTemplates)
+  ]);
   try{ applyBranding(); }catch(e){ console.error(e); }
-  await step('إعدادات الشركة', loadCompany);
-  await step('أماكن حقول النماذج', loadTemplatePositions);
-  await step('المستخدمون', loadUsers);
-  await step('عناوين البنوك', loadBankBook);
-  await step('القوائم الجاهزة', loadLookups);
   try{ fillLookupSelects(); renderBankOptions(''); }catch(e){ console.error(e); }
-  await step('سجل العمليات', loadLog);
-  await step('الشحنات', loadRecords);
-  await step('المهام', loadTasks);
-  await step('الدفعات', loadPayments);
-  await step('الشركات', loadCompanies);
-  await step('حسابات العملاء', loadLedger);
-  await step('نماذج البوالص', loadBolTemplates);
   try{ fillCertPicker(); }catch(e){ console.error(e); }
   try{ renderDrafts(); renderIssued(); renderSea(); }catch(e){ console.error(e); }
   try{ renderNotifications(); renderReport(); }catch(e){ console.error(e); }
@@ -6235,6 +6241,29 @@ window.addEventListener('scroll', ()=>{
 backTop.addEventListener('click', ()=> window.scrollTo({top:0, behavior:'smooth'}));
 
 // ===== التنقل بين الشاشات =====
+// حفظ/قراءة "أنت فين" في رابط المتصفح — يسمح بالرجوع لنفس الصفحة بعد تحديث (F5)
+function updateHash(v, id){
+  const h = 'v=' + v + (id ? ('&id=' + id) : '');
+  if(location.hash.slice(1) !== h) history.replaceState(null, '', '#' + h);
+}
+function parseHash(){
+  const p = new URLSearchParams(location.hash.slice(1));
+  return { v: p.get('v'), id: p.get('id') };
+}
+function restoreFromHash(){
+  const {v, id} = parseHash();
+  const fallback = isStaffRole() ? 'tasks' : 'dashboard';
+  if(!v){ switchView(fallback); return; }
+  if(v === 'shipForm' && id){
+    const r = records.find(x=>x.id===id);
+    if(r){ fillFormForEdit(r); return; }
+    switchView(fallback);
+    return;
+  }
+  switchView(v);
+  if(v === 'records' && id && records.find(x=>x.id===id)) openDetail(id);
+}
+
 function switchView(v){
   closeAllOverlays();
   // توافقية: الشاشات القديمة أصبحت تبويبات داخل شاشة الشحنات
@@ -6268,6 +6297,7 @@ function switchView(v){
   if(v==='money') renderMoney();
   if(v==='wallet') renderWallet();
   if(v==='admin'){ renderUsers(); fillBrandForm(); renderDataStats(); renderLookupAdmin(); renderCompaniesAdmin(); }
+  updateHash(v);
 }
 
 // ===== مرفقات المهام =====
@@ -10718,6 +10748,7 @@ async function loadShipmentTimeline(r){
 function openDetail(id){
   const r = records.find(x=>x.id===id);
   if(!r) return;
+  updateHash('records', id);
   const card = document.getElementById('detailCard');
   card.innerHTML = `
     <div class="dh">
@@ -11084,6 +11115,7 @@ function fillFormForEdit(r){
   document.getElementById('f_notes').value = r.notes||'';
   formPanel.classList.add('open');
   switchView('shipForm');
+  updateHash('shipForm', r.id);
 }
 
 const docTitles = {
@@ -14065,7 +14097,7 @@ document.getElementById('tplResetBtn').addEventListener('click', ()=>{
         status = await afterSignIn(session.user);
       }
       if(status === 'ok'){
-        switchView('dashboard');
+        restoreFromHash();
         return;
       }
       // فشلت فعلياً بعد كل المحاولات (أو غياب صلاحية) — تفضل شاشة الدخول ظاهرة
