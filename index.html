@@ -8,13 +8,15 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" onload="this.onload=null;this.rel='stylesheet'">
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap"></noscript>
+<link rel="preload" as="style" href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css"></noscript>
 <style>
 
 :root{
-  /* ===== ستايل المتاجر (جرير) ===== */
-  --brand:#C8102E;
-  --brand-dark:#A50D26;
-  --brand-light:#FDECEF;
+  /* ===== هوية Sneat (بنفسجي/إنديجو) ===== */
+  --brand:#696CFF;
+  --brand-dark:#5F61E6;
+  --brand-light:#E7E8FF;
   --teal:#00857D;
   --teal-dark:#006B64;
   --teal-light:#E6F4F3;
@@ -23,19 +25,19 @@
   --muted:#767676;
   --border:#E3E3E3;
   --border-soft:#F0F0F0;
-  --bg:#F4F4F4;
+  --bg:#F5F5F9;
   --white:#fff;
   --ok:#2E7D32;
   --ok-light:#E8F5E9;
   --warn:#F5A623;
-  --danger:var(--brand);
+  --danger:#FF3E1D;
   --dark:#1F2933;
-  --radius:8px;
-  --radius-lg:12px;
-  --ring:0 0 0 3px rgba(200,16,46,.18);
-  --brand2:#E8536B;
-  --bar-fill:linear-gradient(90deg,#C8102E,#E8536B);
-  --chart-fill:linear-gradient(180deg,#E8536B,#C8102E);
+  --radius:10px;
+  --radius-lg:16px;
+  --ring:0 0 0 3px rgba(105,108,255,.18);
+  --brand2:#8C8EFF;
+  --bar-fill:linear-gradient(90deg,#696CFF,#8C8EFF);
+  --chart-fill:linear-gradient(180deg,#8C8EFF,#696CFF);
   --kpi2:#00857D; --kpi3:#F5A623; --kpi4:#2E7D32; --kpi5:#3F6FB8;
   --ease:cubic-bezier(.4,0,.2,1);
   --shadow-sm:0 1px 3px rgba(0,0,0,.07);
@@ -421,12 +423,8 @@ body{padding-right:230px;}
 #lockScreen{
   position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;
   overflow:hidden;
-  /* هوية Ant Design Mobile — أزرق مميّز بدل الأحمر، مقصورة على شاشة الدخول فقط */
-  --brand:#1677FF; --brand-dark:#0E58D9; --brand-light:#E8F2FF;
-  --ring:0 0 0 3px rgba(22,119,255,.18);
 }
 #lockScreen.hidden{display:none;}
-#lockScreen .btn-primary{box-shadow:0 3px 10px rgba(22,119,255,.3);}
 .lock-image-panel{
   position:absolute;inset:0;z-index:0;
   background-size:cover;background-position:center;
@@ -4309,10 +4307,25 @@ const SVG_PATHS = {
   arrowLeft: '<path d="M19 12H5"/><path d="m11 6-6 6 6 6"/>',
 };
 
+// أيقونات Boxicons (تطابق قالب Sneat) — أسماء غير موجودة في المكتبة تبقى على SVG القديم تلقائياً
+const BOXICON_MAP = {
+  box:'bx-box', doc:'bx-file', invoice:'bx-receipt', award:'bx-award',
+  dashboard:'bx-tachometer', list:'bx-list-ul', check:'bx-check', checkCircle:'bx-check-circle',
+  edit:'bx-edit', lock:'bx-lock-alt', key:'bx-key', user:'bx-user', users:'bx-group',
+  eye:'bx-show', search:'bx-search', filter:'bx-filter-alt', printer:'bx-printer',
+  palette:'bx-palette', save:'bx-save', download:'bx-download', upload:'bx-upload',
+  arrowUp:'bx-up-arrow-alt', close:'bx-x', plus:'bx-plus', minus:'bx-minus', trash:'bx-trash',
+  bank:'bx-buildings', shield:'bx-shield', warning:'bx-error', anchor:'bx-anchor',
+  plane:'bx-paper-plane', building:'bx-building', clipboard:'bx-clipboard', globe:'bx-globe',
+  gear:'bx-cog', chart:'bx-bar-chart-alt-2', tag:'bx-tag', folder:'bx-folder',
+  briefcase:'bx-briefcase', arrowLeft:'bx-left-arrow-alt', ship:'bx-water'
+};
 function icon(name, size){
+  const sz = size || 18;
+  const bx = BOXICON_MAP[name];
+  if(bx) return `<i class="bx ${bx} ic" style="font-size:${sz}px;line-height:1;" aria-hidden="true"></i>`;
   const d = SVG_PATHS[name];
   if(!d) return '';
-  const sz = size || 18;
   return `<svg class="ic" width="${sz}" height="${sz}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
 }
 
@@ -5350,8 +5363,8 @@ const DEFAULT_BRAND = {
   icon:'ship',
   iconImg:'',
   loginImg:'',
-  color:'#C8102E',
-  color2:'#E8536B',      // اللون الثانوي للتدرجات
+  color:'#696CFF',
+  color2:'#8C8EFF',      // اللون الثانوي للتدرجات
   useGradient:true,      // تدرج أم لون واحد
   kpi2:'#00857D', kpi3:'#F5A623', kpi4:'#2E7D32',
   animations:true
