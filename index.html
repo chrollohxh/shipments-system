@@ -578,10 +578,8 @@ body{padding-right:230px;}
 }
 .dash-welcome-title{font-size:19px;font-weight:800;}
 .dash-welcome-sub{font-size:13px;margin-top:5px;opacity:.92;}
-.dash-welcome-ico{
-  width:56px;height:56px;border-radius:16px;background:rgba(255,255,255,.2);flex-shrink:0;
-  display:flex;align-items:center;justify-content:center;font-size:26px;
-}
+.dash-welcome-ico{flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+@media (max-width:700px){ .dash-welcome-ico{display:none;} }
 .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(205px,1fr));gap:16px;margin-bottom:20px;}
 .kpi{
   background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);padding:22px;
@@ -1719,7 +1717,21 @@ table.doc-items td.num{font-family:'IBM Plex Mono',monospace;text-align:left;}
         <div class="dash-welcome-title" id="dwTitle">أهلاً 👋</div>
         <div class="dash-welcome-sub" id="dwSub">—</div>
       </div>
-      <div class="dash-welcome-ico"><i class="bx bx-bar-chart-alt-2"></i></div>
+      <div class="dash-welcome-ico">
+        <svg viewBox="0 0 160 120" width="150" height="112" fill="none">
+          <ellipse cx="80" cy="108" rx="62" ry="8" fill="#fff" opacity=".12"/>
+          <rect x="18" y="52" width="70" height="46" rx="8" fill="#fff" opacity=".16"/>
+          <rect x="26" y="60" width="54" height="30" rx="4" fill="#fff" opacity=".22"/>
+          <rect x="60" y="18" width="46" height="34" rx="4" fill="#fff" opacity=".9"/>
+          <rect x="65" y="23" width="36" height="22" rx="2" fill="var(--brand-dark)"/>
+          <rect x="52" y="52" width="72" height="6" rx="3" fill="#fff" opacity=".9"/>
+          <circle cx="112" cy="34" r="15" fill="#fff" opacity=".95"/>
+          <circle cx="112" cy="29" r="6" fill="var(--brand-dark)" opacity=".5"/>
+          <rect x="100" y="40" width="24" height="20" rx="10" fill="#fff" opacity=".95"/>
+          <circle cx="132" cy="70" r="9" fill="#fff" opacity=".25"/>
+          <circle cx="24" cy="30" r="6" fill="#fff" opacity=".3"/>
+        </svg>
+      </div>
     </div>
     <div class="dash-settings" id="dashSettings">
       <div class="ds-grid">
@@ -10460,7 +10472,7 @@ function renderDashboard(){
   document.getElementById('docRingPct').textContent = pctDocs + '%';
   const ringCirc = 2*Math.PI*52;
   const ringOffset = ringCirc * (1 - pctDocs/100);
-  requestAnimationFrame(()=>{ document.getElementById('docRingCircle').setAttribute('stroke-dashoffset', ringOffset); });
+  document.getElementById('docRingCircle').setAttribute('stroke-dashoffset', ringOffset);
 
   // متوسط مدة التنفيذ: من الإنشاء حتى الاعتماد (الشحنات الصادرة فقط)
   const sentRecs = records.filter(r=>recStatus(r)==='sent' && r.createdAt && r.updatedAt);
