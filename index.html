@@ -618,6 +618,13 @@ body{padding-right:230px;}
 .dash-card h3 .cnt{font-size:12px;font-weight:500;color:var(--muted);font-family:'IBM Plex Mono',monospace;}
 .dash-card > div:not(.chart),.dash-card > ul{padding:20px 22px;}
 
+.doc-complete-wrap{display:flex;gap:26px;align-items:center;padding:22px;flex-wrap:wrap;}
+.radial-wrap{position:relative;width:120px;height:120px;flex-shrink:0;}
+.radial-ring{width:100%;height:100%;}
+.radial-ring circle:last-child{transition:stroke-dashoffset 1s var(--ease);}
+.radial-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.radial-center b{font-size:22px;color:var(--ink);}
+.radial-center span{font-size:11px;color:var(--muted);}
 .docbar-row{margin-bottom:16px;}
 .docbar-row:last-child{margin-bottom:0;}
 .docbar-head{display:flex;justify-content:space-between;font-size:13.5px;margin-bottom:6px;font-weight:600;color:var(--ink);}
@@ -1807,7 +1814,18 @@ table.doc-items td.num{font-family:'IBM Plex Mono',monospace;text-align:left;}
     <div class="dash-grid">
       <div class="dash-card">
         <h3>اكتمال المستندات</h3>
-        <div id="docProgress"></div>
+        <div class="doc-complete-wrap">
+          <div class="radial-wrap">
+            <svg viewBox="0 0 120 120" class="radial-ring">
+              <circle cx="60" cy="60" r="52" fill="none" stroke="var(--border)" stroke-width="12"/>
+              <circle cx="60" cy="60" r="52" fill="none" stroke="var(--brand)" stroke-width="12"
+                stroke-linecap="round" transform="rotate(-90 60 60)" id="docRingCircle"
+                stroke-dasharray="326.7" stroke-dashoffset="326.7"/>
+            </svg>
+            <div class="radial-center"><b id="docRingPct">0%</b><span>الإجمالي</span></div>
+          </div>
+          <div id="docProgress" style="flex:1;min-width:180px;"></div>
+        </div>
       </div>
       <div class="dash-card">
         <h3>الشحنات آخر 6 شهور</h3>
@@ -10439,6 +10457,10 @@ function renderDashboard(){
   });
   const pctDocs = total ? Math.round(ready/(total*4)*100) : 0;
   animateNumber(document.getElementById('kpiDocs'), pctDocs, '%');
+  document.getElementById('docRingPct').textContent = pctDocs + '%';
+  const ringCirc = 2*Math.PI*52;
+  const ringOffset = ringCirc * (1 - pctDocs/100);
+  requestAnimationFrame(()=>{ document.getElementById('docRingCircle').setAttribute('stroke-dashoffset', ringOffset); });
 
   // متوسط مدة التنفيذ: من الإنشاء حتى الاعتماد (الشحنات الصادرة فقط)
   const sentRecs = records.filter(r=>recStatus(r)==='sent' && r.createdAt && r.updatedAt);
