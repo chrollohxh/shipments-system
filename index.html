@@ -79,14 +79,14 @@ body{
 /* ===== القائمة الجانبية — تثبيت بصري بلا نقل فعلي للعناصر في الصفحة ===== */
 .app-sidebar{
   position:fixed;top:0;right:0;bottom:0;width:230px;z-index:70;
-  background:var(--white);border-inline-start:1px solid var(--border);
+  background:var(--white);border-left:1px solid var(--border);
   display:flex;flex-direction:column;padding:20px 16px;overflow-y:auto;
   box-shadow:var(--shadow-sm);
 }
 .app-sidebar .o-brand{margin-bottom:22px;padding:0 4px;}
 .app-sidebar .o-menu{flex-direction:column;flex:none;gap:3px;flex-wrap:nowrap;}
 .app-sidebar .o-menu button{width:100%;display:flex;align-items:center;text-align:right;}
-body{padding-inline-end:230px;}
+body{padding-right:230px;}
 .o-navbar-right{margin-inline-start:auto;}
 .o-menu{display:flex;gap:2px;flex:1;flex-wrap:wrap;}
 .o-menu button{
