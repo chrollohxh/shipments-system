@@ -14,6 +14,9 @@
 # مساحة عمل المساعد المحلية — ليست جزءاً من المشروع المنشور
 .claude/
 
+# قالب Bootstrap مرجعي (Sneat) — للدراسة البصرية فقط، غير مستخدم في المشروع مباشرة
+sneat-bootstrap-html-admin-template-free/
+
 # ملفات نظام التشغيل
 Thumbs.db
 .DS_Store

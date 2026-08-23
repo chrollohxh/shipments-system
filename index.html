@@ -623,12 +623,24 @@ body{padding-right:230px;}
 .radial-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
 .radial-center b{font-size:22px;color:var(--ink);}
 .radial-center span{font-size:11px;color:var(--muted);}
-.donut-wrap{display:flex;align-items:center;gap:24px;padding:22px;flex-wrap:wrap;}
-.donut{width:120px;height:120px;border-radius:50%;flex-shrink:0;position:relative;transition:background 1s var(--ease);}
-.donut::after{content:'';position:absolute;inset:20px;background:var(--white);border-radius:50%;}
-.donut-legend{display:flex;flex-direction:column;gap:10px;font-size:13px;color:var(--ink);}
-.donut-legend-item{display:flex;align-items:center;gap:8px;}
-.donut-legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.dash-grid2{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-bottom:22px;}
+@media (max-width:820px){ .dash-grid2{grid-template-columns:1fr;} }
+.donut{width:90px;height:90px;border-radius:50%;flex-shrink:0;position:relative;transition:background 1s var(--ease);}
+.donut::after{content:'';position:absolute;inset:16px;background:var(--white);border-radius:50%;}
+.stats-donut-top{display:flex;align-items:center;justify-content:space-between;padding:20px 22px 12px;}
+.stats-donut-total{display:flex;flex-direction:column;align-items:center;gap:4px;}
+.stats-donut-total b{font-size:24px;color:var(--ink);}
+.stats-donut-total span{font-size:11.5px;color:var(--muted);}
+.stats-cat-list{list-style:none;margin:0;padding:8px 22px 22px;display:flex;flex-direction:column;gap:14px;}
+.stats-cat-item{display:flex;align-items:center;gap:11px;}
+.stats-cat-ico{
+  width:38px;height:38px;border-radius:10px;flex-shrink:0;display:flex;
+  align-items:center;justify-content:center;font-size:17px;
+}
+.stats-cat-body{flex:1;min-width:0;display:flex;justify-content:space-between;align-items:center;gap:8px;}
+.stats-cat-title{font-size:13.5px;font-weight:700;color:var(--ink);}
+.stats-cat-sub{font-size:11.5px;color:var(--muted);margin-top:1px;}
+.stats-cat-val{font-size:14px;font-weight:800;color:var(--ink);white-space:nowrap;}
 .docbar-row{margin-bottom:16px;}
 .docbar-row:last-child{margin-bottom:0;}
 .docbar-head{display:flex;justify-content:space-between;font-size:13.5px;margin-bottom:6px;font-weight:600;color:var(--ink);}
@@ -1851,11 +1863,18 @@ table.doc-items td.num{font-family:'IBM Plex Mono',monospace;text-align:left;}
       </div>
     </div>
 
-    <div class="dash-card" style="margin-bottom:22px;">
-      <h3>توزيع الشحنات</h3>
-      <div class="donut-wrap">
-        <div class="donut" id="shipDonut"></div>
-        <div class="donut-legend" id="shipDonutLegend"></div>
+    <div class="dash-grid2">
+      <div class="dash-card">
+        <h3>توزيع الشحنات</h3>
+        <div class="stats-donut-top">
+          <div class="stats-donut-total"><b id="shipDonutBigNum">0</b><span>إجمالي الشحنات</span></div>
+          <div class="donut" id="shipDonut"></div>
+        </div>
+        <ul class="stats-cat-list" id="shipDonutLegend"></ul>
+      </div>
+      <div class="dash-card">
+        <h3>حالة الشحنات</h3>
+        <ul class="stats-cat-list" id="statusBreakdown"></ul>
       </div>
     </div>
 
@@ -10488,7 +10507,7 @@ function renderDashboard(){
   const ringOffset = ringCirc * (1 - pctDocs/100);
   document.getElementById('docRingCircle').setAttribute('stroke-dashoffset', ringOffset);
 
-  // توزيع الشحنات (بري/بحري)
+  // توزيع الشحنات (بري/بحري) — بنفس أسلوب Order Statistics
   const landCount = records.filter(r=>!isSea(r)).length;
   const seaCount = records.filter(r=>isSea(r)).length;
   const totalShip = landCount + seaCount;
@@ -10498,10 +10517,38 @@ function renderDashboard(){
     donutEl.style.background = totalShip
       ? `conic-gradient(var(--brand) 0% ${landPct}%, var(--brand2) ${landPct}% 100%)`
       : 'var(--border)';
+    document.getElementById('shipDonutBigNum').textContent = totalShip;
     document.getElementById('shipDonutLegend').innerHTML = totalShip ? `
-      <div class="donut-legend-item"><span class="donut-legend-dot" style="background:var(--brand)"></span> بري (${landCount} — ${landPct}%)</div>
-      <div class="donut-legend-item"><span class="donut-legend-dot" style="background:var(--brand2)"></span> بحري (${seaCount} — ${100-landPct}%)</div>
+      <li class="stats-cat-item">
+        <div class="stats-cat-ico" style="background:var(--brand-light);color:var(--brand);">${icon('truck',18)}</div>
+        <div class="stats-cat-body"><div><div class="stats-cat-title">بري</div><div class="stats-cat-sub">${landPct}% من الإجمالي</div></div><div class="stats-cat-val">${landCount}</div></div>
+      </li>
+      <li class="stats-cat-item">
+        <div class="stats-cat-ico" style="background:var(--teal-light);color:var(--teal-dark);">${icon('anchor',18)}</div>
+        <div class="stats-cat-body"><div><div class="stats-cat-title">بحري</div><div class="stats-cat-sub">${100-landPct}% من الإجمالي</div></div><div class="stats-cat-val">${seaCount}</div></div>
+      </li>
     ` : '<div class="dash-empty">لا توجد شحنات بعد</div>';
+  }
+
+  // حالة الشحنات (مسودة/بانتظار الاعتماد/معادة/صادرة)
+  const statusIcoMap = {
+    draft:   {bg:'var(--warn)', bgLight:'#FFF4E0', ic:'edit'},
+    review:  {bg:'#3F6FB8', bgLight:'#E8F0FB', ic:'checkCircle'},
+    rework:  {bg:'var(--brand)', bgLight:'var(--brand-light)', ic:'warning'},
+    sent:    {bg:'var(--ok)', bgLight:'var(--ok-light)', ic:'check'}
+  };
+  const statusCounts = {draft:0, review:0, rework:0, sent:0};
+  records.forEach(r=>{ statusCounts[recStatus(r)]++; });
+  const statusEl = document.getElementById('statusBreakdown');
+  if(statusEl){
+    statusEl.innerHTML = total ? Object.keys(statusCounts).map(k=>{
+      const m = statusIcoMap[k];
+      const pct = total ? Math.round(statusCounts[k]/total*100) : 0;
+      return `<li class="stats-cat-item">
+        <div class="stats-cat-ico" style="background:${m.bgLight};color:${m.bg};">${icon(m.ic,17)}</div>
+        <div class="stats-cat-body"><div><div class="stats-cat-title">${STATUS_AR[k]}</div><div class="stats-cat-sub">${pct}% من الإجمالي</div></div><div class="stats-cat-val">${statusCounts[k]}</div></div>
+      </li>`;
+    }).join('') : '<div class="dash-empty">لا توجد شحنات بعد</div>';
   }
 
   // متوسط مدة التنفيذ: من الإنشاء حتى الاعتماد (الشحنات الصادرة فقط)
