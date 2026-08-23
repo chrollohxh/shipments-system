@@ -14910,6 +14910,9 @@ document.getElementById('tplResetBtn').addEventListener('click', ()=>{
 (async function init(){
   hydrateIcons();
   applyBranding();
+  // جلب الهوية (الشعار/الألوان/صورة شاشة الدخول) بدون انتظار — تظهر شاشة القفل فوراً بالوضع
+  // الافتراضي ثم تُحدَّث تلقائياً فور وصول الهوية الحقيقية، حتى قبل تسجيل الدخول (يحتاج ملف SQL رقم 17)
+  loadBranding().then(applyBranding).catch(e=>console.warn('early branding load failed', e));
   try{ lastSeenAt = +(localStorage.getItem('lastSeenAt')||0); }catch(e){}
   try{
     const {data:{session}} = await sb.auth.getSession();
