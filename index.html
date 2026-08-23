@@ -11157,6 +11157,76 @@ async function loadShipmentTimeline(r){
   }).join('');
 }
 
+// ===== ترتيب المستندات الخمسة الأساسية عند تجميع الحزمة الكاملة =====
+const DOC_ORDER_DEFAULT = ['proforma','invoice','cert','bol','packing'];
+const DOC_META = {
+  proforma: {label:'الفاتورة المبدئية', icon:'invoice', btnId:'btnProforma', ready:r=>!!r.proformaNo, readyTxt:'تحميل PDF / طباعة', notReadyTxt:'أدخل رقم البروفورما أولاً'},
+  invoice:  {label:'الفاتورة النهائية', icon:'invoice', btnId:'btnInvoice', ready:r=>!!r.invoiceNo, readyTxt:'تحميل PDF / طباعة', notReadyTxt:'أدخل رقم الفاتورة أولاً'},
+  cert:     {label:'شهادة المنشأ', icon:'award', btnId:'btnCert', ready:r=>!!r.certNo, readyTxt:'تحميل PDF / طباعة', notReadyTxt:'أدخل رقم شهادة المنشأ أولاً'},
+  bol:      {label:'بوليصة الشحن', icon:'truck', btnId:'btnBol', ready:r=>!!r.billNo, readyTxt:'تحميل PDF / طباعة', notReadyTxt:'أدخل رقم البوليصة أولاً'},
+  packing:  {label:'كشف التعبئة', icon:'box', btnId:'btnPacking', ready:r=>!!r.invoiceNo, readyTxt:'بيان وكميات فقط — برقم وتاريخ الفاتورة النهائية', notReadyTxt:'أدخل رقم الفاتورة النهائية أولاً'}
+};
+function docOrderOf(r){
+  const o = Array.isArray(r.docOrder) ? r.docOrder.filter(k=>DOC_META[k]) : [];
+  const missing = DOC_ORDER_DEFAULT.filter(k=>!o.includes(k));
+  return [...o, ...missing];
+}
+function renderDocOrderList(r){
+  const el = document.getElementById('docOrderList');
+  if(!el) return;
+  const order = docOrderOf(r);
+  el.innerHTML = order.map((k,i)=>`<div class="tk-file">
+      <span class="tf-n">${icon(DOC_META[k].icon,14)} ${DOC_META[k].label}</span>
+      <div class="pkg-move-btns">
+        <button type="button" data-act="up" data-k="${k}" ${i===0?'disabled':''} title="أعلى">▲</button>
+        <button type="button" data-act="down" data-k="${k}" ${i===order.length-1?'disabled':''} title="أسفل">▼</button>
+      </div>
+    </div>`).join('');
+  el.querySelectorAll('.pkg-move-btns button').forEach(b=>{
+    b.addEventListener('click', ()=> moveDocOrder(r, b.dataset.k, b.dataset.act==='up'? -1 : 1));
+  });
+}
+function renderDocActionsGrid(r){
+  const order = docOrderOf(r);
+  return order.map(k=>{
+    const m = DOC_META[k];
+    const isReady = m.ready(r);
+    return `<button class="doc-action-btn" id="${m.btnId}" ${!isReady?'disabled':''}>
+        <span class="t">${icon(m.icon)} ${m.label}</span>
+        <span class="s">${isReady? m.readyTxt : m.notReadyTxt}</span>
+      </button>`;
+  }).join('');
+}
+function wireDocActionButtons(r){
+  document.getElementById('btnProforma').addEventListener('click', ()=> chooseDocLang(r, lang=> printSingle(r,'proforma',lang)));
+  document.getElementById('btnInvoice').addEventListener('click', ()=> chooseDocLang(r, lang=> printSingle(r,'invoice',lang)));
+  document.getElementById('btnCert').addEventListener('click', ()=>{
+    if(isSea(r)) openSeaCertPdf(r);        // بحري: يُكتب على PDF الأصلي
+    else if(r.certCoded) chooseDocLang(r, lang=> printSingle(r,'cert',lang)); // مبنية بالكود: تدعم اختيار اللغة
+    else printSingle(r,'cert');            // نموذج صورة قديم: عربي دائماً
+  });
+  document.getElementById('btnBol').addEventListener('click', ()=>{
+    if(r.bolCoded || r.bolSeaCoded) chooseDocLang(r, lang=> printSingle(r,'bol',lang)); // مبنية بالكود: تدعم اختيار اللغة
+    else printSingle(r,'bol');             // نموذج صورة قديم: عربي دائماً
+  });
+  document.getElementById('btnPacking').addEventListener('click', ()=> chooseDocLang(r, lang=> printSingle(r,'packing',lang)));
+}
+async function moveDocOrder(r, key, dir){
+  const order = docOrderOf(r);
+  const idx = order.indexOf(key);
+  const swapIdx = idx + dir;
+  if(idx<0 || swapIdx<0 || swapIdx>=order.length) return;
+  [order[idx], order[swapIdx]] = [order[swapIdx], order[idx]];
+  r.docOrder = order;
+  renderDocOrderList(r);
+  document.getElementById('docActionsGrid').innerHTML = renderDocActionsGrid(r);
+  wireDocActionButtons(r);
+  try{
+    const row = recordToRow(r);
+    await sb.from('shipments').update({data: row.data}).eq('id', r.id);
+  }catch(e){ console.warn('تعذّر حفظ ترتيب المستندات', e); }
+}
+
 function openDetail(id){
   const r = records.find(x=>x.id===id);
   if(!r) return;
@@ -11182,28 +11252,12 @@ function openDetail(id){
       <div id="stlList" class="stl-list"><div class="sf-loading">جاري التحميل…</div></div>
     </div>
 
-    <div class="doc-actions-grid">
-      <button class="doc-action-btn" id="btnProforma" ${!r.proformaNo?'disabled':''}>
-        <span class="t">${icon('invoice')} الفاتورة المبدئية</span>
-        <span class="s">${r.proformaNo? 'تحميل PDF / طباعة' : 'أدخل رقم البروفورما أولاً'}</span>
-      </button>
-      <button class="doc-action-btn" id="btnInvoice" ${!r.invoiceNo?'disabled':''}>
-        <span class="t">${icon('invoice')} الفاتورة النهائية</span>
-        <span class="s">${r.invoiceNo? 'تحميل PDF / طباعة' : 'أدخل رقم الفاتورة أولاً'}</span>
-      </button>
-      <button class="doc-action-btn" id="btnCert" ${!r.certNo?'disabled':''}>
-        <span class="t">${icon('award')} شهادة المنشأ</span>
-        <span class="s">${r.certNo? 'تحميل PDF / طباعة' : 'أدخل رقم شهادة المنشأ أولاً'}</span>
-      </button>
-      <button class="doc-action-btn" id="btnBol" ${!r.billNo?'disabled':''}>
-        <span class="t">${icon('truck')} بوليصة الشحن</span>
-        <span class="s">${r.billNo? 'تحميل PDF / طباعة' : 'أدخل رقم البوليصة أولاً'}</span>
-      </button>
-      <button class="doc-action-btn" id="btnPacking" ${!r.invoiceNo?'disabled':''} style="grid-column:1/-1;">
-        <span class="t">${icon('box')} كشف التعبئة</span>
-        <span class="s">${r.invoiceNo? 'بيان وكميات فقط — برقم وتاريخ الفاتورة النهائية' : 'أدخل رقم الفاتورة النهائية أولاً'}</span>
-      </button>
+    <div class="sf-section">
+      <div class="sf-head">${icon('list',15)} ترتيب المستندات</div>
+      <div id="docOrderList" class="sf-list"></div>
     </div>
+
+    <div class="doc-actions-grid" id="docActionsGrid">${renderDocActionsGrid(r)}</div>
 
     <div class="cmt-section">
       <div class="cmt-title">${icon('clipboard',15)} التعليقات والمتابعة</div>
@@ -11254,18 +11308,8 @@ function openDetail(id){
   `;
   overlay.classList.add('open');
   document.getElementById('closeDetail').addEventListener('click', ()=> overlay.classList.remove('open'));
-  document.getElementById('btnProforma').addEventListener('click', ()=> chooseDocLang(r, lang=> printSingle(r,'proforma',lang)));
-  document.getElementById('btnInvoice').addEventListener('click', ()=> chooseDocLang(r, lang=> printSingle(r,'invoice',lang)));
-  document.getElementById('btnCert').addEventListener('click', ()=>{
-    if(isSea(r)) openSeaCertPdf(r);        // بحري: يُكتب على PDF الأصلي
-    else if(r.certCoded) chooseDocLang(r, lang=> printSingle(r,'cert',lang)); // مبنية بالكود: تدعم اختيار اللغة
-    else printSingle(r,'cert');            // نموذج صورة قديم: عربي دائماً
-  });
-  document.getElementById('btnBol').addEventListener('click', ()=>{
-    if(r.bolCoded || r.bolSeaCoded) chooseDocLang(r, lang=> printSingle(r,'bol',lang)); // مبنية بالكود: تدعم اختيار اللغة
-    else printSingle(r,'bol');             // نموذج صورة قديم: عربي دائماً
-  });
-  document.getElementById('btnPacking').addEventListener('click', ()=> chooseDocLang(r, lang=> printSingle(r,'packing',lang)));
+  renderDocOrderList(r);
+  wireDocActionButtons(r);
   document.getElementById('packageBtn').addEventListener('click', ()=> chooseDocLang(r, async lang=>{
     printPackage(r,lang);
     await mergePackageAttachmentsPdf(r);
@@ -13558,11 +13602,9 @@ function printSingle(r, kind, lang){
 
 function printPackage(r, lang){
   let html = '';
-  if(r.proformaNo) html += buildSheet(r,'proforma', lang);
-  if(r.invoiceNo) html += buildSheet(r,'invoice', lang);
-  if(r.certNo) html += buildSheet(r,'cert', lang);
-  if(r.billNo) html += buildSheet(r,'bol', lang);
-  if(r.invoiceNo) html += buildSheet(r,'packing', lang);
+  docOrderOf(r).forEach(k=>{
+    if(DOC_META[k].ready(r)) html += buildSheet(r, k, lang);
+  });
   addLog('print', 'طباعة حزمة المستندات كاملة' + (r.invoiceNo? ` — فاتورة ${r.invoiceNo}` : '') + (lang==='en'?' (إنجليزي)':''));
   openPrintWindow(html || '<div class="doc-sheet">لا توجد مستندات جاهزة بعد</div>');
 }
