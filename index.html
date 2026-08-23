@@ -13684,47 +13684,60 @@ async function mergeFullPackage(r, lang){
   const btnHtmlOrig = btn ? btn.innerHTML : '';
   if(btn){ btn.disabled = true; btn.innerHTML = 'جاري الدمج…'; }
   let tempPath = null;
+  let step = 'تحضير المستندات';
   try{
     const bodyHtml = packageBodyHtml(r, lang);
     if(!bodyHtml){ alert('لا توجد مستندات جاهزة بعد للدمج.'); return; }
     const fullDoc = buildStandaloneDocHtml(bodyHtml, 'مستندات الشحنة');
 
+    step = 'رفع المستندات المؤقتة للتخزين';
     tempPath = `temp-pkg/${r.id}/${Date.now()}.html`;
     const {error: upErr} = await sb.storage.from('shipment-files')
       .upload(tempPath, new Blob([fullDoc],{type:'text/html'}), {contentType:'text/html', upsert:true});
     if(upErr) throw upErr;
+    step = 'توليد رابط مؤقت للمستندات';
     const {data: signed, error: sErr} = await sb.storage.from('shipment-files').createSignedUrl(tempPath, 300);
     if(sErr) throw sErr;
 
+    step = 'الاتصال بخدمة الدمج (المصادقة)';
     const token = await ilovepdfAuth();
+    step = 'بدء تحويل المستندات إلى PDF';
     const started = await ilovepdfStart(token, 'htmlpdf');
     let server = started.server, task = started.task;
+    step = 'رفع رابط المستندات لخدمة التحويل';
     const htmlServerFilename = await ilovepdfUploadUrl(token, server, task, signed.signedUrl);
+    step = 'تنفيذ تحويل المستندات إلى PDF';
     await ilovepdfProcess(token, server, task, 'htmlpdf', [{server_filename: htmlServerFilename, filename:'docs.pdf'}]);
 
     const attachments = (packageAttachmentsCache[r.id]||[]).slice().sort((a,b)=>a.sort_order-b.sort_order);
-    let finalServer = server, finalTask = task;
+    let finalTask = task;
+    // ملاحظة: خادم العامل (worker server) لا يتغيّر عند التتابع بين الأدوات — نفس السيرفر الأصلي من /start يبقى صالحاً، ورد task/next لا يحتوي حقل server إطلاقاً (موثّق في SDK الرسمي بلغة PHP)
     if(attachments.length){
+      step = 'بدء دمج المرفقات مع المستندات';
       const next = await ilovepdfNext(token, server, task, 'merge');
-      finalServer = next.server; finalTask = next.task;
+      finalTask = next.task;
       // ملاحظة: files في رد task/next كائن مفاتيحه server_filename وقيمه filename، وليس مصفوفة (موثّق فعلياً في SDK الرسمي بلغة PHP)
       const files = Object.entries(next.files||{}).map(([server_filename, filename])=>({server_filename, filename}));
       for(const att of attachments){
+        step = `تحميل المرفق "${att.name}" من التخزين`;
         const {data: fileData, error: dErr} = await sb.storage.from('shipment-files').download(att.path);
         if(dErr){ console.warn('تعذّر تحميل مرفق', att.name, dErr); continue; }
-        const sf = await ilovepdfUploadBlob(token, finalServer, finalTask, fileData, att.name);
+        step = `رفع المرفق "${att.name}" لخدمة الدمج`;
+        const sf = await ilovepdfUploadBlob(token, server, finalTask, fileData, att.name);
         files.push({server_filename: sf, filename: att.name});
       }
-      await ilovepdfProcess(token, finalServer, finalTask, 'merge', files);
+      step = 'تنفيذ دمج كل الملفات';
+      await ilovepdfProcess(token, server, finalTask, 'merge', files);
     }
 
-    const blob = await ilovepdfDownload(token, finalServer, finalTask);
+    step = 'تحميل الملف النهائي المدموج';
+    const blob = await ilovepdfDownload(token, server, finalTask);
     const url = URL.createObjectURL(blob);
     openPdfPreview(url, 'الحزمة الكاملة مدموجة');
     addLog('print', 'دمج الحزمة الكاملة في ملف واحد' + (r.invoiceNo? ` — فاتورة ${r.invoiceNo}` : ''));
   }catch(e){
-    console.error('merge full package', e);
-    alert('تعذّر دمج الحزمة في ملف واحد:\n' + ((e&&e.message)||e) + '\n\nيمكنك استخدام "تجميع الحزمة الكاملة PDF" العادي بدلاً من ذلك.');
+    console.error('merge full package, step:', step, e);
+    alert('تعذّر دمج الحزمة في ملف واحد أثناء: ' + step + '\n\nتفاصيل: ' + ((e&&e.message)||e) + '\n\nيمكنك استخدام "تجميع الحزمة الكاملة PDF" العادي بدلاً من ذلك.');
   }finally{
     if(tempPath){ try{ await sb.storage.from('shipment-files').remove([tempPath]); }catch(e){} }
     if(btn){ btn.disabled = false; btn.innerHTML = btnHtmlOrig; }
