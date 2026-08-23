@@ -13699,6 +13699,17 @@ async function mergeFullPackage(r, lang){
     const {data: signed, error: sErr} = await sb.storage.from('shipment-files').createSignedUrl(tempPath, 300);
     if(sErr) throw sErr;
 
+    // تشخيص: نتأكد بأنفسنا من نوع المحتوى (Content-Type) اللي Supabase بيقدمه فعلياً لهذا الرابط —
+    // لو مش text/html فهذا سبب محتمل لفشل خدمة الدمج في تفسير الملف كصفحة ويب
+    let diag = '';
+    try{
+      const selfCheck = await fetch(signed.signedUrl);
+      const ct = selfCheck.headers.get('content-type');
+      diag = `Content-Type المُرسَل فعلياً: ${ct}`;
+      console.log('تشخيص الرابط المؤقت —', diag);
+      toast(diag, ct && ct.includes('html') ? 'ok' : 'err');
+    }catch(diagErr){ console.warn('تعذّر التحقق من الرابط المؤقت', diagErr); }
+
     step = 'الاتصال بخدمة الدمج (المصادقة)';
     const token = await ilovepdfAuth();
     step = 'بدء تحويل المستندات إلى PDF';
