@@ -3228,6 +3228,7 @@ table.doc-items td.num{font-family:'IBM Plex Mono',monospace;text-align:left;}
 
       <div class="detail-actions">
         <button class="btn btn-primary" id="ceSaveBtn">حفظ الشركة</button>
+        <button class="btn btn-ghost" id="ceTplEditBtn" style="display:none;">فتح محرر النماذج</button>
         <button class="btn btn-ghost" id="ceCancelBtn">إلغاء</button>
       </div>
     </div>
@@ -4511,6 +4512,7 @@ SWIFT: NBEGEGCX"></textarea>
       </div>
       <span id="tplEditorTitle" class="tpl-editing"></span>
       <div class="tpl-editor-actions">
+        <label class="tpl-chk">الشركة: <select id="tplCompanyPicker" style="width:auto;min-width:140px;"></select></label>
         <label class="tpl-chk"><input type="checkbox" id="tplPrevChk" checked> معاينة النصوص</label>
         <label class="tpl-chk"><input type="checkbox" id="tplRealChk"> بيانات شحنة حقيقية</label>
         <label class="btn btn-ghost btn-small" style="cursor:pointer;margin:0;">
@@ -4927,14 +4929,15 @@ async function loadCompany(){
   company.bolSeaStampPos = Object.assign({}, DEFAULT_COMPANY.bolSeaStampPos, company.bolSeaStampPos||{});
   console.log('loadCompany: ' + (v ? 'من الخادم ✓' : 'افتراضي (لا يوجد على الخادم)'));
 }
-async function saveCompany(){
+async function saveCompany(companyId){
+  companyId = companyId || activeCompanyId;
   try{
     // بعد تعدد الشركات، القراءة تتم من companies.settings للشركة النشطة (companyDataFor/activeCompany) —
     // لازم الحفظ يذهب لنفس المكان، وإلا يختفي التعديل عند أي تحديث صفحة.
-    if(activeCompanyId){
-      const {error} = await sb.from('companies').update({settings: company}).eq('id', activeCompanyId);
+    if(companyId){
+      const {error} = await sb.from('companies').update({settings: company}).eq('id', companyId);
       if(error) throw error;
-      const c = companyById(activeCompanyId);
+      const c = companyById(companyId);
       if(c) c.settings = company;
     }else{
       // توافقية: لا شركات مسجَّلة بعد (قبل تفعيل تعدد الشركات) — نحتفظ بالمسار القديم
@@ -4972,13 +4975,25 @@ async function saveBranding(){
   try{ await dbSetSetting('branding', branding); }
   catch(e){ dbError(e, 'تعذّر حفظ الهوية'); }
 }
+// legacyTemplatePositions: الإعداد العام القديم (قبل تعدد الشركات) — يُستخدم فقط كنقطة بداية
+// لأي شركة لسه ما عندهاش أماكن حقول خاصة بيها (company.templatePositions)، ولمسارات الاستيراد القديمة.
+let legacyTemplatePositions = {cert:{}, bol:{}, certSea:{}, bolSea:{}, bolCodedFree:{}, bolSeaCodedFree:{}};
 async function loadTemplatePositions(){
-  templatePositions = {cert:{}, bol:{}};
+  legacyTemplatePositions = {cert:{}, bol:{}};
   const v = await dbGetSetting('template_positions');
-  if(v) templatePositions = v;
-  ['cert','bol','certSea','bolSea','bolCodedFree','bolSeaCodedFree'].forEach(k=>{ if(!templatePositions[k]) templatePositions[k] = {}; });
-  console.log('loadTemplatePositions: cert='+Object.keys(templatePositions.cert).length+' bol='+Object.keys(templatePositions.bol).length);
+  if(v) legacyTemplatePositions = v;
+  ['cert','bol','certSea','bolSea','bolCodedFree','bolSeaCodedFree'].forEach(k=>{ if(!legacyTemplatePositions[k]) legacyTemplatePositions[k] = {}; });
+  console.log('loadTemplatePositions: cert='+Object.keys(legacyTemplatePositions.cert).length+' bol='+Object.keys(legacyTemplatePositions.bol).length);
 }
+// تُرجع أماكن حقول الشركة الممرَّرة، وتزرعها أول مرة من legacyTemplatePositions لو الشركة لسه مفيهاش
+function ensureCompanyTemplatePositions(c){
+  if(!c.templatePositions) c.templatePositions = JSON.parse(JSON.stringify(legacyTemplatePositions||{}));
+  ['cert','bol','certSea','bolSea','bolCodedFree','bolSeaCodedFree'].forEach(k=>{ if(!c.templatePositions[k]) c.templatePositions[k] = {}; });
+  return c.templatePositions;
+}
+// templatePositions (المتغيّر المستخدم في fieldPos/tplSetPosition) دايماً يشاور على أماكن الشركة الحالية —
+// يُعاد ربطه كل ما company تتغيّر (applyActiveCompany، withCompany، محرر النماذج)
+function syncTemplatePositions(){ templatePositions = ensureCompanyTemplatePositions(company); }
 async function saveTemplatePositions(){
   try{ await dbSetSetting('template_positions', templatePositions); }
   catch(e){ dbError(e, 'تعذّر حفظ أماكن الحقول'); }
@@ -6024,7 +6039,7 @@ document.getElementById('exportBtn').addEventListener('click', async ()=>{
   const backup = {
     _type:'shipdocs-backup', _version:1, _date:new Date().toISOString(),
     records, users, activityLog, company, branding,
-    templatePositions, suggestions, bankBook, lookups
+    templatePositions: legacyTemplatePositions, suggestions, bankBook, lookups
   };
   const blob = new Blob([JSON.stringify(backup,null,2)], {type:'application/json'});
   const url = URL.createObjectURL(blob);
@@ -6065,8 +6080,9 @@ document.getElementById('importFile').addEventListener('change', function(){
           report.push('الهوية والألوان ✓');
         }
         if(d.templatePositions){
-          templatePositions = d.templatePositions;
-          await dbSetSetting('template_positions', templatePositions);
+          legacyTemplatePositions = d.templatePositions;
+          await dbSetSetting('template_positions', legacyTemplatePositions);
+          syncTemplatePositions();
           report.push('أماكن حقول النماذج ✓');
         }
         if(Array.isArray(d.bankBook) && d.bankBook.length){
@@ -8846,8 +8862,8 @@ function companyDataFor(r){
 // تبديل إعدادات الشركة أثناء الطباعة
 function withCompany(r, fn){
   const prev = company;
-  try{ company = companyDataFor(r); return fn(); }
-  finally{ company = prev; }
+  try{ company = companyDataFor(r); syncTemplatePositions(); return fn(); }
+  finally{ company = prev; syncTemplatePositions(); }
 }
 
 function fillFormCompanies(selected){
@@ -8860,6 +8876,7 @@ function fillFormCompanies(selected){
 function applyActiveCompany(){
   const c = activeCompany();
   if(c) company = companyDataFor(null);
+  syncTemplatePositions();
 }
 
 // ---- لوحة إدارة الشركات ----
@@ -8935,6 +8952,7 @@ function openCompanyModal(id){
   const c = id ? companyById(id) : null;
   const s = (c && c.settings) || {};
   document.getElementById('ceTitle').textContent = c ? ('تعديل: ' + c.name_ar) : 'شركة جديدة';
+  document.getElementById('ceTplEditBtn').style.display = id ? '' : 'none';
   document.getElementById('ce_nameAr').value  = c ? c.name_ar : '';
   document.getElementById('ce_nameEn').value  = c ? (c.name_en||'') : '';
   document.getElementById('ce_tagline').value = c ? (c.tagline||'') : '';
@@ -9005,6 +9023,11 @@ document.getElementById('ce_letterheadW').addEventListener('input', function(){
 document.getElementById('ce_footerW').addEventListener('input', function(){
   ceFooterWidth = parseInt(this.value,10)||100;
   document.getElementById('ce_footerWVal').textContent = ceFooterWidth;
+});
+document.getElementById('ceTplEditBtn').addEventListener('click', ()=>{
+  if(!compEditId) return;
+  companyEditOverlay.classList.remove('open');
+  tplOpenEditor(compEditId);
 });
 document.getElementById('ceCancelBtn').addEventListener('click', ()=> companyEditOverlay.classList.remove('open'));
 companyEditOverlay.addEventListener('click', e=>{ if(e.target===companyEditOverlay) companyEditOverlay.classList.remove('open'); });
@@ -14493,13 +14516,36 @@ function tplGetImg(doc){
 }
 function isSea(r){ return (r && r.shipType) === 'sea'; }
 
-function tplOpenEditor(){
+let tplEditCompanyId = null;
+function fillTplCompanyPicker(){
+  const sel = document.getElementById('tplCompanyPicker');
+  if(!sel) return;
+  sel.innerHTML = companies.map(c=>`<option value="${c.id}">${escapeHtml(c.name_ar||c.name_en||'بدون اسم')}</option>`).join('');
+  sel.value = tplEditCompanyId;
+}
+// companyId: افتح المحرر على شركة محدَّدة (من بطاقة الشركة) — لو فاضي، الشركة النشطة كالمعتاد
+function tplOpenEditor(companyId){
+  tplEditCompanyId = companyId || activeCompanyId;
+  company = companyDataFor(tplEditCompanyId ? {companyId: tplEditCompanyId} : null);
+  syncTemplatePositions();
+  fillTplCompanyPicker();
   document.getElementById('tplEditorOverlay').classList.add('open');
+  tplRenderCanvas();
+}
+async function tplSwitchEditorCompany(newId){
+  if(newId === tplEditCompanyId) return;
+  if(!activeBolTplId) await saveCompany(tplEditCompanyId);
+  tplEditCompanyId = newId;
+  company = companyDataFor({companyId: newId});
+  syncTemplatePositions();
   tplRenderCanvas();
 }
 async function tplCloseEditor(){
   if(activeBolTplId && btPosDirty) await saveBolTplPositions();
   activeBolTplId = null; btPosDirty = false;
+  tplEditCompanyId = null;
+  company = companyDataFor(null);
+  syncTemplatePositions();
   const ttl = document.getElementById('tplEditorTitle');
   if(ttl) ttl.textContent = '';
   document.getElementById('tplEditorOverlay').classList.remove('open');
@@ -14780,9 +14826,12 @@ document.getElementById('tplCloseBtn').addEventListener('click', tplCloseEditor)
   const el = document.getElementById(id);
   if(el) el.addEventListener('click', ()=>{ tplCurrentDoc=doc; tplSelectedKey=null; tplRenderCanvas(); });
 });
+document.getElementById('tplCompanyPicker').addEventListener('change', function(){
+  tplSwitchEditorCompany(this.value);
+});
 document.getElementById('tplSaveBtn').addEventListener('click', async ()=>{
   if(activeBolTplId){ await saveBolTplPositions(); return; }
-  await saveTemplatePositions();
+  await saveCompany(tplEditCompanyId);
   toast('تم حفظ أماكن الحقول ✓');
 });
 document.getElementById('tplImgFile').addEventListener('change', async function(){
@@ -14804,7 +14853,7 @@ document.getElementById('tplImgFile').addEventListener('change', async function(
       return;
     }
     company[TPL_IMG_KEY[tplCurrentDoc]] = data;
-    await saveCompany();
+    await saveCompany(tplEditCompanyId);
     tplRenderCanvas();
     addLog('edit','استبدال نموذج: '+label);
   }catch(e){
@@ -14819,7 +14868,7 @@ document.getElementById('tplImgReset').addEventListener('click', async ()=>{
   if(!has){ alert('النموذج ده أصلي بالفعل.'); return; }
   if(!confirm(`رجوع "${label}" للنموذج الأصلي؟`)) return;
   company[TPL_IMG_KEY[tplCurrentDoc]] = '';
-  await saveCompany();
+  await saveCompany(tplEditCompanyId);
   tplRenderCanvas();
   addLog('edit','استرجاع النموذج الأصلي: '+label);
 });
