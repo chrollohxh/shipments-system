@@ -5971,6 +5971,9 @@ document.getElementById('br_iconFile').addEventListener('change', async function
     branding.iconImg = await fileToScaledDataURL(f, 180);
     renderImgPrev('br_iconPrev', branding.iconImg, 'iconImg');
     renderIconPicker();
+    applyBranding();
+    await saveBranding();
+    toast('تم حفظ الشعار ✓');
   }catch(e){ alert('تعذّر قراءة الصورة.'); }
   this.value='';
 });
@@ -5981,6 +5984,8 @@ document.getElementById('br_loginImgFile').addEventListener('change', async func
     branding.loginImg = await fileToScaledDataURL(f, 1600, {format:'jpeg', quality:0.85});
     renderImgPrev('br_loginImgPrev', branding.loginImg, 'loginImg');
     applyBranding();
+    await saveBranding();
+    toast('تم حفظ صورة شاشة الدخول ✓');
   }catch(e){ alert('تعذّر قراءة الصورة.'); }
   this.value='';
 });
