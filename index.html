@@ -4342,6 +4342,36 @@ SWIFT: NBEGEGCX"></textarea>
         </div>
       </div>
 
+      <div class="section-title">رأس وتذييل الفاتورة</div>
+      <div class="grid">
+        <div class="field span2">
+          <label style="font-weight:400;color:var(--ink);cursor:pointer;display:inline-block;margin-left:20px;">
+            <input type="radio" name="co_brandMode" id="co_brandModeCustom" value="custom" style="width:auto;vertical-align:middle;">
+            إنشاء جديد — اسم الشركة والشعار مكتوبين
+          </label>
+          <label style="font-weight:400;color:var(--ink);cursor:pointer;display:inline-block;">
+            <input type="radio" name="co_brandMode" id="co_brandModeReady" value="ready" style="width:auto;vertical-align:middle;">
+            معد مسبقاً — صورة ترويسة وتذييل جاهزتين
+          </label>
+        </div>
+      </div>
+      <div class="grid" id="brandReadyFields" style="display:none;">
+        <div class="field">
+          <label>ترويسة جاهزة (تحل محل اسم الشركة والشعار)</label>
+          <input type="file" id="co_letterheadFile" accept="image/*">
+          <div id="co_letterheadPrev" class="img-prev"></div>
+          <label style="margin-top:10px;">عرض الترويسة: <b id="co_letterheadWVal">100</b>%</label>
+          <input type="range" id="co_letterheadW" min="30" max="100" step="1">
+        </div>
+        <div class="field">
+          <label>تذييل جاهز (يحل محل عناوين الشركة ورقم التواصل)</label>
+          <input type="file" id="co_footerImgFile" accept="image/*">
+          <div id="co_footerImgPrev" class="img-prev"></div>
+          <label style="margin-top:10px;">عرض التذييل: <b id="co_footerWVal">100</b>%</label>
+          <input type="range" id="co_footerW" min="30" max="100" step="1">
+        </div>
+      </div>
+
       <div class="section-title">الصور</div>
       <div class="grid">
         <div class="field">
@@ -4958,6 +4988,11 @@ const DEFAULT_COMPANY = {
   certifyLineEn: 'We certify that these goods are 100% of Egyptian origin',
   showStampBox: true,
   logoWidth: 130,        // عرض الشعار بالبكسل على المستند
+  brandMode: 'custom',    // 'custom' = اسم مكتوب + شعار صغير (كالحالي) | 'ready' = ترويسة/تذييل جاهزين كصورة كاملة
+  letterheadImg: '',      // صورة ترويسة جاهزة تحل محل اسم الشركة والشعار في رأس الفاتورة (وضع 'ready' فقط)
+  letterheadWidth: 100,   // عرض الترويسة كنسبة من عرض الصفحة
+  footerImg: '',          // صورة تذييل جاهزة تحل محل سطور العنوان ورقم التواصل (وضع 'ready' فقط)
+  footerWidth: 100,       // عرض التذييل كنسبة من عرض الصفحة
   certImg: '',           // نموذج شهادة منشأ (بري)
   bolImg: '',            // نموذج بوليصة (بري)
   certImgSea: '',        // نموذج شهادة منشأ (بحري) — صورة للمحرر
@@ -12223,6 +12258,19 @@ function invoiceSheet(r, kind, lang){
     ? `<img class="inv-logo" src="${c.logo}" alt="" style="max-width:${c.logoWidth||130}px;">`
     : `<div class="inv-logo-ph">${t.logoPh}</div>`;
 
+  const isReadyBrand = c.brandMode === 'ready';
+  const headerHtml = (isReadyBrand && c.letterheadImg)
+    ? `<header class="inv-head inv-head-img"><img src="${c.letterheadImg}" alt="" style="width:${c.letterheadWidth||100}%;"></header>`
+    : `<header class="inv-head">
+      <div class="inv-head-txt">
+        ${lang==='en'
+          ? `<div class="inv-name-ar">${esc(c.nameEn)}</div>`
+          : `<div class="inv-name-ar">${esc(c.nameAr)}</div><div class="inv-name-en">${esc(c.nameEn)}</div>`}
+        ${c.tagline?`<div class="inv-tagline">${esc(c.tagline)}</div>`:''}
+      </div>
+      ${logoHtml}
+    </header>`;
+
   const sp = c.stampPos || {top:66,left:10,width:20};
   const stampInner = c.stamp
     ? `<img class="inv-stamp" src="${c.stamp}" alt="">`
@@ -12245,15 +12293,7 @@ function invoiceSheet(r, kind, lang){
   ${stampHtml}
   <div class="inv-inner">
 
-    <header class="inv-head">
-      <div class="inv-head-txt">
-        ${lang==='en'
-          ? `<div class="inv-name-ar">${esc(c.nameEn)}</div>`
-          : `<div class="inv-name-ar">${esc(c.nameAr)}</div><div class="inv-name-en">${esc(c.nameEn)}</div>`}
-        ${c.tagline?`<div class="inv-tagline">${esc(c.tagline)}</div>`:''}
-      </div>
-      ${logoHtml}
-    </header>
+    ${headerHtml}
     <div class="inv-accentbar"></div>
 
     <div class="inv-title">
@@ -12329,11 +12369,13 @@ function invoiceSheet(r, kind, lang){
 
     ${r.notes?`<div class="inv-notes"><span class="lbl">${t.notes}</span>${esc(r.notes)}</div>`:''}
 
-    <footer class="inv-foot">
+    ${(isReadyBrand && c.footerImg)
+      ? `<footer class="inv-foot inv-foot-img"><img src="${c.footerImg}" alt="" style="width:${c.footerWidth||100}%;"></footer>`
+      : `<footer class="inv-foot">
       <div class="inv-foot-bar"></div>
       <div class="inv-foot-lines">${footerLines}</div>
       ${c.contactLine?`<div class="inv-foot-contact">${esc(c.contactLine)}</div>`:''}
-    </footer>
+    </footer>`}
 
   </div>
 </div>`;
@@ -13200,6 +13242,10 @@ table.doc-items td.num{font-family:'IBM Plex Mono',monospace;text-align:left;}
 .inv-watermark img{width:62%;max-height:60%;object-fit:contain;}
 
 .inv-head{display:flex;justify-content:space-between;align-items:center;gap:20px;padding-bottom:12px;}
+.inv-head-img{display:block;padding-bottom:12px;text-align:center;}
+.inv-head-img img{display:inline-block;max-width:100%;height:auto;}
+.inv-foot-img{display:block;text-align:center;}
+.inv-foot-img img{display:inline-block;max-width:100%;height:auto;}
 .inv-head-txt{flex:1;}
 .inv-name-ar{font-size:23px;font-weight:900;color:var(--accent);line-height:1.25;}
 .inv-name-en{font-size:14px;font-weight:700;color:#333;letter-spacing:.3px;margin-top:2px;}
@@ -13884,6 +13930,17 @@ function fillCompanyForm(){
   renderImgPrev('co_logoPrev', company.logo, 'logo');
   renderImgPrev('co_stampPrev', company.stamp, 'stamp');
   renderImgPrev('co_wmPrev', company.watermark, 'watermark');
+
+  const ready = company.brandMode === 'ready';
+  document.getElementById('co_brandModeCustom').checked = !ready;
+  document.getElementById('co_brandModeReady').checked = ready;
+  document.getElementById('brandReadyFields').style.display = ready ? '' : 'none';
+  document.getElementById('co_letterheadW').value = company.letterheadWidth||100;
+  document.getElementById('co_letterheadWVal').textContent = company.letterheadWidth||100;
+  document.getElementById('co_footerW').value = company.footerWidth||100;
+  document.getElementById('co_footerWVal').textContent = company.footerWidth||100;
+  renderImgPrev('co_letterheadPrev', company.letterheadImg, 'letterheadImg');
+  renderImgPrev('co_footerImgPrev', company.footerImg, 'footerImg');
 }
 
 function readCompanyForm(){
@@ -14001,9 +14058,30 @@ document.getElementById('co_accent').addEventListener('change', function(){
   refreshStampPreview();
 });
 
+document.querySelectorAll('input[name="co_brandMode"]').forEach(radio=>{
+  radio.addEventListener('change', function(){
+    if(!this.checked) return;
+    company.brandMode = this.value;
+    document.getElementById('brandReadyFields').style.display = this.value==='ready' ? '' : 'none';
+    refreshStampPreview();
+  });
+});
+document.getElementById('co_letterheadW').addEventListener('input', function(){
+  company.letterheadWidth = parseInt(this.value,10)||100;
+  document.getElementById('co_letterheadWVal').textContent = company.letterheadWidth;
+  refreshStampPreview();
+});
+document.getElementById('co_footerW').addEventListener('input', function(){
+  company.footerWidth = parseInt(this.value,10)||100;
+  document.getElementById('co_footerWVal').textContent = company.footerWidth;
+  refreshStampPreview();
+});
+
 [['co_logoFile','logo','co_logoPrev',420],
  ['co_stampFile','stamp','co_stampPrev',400],
- ['co_wmFile','watermark','co_wmPrev',600]].forEach(([inputId, key, prevId, maxDim])=>{
+ ['co_wmFile','watermark','co_wmPrev',600],
+ ['co_letterheadFile','letterheadImg','co_letterheadPrev',900],
+ ['co_footerImgFile','footerImg','co_footerImgPrev',900]].forEach(([inputId, key, prevId, maxDim])=>{
   document.getElementById(inputId).addEventListener('change', async function(){
     const f = this.files && this.files[0];
     if(!f) return;
@@ -14023,8 +14101,9 @@ companyOverlay.addEventListener('click', e=>{
   if(e.target.classList && e.target.classList.contains('rm')){
     const key = e.target.dataset.key;
     company[key] = '';
-    renderImgPrev({logo:'co_logoPrev', stamp:'co_stampPrev', watermark:'co_wmPrev'}[key], '', key);
+    renderImgPrev({logo:'co_logoPrev', stamp:'co_stampPrev', watermark:'co_wmPrev', letterheadImg:'co_letterheadPrev', footerImg:'co_footerImgPrev'}[key], '', key);
     if(key === 'logo') syncLogoHeadHandle();
+    if(key === 'letterheadImg' || key === 'footerImg') refreshStampPreview();
   }
 });
 
