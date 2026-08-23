@@ -453,7 +453,7 @@ body{padding-right:230px;}
 .drow span:first-child{color:var(--muted);flex-shrink:0;}
 .drow span:last-child{font-family:'IBM Plex Mono',monospace;font-weight:700;text-align:left;color:var(--ink);}
 .drow.text span:last-child{font-family:inherit;font-weight:600;text-align:right;}
-.doc-actions-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px;}
+.doc-actions-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:18px;}
 .doc-action-btn{
   display:flex;flex-direction:column;align-items:flex-start;gap:3px;padding:17px 19px;
   border:1.5px solid var(--border);background:var(--white);border-radius:var(--radius);
@@ -3066,7 +3066,7 @@ table.doc-items td.num{font-family:'IBM Plex Mono',monospace;text-align:left;}
 </div>
 
 <div class="overlay" id="overlay">
-  <div class="detail-card" id="detailCard"></div>
+  <div class="detail-card" id="detailCard" style="max-width:1220px;"></div>
 </div>
 
 <div id="printArea"><div class="doc-page" id="docPage"></div></div>
@@ -11298,6 +11298,7 @@ function openDetail(id){
 
     <div class="detail-actions">
       <button class="btn btn-gold" id="packageBtn">${icon('printer')} تجميع الحزمة الكاملة PDF</button>
+      <button class="btn btn-ghost" id="mergeAllBtn">${icon('doc')} دمج الحزمة في ملف واحد</button>
       ${reviewButtonsHtml(r)}
       ${r.consignee ? `<button class="btn btn-ghost btn-small" id="lgBtn">${icon('bank',15)} حساب العميل</button>` : ''}
       ${r.consignee ? `<button class="btn btn-ghost btn-small" id="shipCostBtn">${icon('truck',15)} تكلفة الشحن</button>` : ''}
@@ -11314,6 +11315,7 @@ function openDetail(id){
     printPackage(r,lang);
     await mergePackageAttachmentsPdf(r);
   }));
+  document.getElementById('mergeAllBtn').addEventListener('click', ()=> chooseDocLang(r, lang=> mergeFullPackage(r, lang)));
   document.getElementById('editBtn').addEventListener('click', ()=>{
     overlay.classList.remove('open');
     fillFormForEdit(r);
@@ -13552,6 +13554,11 @@ table.bol4-foot td{border:1px solid #999;padding:4px;}
 }
 `;
 
+function buildStandaloneDocHtml(bodyHtml, title){
+  return '<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8">'
+    + '<title>' + (title||'مستند الشحنة') + '</title><style>' + PRINT_STYLES + '</style></head>'
+    + '<body><div class="doc-page">' + bodyHtml + '</div></body></html>';
+}
 function openPrintWindow(bodyHtml){
   const w = window.open('', '_blank');
   if(!w){
@@ -13566,9 +13573,7 @@ function openPrintWindow(bodyHtml){
     w.document.close();
   }catch(e){}
 
-  const full = '<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8">'
-    + '<title>مستند الشحنة</title><style>' + PRINT_STYLES + '</style></head>'
-    + '<body><div class="doc-page">' + bodyHtml + '</div></body></html>';
+  const full = buildStandaloneDocHtml(bodyHtml);
 
   // Blob URL أسرع بكتير من document.write مع المستندات الكبيرة (صور base64)
   const blob = new Blob([full], {type:'text/html;charset=utf-8'});
@@ -13600,13 +13605,129 @@ function printSingle(r, kind, lang){
   openPrintWindow(buildSheet(r, kind, lang));
 }
 
-function printPackage(r, lang){
+function packageBodyHtml(r, lang){
   let html = '';
   docOrderOf(r).forEach(k=>{
     if(DOC_META[k].ready(r)) html += buildSheet(r, k, lang);
   });
+  return html;
+}
+function printPackage(r, lang){
+  const html = packageBodyHtml(r, lang);
   addLog('print', 'طباعة حزمة المستندات كاملة' + (r.invoiceNo? ` — فاتورة ${r.invoiceNo}` : '') + (lang==='en'?' (إنجليزي)':''));
   openPrintWindow(html || '<div class="doc-sheet">لا توجد مستندات جاهزة بعد</div>');
+}
+
+// ===== دمج الحزمة الكاملة في ملف PDF واحد فعلياً عبر iLoveAPI (htmlpdf + merge) =====
+const ILOVEAPI_PUBLIC_KEY = 'project_public_8c4071e0479865e305e0ccee399dee9f_gZSna6c0fc61a0b09641128c1f95f4c07766d';
+
+async function ilovepdfAuth(){
+  const res = await fetch('https://api.ilovepdf.com/v1/auth', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({public_key: ILOVEAPI_PUBLIC_KEY})
+  });
+  const data = await res.json().catch(()=>({}));
+  if(!res.ok || !data.token) throw new Error((data.error&&data.error.message) || 'تعذّر الاتصال بخدمة الدمج');
+  return data.token;
+}
+async function ilovepdfStart(token, tool){
+  const res = await fetch(`https://api.ilovepdf.com/v1/start/${tool}`, {
+    headers:{'Authorization':'Bearer '+token}
+  });
+  const data = await res.json().catch(()=>({}));
+  if(!res.ok) throw new Error((data.error&&data.error.message) || 'تعذّر بدء عملية الدمج');
+  return data;
+}
+async function ilovepdfUploadUrl(token, server, task, url){
+  const fd = new FormData();
+  fd.append('task', task);
+  fd.append('cloud_file', url);
+  const res = await fetch(`https://${server}/v1/upload`, {method:'POST', headers:{'Authorization':'Bearer '+token}, body:fd});
+  const data = await res.json().catch(()=>({}));
+  if(!res.ok) throw new Error((data.error&&data.error.message) || 'تعذّر رفع المستندات للتحويل');
+  return data.server_filename;
+}
+async function ilovepdfUploadBlob(token, server, task, blob, filename){
+  const fd = new FormData();
+  fd.append('task', task);
+  fd.append('file', blob, filename);
+  const res = await fetch(`https://${server}/v1/upload`, {method:'POST', headers:{'Authorization':'Bearer '+token}, body:fd});
+  const data = await res.json().catch(()=>({}));
+  if(!res.ok) throw new Error((data.error&&data.error.message) || `تعذّر رفع المرفق "${filename}"`);
+  return data.server_filename;
+}
+async function ilovepdfProcess(token, server, task, tool, files){
+  const res = await fetch(`https://${server}/v1/process`, {
+    method:'POST', headers:{'Authorization':'Bearer '+token, 'Content-Type':'application/json'},
+    body: JSON.stringify({task, tool, files})
+  });
+  const data = await res.json().catch(()=>({}));
+  if(!res.ok) throw new Error((data.error&&data.error.message) || 'تعذّر تنفيذ الدمج');
+  return data;
+}
+async function ilovepdfNext(token, server, task, tool){
+  const res = await fetch(`https://${server}/v1/task/next`, {
+    method:'POST', headers:{'Authorization':'Bearer '+token, 'Content-Type':'application/json'},
+    body: JSON.stringify({task, tool})
+  });
+  const data = await res.json().catch(()=>({}));
+  if(!res.ok) throw new Error((data.error&&data.error.message) || 'تعذّر متابعة عملية الدمج');
+  return data;
+}
+async function ilovepdfDownload(token, server, task){
+  const res = await fetch(`https://${server}/v1/download/${task}`, {headers:{'Authorization':'Bearer '+token}});
+  if(!res.ok) throw new Error('تعذّر تحميل الملف الناتج');
+  return await res.blob();
+}
+async function mergeFullPackage(r, lang){
+  const btn = document.getElementById('mergeAllBtn');
+  const btnHtmlOrig = btn ? btn.innerHTML : '';
+  if(btn){ btn.disabled = true; btn.innerHTML = 'جاري الدمج…'; }
+  let tempPath = null;
+  try{
+    const bodyHtml = packageBodyHtml(r, lang);
+    if(!bodyHtml){ alert('لا توجد مستندات جاهزة بعد للدمج.'); return; }
+    const fullDoc = buildStandaloneDocHtml(bodyHtml, 'مستندات الشحنة');
+
+    tempPath = `temp-pkg/${r.id}/${Date.now()}.html`;
+    const {error: upErr} = await sb.storage.from('shipment-files')
+      .upload(tempPath, new Blob([fullDoc],{type:'text/html'}), {contentType:'text/html', upsert:true});
+    if(upErr) throw upErr;
+    const {data: signed, error: sErr} = await sb.storage.from('shipment-files').createSignedUrl(tempPath, 300);
+    if(sErr) throw sErr;
+
+    const token = await ilovepdfAuth();
+    const started = await ilovepdfStart(token, 'htmlpdf');
+    let server = started.server, task = started.task;
+    const htmlServerFilename = await ilovepdfUploadUrl(token, server, task, signed.signedUrl);
+    await ilovepdfProcess(token, server, task, 'htmlpdf', [{server_filename: htmlServerFilename, filename:'docs.pdf'}]);
+
+    const attachments = (packageAttachmentsCache[r.id]||[]).slice().sort((a,b)=>a.sort_order-b.sort_order);
+    let finalServer = server, finalTask = task;
+    if(attachments.length){
+      const next = await ilovepdfNext(token, server, task, 'merge');
+      finalServer = next.server; finalTask = next.task;
+      const files = (next.files||[]).map(f=>({server_filename:f.server_filename, filename:f.filename}));
+      for(const att of attachments){
+        const {data: fileData, error: dErr} = await sb.storage.from('shipment-files').download(att.path);
+        if(dErr){ console.warn('تعذّر تحميل مرفق', att.name, dErr); continue; }
+        const sf = await ilovepdfUploadBlob(token, finalServer, finalTask, fileData, att.name);
+        files.push({server_filename: sf, filename: att.name});
+      }
+      await ilovepdfProcess(token, finalServer, finalTask, 'merge', files);
+    }
+
+    const blob = await ilovepdfDownload(token, finalServer, finalTask);
+    const url = URL.createObjectURL(blob);
+    openPdfPreview(url, 'الحزمة الكاملة مدموجة');
+    addLog('print', 'دمج الحزمة الكاملة في ملف واحد' + (r.invoiceNo? ` — فاتورة ${r.invoiceNo}` : ''));
+  }catch(e){
+    console.error('merge full package', e);
+    alert('تعذّر دمج الحزمة في ملف واحد:\n' + ((e&&e.message)||e) + '\n\nيمكنك استخدام "تجميع الحزمة الكاملة PDF" العادي بدلاً من ذلك.');
+  }finally{
+    if(tempPath){ try{ await sb.storage.from('shipment-files').remove([tempPath]); }catch(e){} }
+    if(btn){ btn.disabled = false; btn.innerHTML = btnHtmlOrig; }
+  }
 }
 
 // ===== اختيار لغة الطباعة (عربي/إنجليزي) للمستندات المبنية بالكود =====
