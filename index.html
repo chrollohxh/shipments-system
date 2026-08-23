@@ -3121,7 +3121,7 @@ table.doc-items td.num{font-family:'IBM Plex Mono',monospace;text-align:left;}
 </div>
 
 <div class="overlay" id="companyEditOverlay">
-  <div class="detail-card" style="max-width:680px;">
+  <div class="detail-card" style="max-width:1200px;">
     <div class="dh">
       <div><h2 id="ceTitle">شركة جديدة</h2>
         <div style="font-size:12px;color:var(--muted);margin-top:3px;">تظهر بياناتها على مستندات شحناتها</div>
@@ -3188,6 +3188,37 @@ table.doc-items td.num{font-family:'IBM Plex Mono',monospace;text-align:left;}
           </label>
         </div>
       </div>
+
+      <div class="section-title">رأس وتذييل الفاتورة</div>
+      <div class="grid">
+        <div class="field span2">
+          <label style="font-weight:400;color:var(--ink);cursor:pointer;display:inline-block;margin-left:20px;">
+            <input type="radio" name="ce_brandMode" id="ce_brandModeCustom" value="custom" style="width:auto;vertical-align:middle;">
+            إنشاء جديد — اسم الشركة والشعار مكتوبين
+          </label>
+          <label style="font-weight:400;color:var(--ink);cursor:pointer;display:inline-block;">
+            <input type="radio" name="ce_brandMode" id="ce_brandModeReady" value="ready" style="width:auto;vertical-align:middle;">
+            معد مسبقاً — صورة ترويسة وتذييل جاهزتين
+          </label>
+        </div>
+      </div>
+      <div class="grid" id="ceBrandReadyFields" style="display:none;">
+        <div class="field">
+          <label>ترويسة جاهزة (تحل محل اسم الشركة والشعار)</label>
+          <input type="file" id="ce_letterheadFile" accept="image/*">
+          <div id="ce_letterheadPrev" class="img-prev"></div>
+          <label style="margin-top:10px;">عرض الترويسة: <b id="ce_letterheadWVal">100</b>%</label>
+          <input type="range" id="ce_letterheadW" min="30" max="100" step="1">
+        </div>
+        <div class="field">
+          <label>تذييل جاهز (يحل محل عناوين الشركة ورقم التواصل)</label>
+          <input type="file" id="ce_footerImgFile" accept="image/*">
+          <div id="ce_footerImgPrev" class="img-prev"></div>
+          <label style="margin-top:10px;">عرض التذييل: <b id="ce_footerWVal">100</b>%</label>
+          <input type="range" id="ce_footerW" min="30" max="100" step="1">
+        </div>
+      </div>
+
       <div class="section-title">معاينة المستند</div>
       <div class="ce-preview-bar">
         <button class="btn btn-ghost btn-small" id="cePreviewBtn" data-ic="doc">تحديث المعاينة</button>
@@ -8902,14 +8933,27 @@ function openCompanyModal(id){
   document.getElementById('ce_term').value    = s.defaultTerm || '';
   document.getElementById('ce_default').checked = c ? !!c.is_default : (companies.length === 0);
   ceLogo = s.logo || ''; ceStamp = s.stamp || '';
+  ceLetterheadImg = s.letterheadImg || ''; ceFooterImg = s.footerImg || '';
+  ceLetterheadWidth = s.letterheadWidth || 100; ceFooterWidth = s.footerWidth || 100;
+  const ceReady = s.brandMode === 'ready';
+  document.getElementById('ce_brandModeCustom').checked = !ceReady;
+  document.getElementById('ce_brandModeReady').checked = ceReady;
+  document.getElementById('ceBrandReadyFields').style.display = ceReady ? '' : 'none';
+  document.getElementById('ce_letterheadW').value = ceLetterheadWidth;
+  document.getElementById('ce_letterheadWVal').textContent = ceLetterheadWidth;
+  document.getElementById('ce_footerW').value = ceFooterWidth;
+  document.getElementById('ce_footerWVal').textContent = ceFooterWidth;
   renderCePreviews();
   companyEditOverlay.classList.add('open');
   setTimeout(()=>document.getElementById('ce_nameAr').focus(), 80);
 }
 let ceLogo = '', ceStamp = '';
+let ceLetterheadImg = '', ceFooterImg = '', ceLetterheadWidth = 100, ceFooterWidth = 100;
 function renderCePreviews(){
   document.getElementById('ce_logoPrev').innerHTML  = ceLogo  ? `<img src="${ceLogo}">`  : '<span>لا يوجد</span>';
   document.getElementById('ce_stampPrev').innerHTML = ceStamp ? `<img src="${ceStamp}">` : '<span>لا يوجد</span>';
+  document.getElementById('ce_letterheadPrev').innerHTML = ceLetterheadImg ? `<img src="${ceLetterheadImg}">` : '<span>لا يوجد</span>';
+  document.getElementById('ce_footerImgPrev').innerHTML  = ceFooterImg    ? `<img src="${ceFooterImg}">`     : '<span>لا يوجد</span>';
 }
 document.getElementById('ce_logoFile').addEventListener('change', async function(){
   const f = this.files && this.files[0]; if(!f) return;
@@ -8922,6 +8966,32 @@ document.getElementById('ce_stampFile').addEventListener('change', async functio
   try{ ceStamp = await fileToScaledDataURL(f, 600); renderCePreviews(); }
   catch(e){ alert('تعذّر قراءة الملف\n\nالسبب: ' + (e.message||e)); }
   this.value='';
+});
+document.getElementById('ce_letterheadFile').addEventListener('change', async function(){
+  const f = this.files && this.files[0]; if(!f) return;
+  try{ ceLetterheadImg = await fileToScaledDataURL(f, 900); renderCePreviews(); }
+  catch(e){ alert('تعذّر قراءة الملف\n\nالسبب: ' + (e.message||e)); }
+  this.value='';
+});
+document.getElementById('ce_footerImgFile').addEventListener('change', async function(){
+  const f = this.files && this.files[0]; if(!f) return;
+  try{ ceFooterImg = await fileToScaledDataURL(f, 900); renderCePreviews(); }
+  catch(e){ alert('تعذّر قراءة الملف\n\nالسبب: ' + (e.message||e)); }
+  this.value='';
+});
+document.querySelectorAll('input[name="ce_brandMode"]').forEach(radio=>{
+  radio.addEventListener('change', function(){
+    if(!this.checked) return;
+    document.getElementById('ceBrandReadyFields').style.display = this.value==='ready' ? '' : 'none';
+  });
+});
+document.getElementById('ce_letterheadW').addEventListener('input', function(){
+  ceLetterheadWidth = parseInt(this.value,10)||100;
+  document.getElementById('ce_letterheadWVal').textContent = ceLetterheadWidth;
+});
+document.getElementById('ce_footerW').addEventListener('input', function(){
+  ceFooterWidth = parseInt(this.value,10)||100;
+  document.getElementById('ce_footerWVal').textContent = ceFooterWidth;
 });
 document.getElementById('ceCancelBtn').addEventListener('click', ()=> companyEditOverlay.classList.remove('open'));
 companyEditOverlay.addEventListener('click', e=>{ if(e.target===companyEditOverlay) companyEditOverlay.classList.remove('open'); });
@@ -8940,7 +9010,10 @@ function ceBuildPreviewSettings(){
     contactLine: document.getElementById('ce_contact').value.trim(),
     certifyLine: document.getElementById('ce_certify').value.trim(),
     accent:      document.getElementById('ce_accent').value,
-    logo: ceLogo, stamp: ceStamp
+    logo: ceLogo, stamp: ceStamp,
+    brandMode: document.querySelector('input[name="ce_brandMode"]:checked')?.value || 'custom',
+    letterheadImg: ceLetterheadImg, letterheadWidth: ceLetterheadWidth,
+    footerImg: ceFooterImg, footerWidth: ceFooterWidth
   });
 }
 function ceRenderPreview(){
@@ -8987,7 +9060,10 @@ document.getElementById('ceSaveBtn').addEventListener('click', async ()=>{
     certifyLine: document.getElementById('ce_certify').value.trim(),
     accent:      document.getElementById('ce_accent').value,
     defaultTerm: document.getElementById('ce_term').value.trim(),
-    logo: ceLogo, stamp: ceStamp
+    logo: ceLogo, stamp: ceStamp,
+    brandMode: document.querySelector('input[name="ce_brandMode"]:checked')?.value || 'custom',
+    letterheadImg: ceLetterheadImg, letterheadWidth: ceLetterheadWidth,
+    footerImg: ceFooterImg, footerWidth: ceFooterWidth
   });
   const row = {
     name_ar: nameAr,
