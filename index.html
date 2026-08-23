@@ -4029,6 +4029,16 @@ table.doc-items td.num{font-family:'IBM Plex Mono',monospace;text-align:left;}
   </div>
 </div>
 
+<div class="overlay" id="pdfPreviewOverlay">
+  <div class="detail-card" style="max-width:900px;height:88vh;display:flex;flex-direction:column;">
+    <div class="dh">
+      <div><h2 id="pdfPreviewTitle">معاينة المرفق</h2></div>
+      <button class="close-x" id="pdfPreviewCloseX" data-ic="close"></button>
+    </div>
+    <iframe id="pdfPreviewFrame" style="flex:1;width:100%;border:none;background:var(--bg);"></iframe>
+  </div>
+</div>
+
 <div class="overlay" id="reviewOverlay">
   <div class="detail-card" style="max-width:560px;">
     <div class="dh">
@@ -6725,11 +6735,11 @@ function renderPackageAttachments(id){
   el.innerHTML = list.length ? list.map((f,i)=>`<div class="tk-file">
       <span class="tf-n">${icon('doc',14)} ${escapeHtml(f.name)}</span>
       <span class="tf-s">${humanSize(f.size_bytes||0)}</span>
-      <div class="pkg-move-btns">
+      ${list.length>1 ? `<div class="pkg-move-btns">
         <button type="button" data-act="up" data-id="${f.id}" ${i===0?'disabled':''} title="أعلى">▲</button>
         <button type="button" data-act="down" data-id="${f.id}" ${i===list.length-1?'disabled':''} title="أسفل">▼</button>
-      </div>
-      <button class="tf-x" data-act="open" data-path="${escapeHtml(f.path)}" title="فتح">${icon('download',13)}</button>
+      </div>` : ''}
+      <button class="tf-x" data-act="open" data-path="${escapeHtml(f.path)}" data-name="${escapeHtml(f.name)}" title="فتح">${icon('eye',13)}</button>
       ${canManage? `<button class="tf-x" data-act="del" data-id="${f.id}" data-path="${escapeHtml(f.path)}" title="حذف">${icon('trash',13)}</button>` : ''}
     </div>`).join('') : '<div class="sf-empty">لا مرفقات بعد</div>';
 
@@ -6738,7 +6748,7 @@ function renderPackageAttachments(id){
   });
   el.querySelectorAll('.tf-x').forEach(b=>{
     b.addEventListener('click', async ()=>{
-      if(b.dataset.act === 'open'){ openPackageAttachment(b.dataset.path); return; }
+      if(b.dataset.act === 'open'){ openPackageAttachment(b.dataset.path, b.dataset.name); return; }
       if(!confirm('حذف هذا المرفق؟')) return;
       try{
         await sb.storage.from('shipment-files').remove([b.dataset.path]);
@@ -6799,13 +6809,27 @@ async function uploadPackageAttachment(id, name, file){
   await loadPackageAttachments(id);
   netEnd();
 }
-async function openPackageAttachment(path){
+async function openPackageAttachment(path, name){
   try{
     const {data, error} = await sb.storage.from('shipment-files').createSignedUrl(path, 300);
     if(error) throw error;
-    window.open(data.signedUrl, '_blank');
+    openPdfPreview(data.signedUrl, name);
   }catch(e){ dbError(e,'تعذّر فتح المرفق'); }
 }
+// معاينة PDF داخل الصفحة نفسها (بدل فتح تبويب خارجي) — تُستخدم لمرفقات الحزمة فقط
+function openPdfPreview(url, name){
+  document.getElementById('pdfPreviewTitle').textContent = name || 'معاينة المرفق';
+  document.getElementById('pdfPreviewFrame').src = url;
+  document.getElementById('pdfPreviewOverlay').classList.add('open');
+}
+function closePdfPreview(){
+  document.getElementById('pdfPreviewOverlay').classList.remove('open');
+  document.getElementById('pdfPreviewFrame').src = 'about:blank';
+}
+document.getElementById('pdfPreviewCloseX').addEventListener('click', closePdfPreview);
+document.getElementById('pdfPreviewOverlay').addEventListener('click', e=>{
+  if(e.target.id === 'pdfPreviewOverlay') closePdfPreview();
+});
 // تدمج فعلياً صفحات المرفقات الحقيقية عبر pdf-lib في ملف PDF منفصل — لا تلمس نافذة طباعة الخمسة الأساسية إطلاقاً
 async function mergePackageAttachmentsPdf(r){
   const items = (packageAttachmentsCache[r.id]||[]).slice().sort((a,b)=>a.sort_order-b.sort_order);
