@@ -8886,6 +8886,7 @@ function renderCompaniesAdmin(){
       <div class="cc-acts">
         <button class="btn btn-ghost btn-small cc-edit">تعديل</button>
         <button class="btn btn-ghost btn-small cc-toggle">${c.active?'إيقاف':'تفعيل'}</button>
+        <button class="btn btn-danger btn-small cc-delete">حذف</button>
       </div>
     </div>`;
   }).join('');
@@ -8901,6 +8902,18 @@ function renderCompaniesAdmin(){
         c.active = !c.active;
         renderCompaniesAdmin();
       }catch(e){ dbError(e,'تعذّر التغيير'); }
+    });
+    card.querySelector('.cc-delete').addEventListener('click', async ()=>{
+      const c = companyById(id);
+      if(!confirm(`حذف شركة "${c.name_ar}" نهائياً؟ لو فيه شحنات مربوطة بيها لن يُسمح بالحذف.`)) return;
+      try{
+        const {error} = await sb.from('companies').delete().eq('id', id);
+        if(error) throw error;
+        companies = companies.filter(x=>x.id!==id);
+        if(activeCompanyId === id) activeCompanyId = null;
+        renderCompaniesAdmin();
+        toast('تم حذف الشركة');
+      }catch(e){ dbError(e,'تعذّر الحذف — تأكد إنه لا توجد شحنات مربوطة بهذه الشركة'); }
     });
   });
   loadCompanyCounters();
@@ -9073,6 +9086,9 @@ document.getElementById('ceSaveBtn').addEventListener('click', async ()=>{
     is_default: document.getElementById('ce_default').checked,
     settings
   };
+  const saveBtn = document.getElementById('ceSaveBtn');
+  const saveBtnOrig = saveBtn.textContent;
+  saveBtn.disabled = true; saveBtn.textContent = 'جاري الحفظ…';
   netStart();
   try{
     if(compEditId){
@@ -9093,7 +9109,7 @@ document.getElementById('ceSaveBtn').addEventListener('click', async ()=>{
     if(/companies_code_uniq/i.test(e.message||'')) alert('الكود ده مستخدم لشركة تانية.');
     else dbError(e,'تعذّر حفظ الشركة');
   }
-  finally{ netEnd(); }
+  finally{ netEnd(); saveBtn.disabled = false; saveBtn.textContent = saveBtnOrig; }
 });
 
 // ترقيم مستقل لكل شركة
