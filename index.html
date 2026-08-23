@@ -13707,7 +13707,8 @@ async function mergeFullPackage(r, lang){
     if(attachments.length){
       const next = await ilovepdfNext(token, server, task, 'merge');
       finalServer = next.server; finalTask = next.task;
-      const files = (next.files||[]).map(f=>({server_filename:f.server_filename, filename:f.filename}));
+      // ملاحظة: files في رد task/next كائن مفاتيحه server_filename وقيمه filename، وليس مصفوفة (موثّق فعلياً في SDK الرسمي بلغة PHP)
+      const files = Object.entries(next.files||{}).map(([server_filename, filename])=>({server_filename, filename}));
       for(const att of attachments){
         const {data: fileData, error: dErr} = await sb.storage.from('shipment-files').download(att.path);
         if(dErr){ console.warn('تعذّر تحميل مرفق', att.name, dErr); continue; }
