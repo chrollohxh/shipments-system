@@ -5295,7 +5295,8 @@ async function bootData(){
     step('الشحنات', loadRecords),
     step('المهام', loadTasks),
     step('الدفعات', loadPayments),
-    step('حسابات العملاء', loadLedger)
+    step('حسابات العملاء', loadLedger),
+    step('الشركات', () => loadCompanies(true))
   ]);
   // بيانات ثقيلة (شعارات وأختام وصور نماذج مضمَّنة base64) — تُحمَّل في الخلفية بلا
   // انتظار، عشان الشحنات والمهام تفتح فوراً حتى لو الصور لسه بتنزل على نت بطيء.
@@ -5303,10 +5304,12 @@ async function bootData(){
   Promise.all([
     step('الهوية والألوان', loadBranding),
     step('إعدادات الشركة', loadCompany),
-    step('الشركات', loadCompanies),
     step('نماذج البوالص', loadBolTemplates)
-  ]).then(()=>{ try{ applyBranding(); }catch(e){ console.error(e); } });
-  try{ fillLookupSelects(); renderBankOptions(''); }catch(e){ console.error(e); }
+  ]).then(()=>{
+    try{ applyBranding(); applyActiveCompany(); }catch(e){ console.error(e); }
+  });
+  // يعالج سباق تحميل الإعدادات القديمة مع الشركة النشطة بعد اكتمال البيانات الأساسية.
+  try{ applyActiveCompany(); fillLookupSelects(); renderBankOptions(''); }catch(e){ console.error(e); }
   try{ fillCertPicker(); }catch(e){ console.error(e); }
   try{ renderDrafts(); renderIssued(); renderSea(); }catch(e){ console.error(e); }
   try{ renderNotifications(); renderReport(); }catch(e){ console.error(e); }
@@ -5791,7 +5794,10 @@ document.querySelectorAll('.admin-tab').forEach(t=>{
     if(t.dataset.atab==='data') renderDataStats();
     if(t.dataset.atab==='brand') fillBrandForm();
     if(t.dataset.atab==='lists') renderLookupAdmin();
-    if(t.dataset.atab==='companies') renderCompaniesAdmin();
+    if(t.dataset.atab==='companies'){
+      renderCompaniesAdmin();
+      if(!companiesLoaded) loadCompanies();
+    }
     if(t.dataset.atab==='clients') renderClientsAdmin();
     if(t.dataset.atab==='templates'){ renderBolTplAdmin(); renderCertTplAdmin(); }
   });
@@ -8884,23 +8890,50 @@ document.getElementById('scSaveBtn').addEventListener('click', async ()=>{
 let companies = [];
 let activeCompanyId = null;
 let compEditId = null;
+let companiesLoaded = false;
+let companiesLoading = false;
+let companiesLoadError = null;
+let companiesLoadPromise = null;
 const companyEditOverlay = document.getElementById('companyEditOverlay');
 
-async function loadCompanies(){
-  try{
-    const {data, error} = await sb.from('companies').select('*').order('sort_order');
-    if(error) throw error;
-    companies = data || [];
-  }catch(e){ companies = []; console.warn('companies', e); }
-
-  if(!activeCompanyId){
-    try{ activeCompanyId = localStorage.getItem('active_company') || null; }catch(e){}
-  }
-  if(!companies.find(c=>c.id===activeCompanyId)){
-    const def = companies.find(c=>c.is_default && c.active) || companies.find(c=>c.active) || companies[0];
-    activeCompanyId = def ? def.id : null;
-  }
-  applyActiveCompany();
+async function loadCompanies(force){
+  if(companiesLoading) return companiesLoadPromise;
+  if(companiesLoaded && !force) return companies;
+  companiesLoading = true;
+  companiesLoadError = null;
+  companiesLoadPromise = (async ()=>{
+    let lastError = null;
+    for(let attempt = 0; attempt < 3; attempt++){
+      try{
+        const {data, error} = await sb.from('companies').select('*').order('sort_order');
+        if(error) throw error;
+        // لا نبدّل القائمة إلا بعد وصول رد ناجح؛ النتيجة الفارغة الصحيحة تبقى مسموحة.
+        companies = data || [];
+        companiesLoaded = true;
+        lastError = null;
+        break;
+      }catch(e){
+        lastError = e;
+        if(attempt < 2) await new Promise(resolve=>setTimeout(resolve, 650 * (attempt + 1)));
+      }
+    }
+    if(lastError){
+      companiesLoadError = lastError;
+      console.warn('companies: keeping the last successful list', lastError);
+    }
+    if(!activeCompanyId){
+      try{ activeCompanyId = localStorage.getItem('active_company') || null; }catch(e){}
+    }
+    if(!companies.find(c=>c.id===activeCompanyId)){
+      const def = companies.find(c=>c.is_default && c.active) || companies.find(c=>c.active) || companies[0];
+      activeCompanyId = def ? def.id : null;
+    }
+    applyActiveCompany();
+    if(document.getElementById('apaneCompanies')?.classList.contains('active')) renderCompaniesAdmin();
+    return companies;
+  })();
+  try{ return await companiesLoadPromise; }
+  finally{ companiesLoading = false; companiesLoadPromise = null; }
 }
 function companyById(id){ return companies.find(c=>c.id===id) || null; }
 function activeCompany(){ return companyById(activeCompanyId); }
@@ -8939,6 +8972,17 @@ function applyActiveCompany(){
 function renderCompaniesAdmin(){
   const el = document.getElementById('companiesList');
   if(!el) return;
+  if(companiesLoading && !companiesLoaded){
+    document.getElementById('compCount').textContent = '(...)';
+    el.innerHTML = '<div class="lk-empty">جاري تحميل الشركات من الخادم...</div>';
+    return;
+  }
+  if(companiesLoadError && !companiesLoaded){
+    document.getElementById('compCount').textContent = '(—)';
+    el.innerHTML = '<div class="lk-empty">تعذّر تحميل الشركات مؤقتاً. <button class="btn btn-ghost btn-small" id="retryCompaniesBtn">إعادة المحاولة</button></div>';
+    document.getElementById('retryCompaniesBtn').addEventListener('click', ()=>loadCompanies(true));
+    return;
+  }
   document.getElementById('compCount').textContent = `(${companies.length})`;
   if(!companies.length){
     el.innerHTML = '<div class="lk-empty">مفيش شركات — اضغط "شركة جديدة"</div>';
@@ -9190,7 +9234,7 @@ document.getElementById('ceSaveBtn').addEventListener('click', async ()=>{
       if(error) throw error;
       addLog('add','إضافة شركة: '+nameAr);
     }
-    await loadCompanies();
+    await loadCompanies(true);
     renderCompaniesAdmin();
     companyEditOverlay.classList.remove('open');
     toast('تم حفظ الشركة ✓');
