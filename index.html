@@ -11676,10 +11676,7 @@ function openDetail(id){
   document.getElementById('closeDetail').addEventListener('click', ()=> overlay.classList.remove('open'));
   renderDocOrderList(r);
   wireDocActionButtons(r);
-  document.getElementById('packageBtn').addEventListener('click', ()=> chooseDocLang(r, async lang=>{
-    printPackage(r,lang);
-    await mergePackageAttachmentsPdf(r);
-  }));
+  document.getElementById('packageBtn').addEventListener('click', ()=> chooseDocLang(r, lang=> mergeFullPackage(r, lang, document.getElementById('packageBtn'))));
   document.getElementById('mergeAllBtn').addEventListener('click', ()=> chooseDocLang(r, lang=> mergeFullPackage(r, lang)));
   document.getElementById('editBtn').addEventListener('click', ()=>{
     overlay.classList.remove('open');
@@ -14061,10 +14058,11 @@ async function ilovepdfDownload(token, server, task){
   if(!res.ok) throw new Error('تعذّر تحميل الملف الناتج');
   return await res.blob();
 }
-async function mergeFullPackage(r, lang){
-  const btn = document.getElementById('mergeAllBtn');
+async function mergeFullPackage(r, lang, triggerBtn){
+  // Both package actions use the same reliable PDF pipeline.
+  const btn = triggerBtn || document.getElementById('mergeAllBtn');
   const btnHtmlOrig = btn ? btn.innerHTML : '';
-  if(btn){ btn.disabled = true; btn.innerHTML = 'جاري الدمج…'; }
+  if(btn){ btn.disabled = true; btn.setAttribute('aria-busy', 'true'); btn.innerHTML = '<span class="pkg-spinner" aria-hidden="true"></span> جارٍ تجهيز الحزمة…'; }
   let tempPath = null;
   let step = 'تحضير المستندات';
   try{
@@ -14127,13 +14125,14 @@ async function mergeFullPackage(r, lang){
     const blob = await ilovepdfDownload(token, server, finalTask);
     const url = URL.createObjectURL(blob);
     openPdfPreview(url, 'الحزمة الكاملة مدموجة');
+    toast('تم تجهيز الحزمة بنجاح. يمكنك معاينتها أو تنزيلها من النافذة.', 'ok');
     addLog('print', 'دمج الحزمة الكاملة في ملف واحد' + (r.invoiceNo? ` — فاتورة ${r.invoiceNo}` : ''));
   }catch(e){
     console.error('merge full package, step:', step, e);
     alert('تعذّر دمج الحزمة في ملف واحد أثناء: ' + step + '\n\nتفاصيل: ' + ((e&&e.message)||e) + '\n\nيمكنك استخدام "تجميع الحزمة الكاملة PDF" العادي بدلاً من ذلك.');
   }finally{
     if(tempPath){ try{ await sb.storage.from('shipment-files').remove([tempPath]); }catch(e){} }
-    if(btn){ btn.disabled = false; btn.innerHTML = btnHtmlOrig; }
+    if(btn){ btn.disabled = false; btn.removeAttribute('aria-busy'); btn.innerHTML = btnHtmlOrig; }
   }
 }
 
