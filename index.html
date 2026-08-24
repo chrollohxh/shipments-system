@@ -4570,6 +4570,7 @@ SWIFT: NBEGEGCX"></textarea>
         </label>
         <button class="btn btn-ghost btn-small" id="tplImgReset">النموذج الأصلي</button>
         <button class="btn btn-ghost btn-small" id="tplResetBtn">استرجاع الافتراضي</button>
+        <button class="btn btn-ghost btn-small" id="tplPreviewBtn" data-ic="eye">معاينة النموذج</button>
         <button class="btn btn-primary btn-small" id="tplSaveBtn">حفظ الأماكن</button>
         <button class="close-x" id="tplCloseBtn">×</button>
       </div>
@@ -14766,6 +14767,15 @@ function tplEndDrag(e){
 
 document.getElementById('openTplEditorBtn').addEventListener('click', tplOpenEditor);
 document.getElementById('tplCloseBtn').addEventListener('click', tplCloseEditor);
+document.getElementById('tplPreviewBtn').addEventListener('click', ()=>{
+  if(tplCurrentDoc === 'certWordCoded'){
+    openPrintWindow(certSheetWordBlank());
+    return;
+  }
+  const record = tplPreviewRecord();
+  const doc = tplCurrentDoc === 'certSea' ? 'cert' : (tplCurrentDoc.startsWith('bol') ? 'bol' : tplCurrentDoc);
+  openPrintWindow(buildSheet(record, doc));
+});
 [['tabCert','cert'],['tabBol','bol'],['tabCertSea','certSea'],['tabCertWordCoded','certWordCoded'],['tabBolSea','bolSea'],
  ['tabBolCodedFree','bolCodedFree'],['tabBolSeaCodedFree','bolSeaCodedFree']].forEach(([id,doc])=>{
   const el = document.getElementById(id);
