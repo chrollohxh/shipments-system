@@ -1763,7 +1763,7 @@ body.role-staff #navWallet,body.role-staff #navAdmin{display:flex !important;}
 <div id="lockScreen">
   <div class="lock-image-panel" id="lockImagePanel"></div>
   <div class="lock-form-panel">
-  <div class="lock-card" id="lockCard">
+  <form class="lock-card" id="loginForm" autocomplete="on">
     <div class="lock-logo" id="lockLogo"></div>
     <h2 id="lockTitle">منصة جاهز</h2>
     <div class="lock-sub" id="lockSub">سجّل الدخول للمتابعة</div>
@@ -1772,7 +1772,7 @@ body.role-staff #navWallet,body.role-staff #navAdmin{display:flex !important;}
       <label for="loginUser">البريد الإلكتروني</label>
       <div class="lg-input-wrap">
         <span class="lg-ico" data-ic="user"></span>
-        <input type="email" id="loginUser" autocomplete="username" placeholder="you@example.com" dir="ltr">
+        <input type="email" id="loginUser" name="username" autocomplete="username" placeholder="you@example.com" dir="ltr">
       </div>
     </div>
 
@@ -1780,7 +1780,7 @@ body.role-staff #navWallet,body.role-staff #navAdmin{display:flex !important;}
       <label for="loginPass">كلمة المرور</label>
       <div class="lg-input-wrap">
         <span class="lg-ico" data-ic="key"></span>
-        <input type="password" id="loginPass" autocomplete="current-password" placeholder="كلمة المرور">
+        <input type="password" id="loginPass" name="password" autocomplete="current-password" placeholder="كلمة المرور">
         <button type="button" class="lg-eye" id="togglePass" title="إظهار/إخفاء كلمة المرور" data-ic="eye"></button>
       </div>
       <div class="lg-caps" id="capsWarn" data-ic="warning">مفتاح Caps Lock مفعّل</div>
@@ -1797,14 +1797,14 @@ body.role-staff #navWallet,body.role-staff #navAdmin{display:flex !important;}
     </label>
 
     <div class="lock-err" id="lockErr"></div>
-    <button class="btn btn-primary" id="lockBtn" style="width:100%;">
+    <button class="btn btn-primary" id="lockBtn" type="submit" style="width:100%;">
       <span id="lockBtnTxt">دخول</span>
     </button>
     <div class="lock-note" id="lockNote">
       البيانات محفوظة على خادم آمن ومشتركة بين الفريق.<br>
       الصلاحيات يحددها مدير النظام.
     </div>
-  </div>
+  </form>
   </div>
 </div>
 
@@ -5388,10 +5388,9 @@ async function lockApp(){
   setTimeout(()=>document.getElementById('loginPass').focus(), 100);
 }
 
-document.getElementById('lockBtn').addEventListener('click', handleLockSubmit);
-['loginUser','loginPass'].forEach(id=>{
-  const el = document.getElementById(id);
-  if(el) el.addEventListener('keydown', e=>{ if(e.key==='Enter') handleLockSubmit(); });
+document.getElementById('loginForm').addEventListener('submit', e=>{
+  e.preventDefault();
+  handleLockSubmit();
 });
 document.getElementById('lockNowBtn').addEventListener('click', ()=>{
   if(confirm('تسجيل الخروج من النظام؟')) lockApp();
