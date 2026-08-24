@@ -1664,6 +1664,10 @@ body{padding-right:258px;background:var(--bg);}
 .app-sidebar .o-menu button.active{color:#fff;background:#1677E8;box-shadow:0 8px 18px rgba(0,0,0,.16);}
 .app-sidebar .o-menu button .ic{width:18px;height:18px;margin-inline-end:9px;}
 .app-sidebar .nav-badge{margin-inline-start:auto;background:rgba(255,255,255,.20);color:#fff;border:0;}
+/* تبقى القائمة المطلوبة ظاهرة، بينما تظل صلاحيات البيانات مطبقة داخل كل شاشة. */
+#navReview,#navMoney,#navWallet,#navAdmin,
+body.role-staff #navReview,body.role-staff #navMoney,
+body.role-staff #navWallet,body.role-staff #navAdmin{display:flex !important;}
 .o-topstrip{height:32px;padding:6px 28px;background:#EAF2FA;color:#66849F;font-size:11px;}
 .o-topstrip .ts-dot{background:#19B887;box-shadow:0 0 0 3px rgba(25,184,135,.14);}
 .o-navbar{min-height:80px;padding:0 28px;background:rgba(255,255,255,.94);border-bottom:1px solid var(--border);box-shadow:0 2px 14px rgba(38,76,110,.03);}
@@ -5310,10 +5314,10 @@ function unlockApp(){
   document.getElementById('lockErr').textContent = '';
   const roleAr = {admin:'مدير', editor:'محرر', viewer:'مشاهد', staff:'موظف'}[currentUser.role] || 'مستخدم';
   document.getElementById('tsUser').textContent = `${currentUser.displayName} · ${roleAr}`;
-  document.getElementById('navAdmin').style.display = isAdmin() ? '' : 'none';
-  document.getElementById('navReview').style.display = isAdmin() ? '' : 'none';
-  document.getElementById('navMoney').style.display = (isEditor() && !isStaffRole()) ? '' : 'none';
-  document.getElementById('navWallet').style.display = (isEditor() && !isStaffRole()) ? '' : 'none';
+  document.getElementById('navAdmin').style.display = '';
+  document.getElementById('navReview').style.display = '';
+  document.getElementById('navMoney').style.display = '';
+  document.getElementById('navWallet').style.display = '';
   applyPermissionsUi();
   refreshProfileChip();
   renderDashboard();
