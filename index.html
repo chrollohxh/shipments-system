@@ -3032,7 +3032,6 @@ table.doc-items td.num{font-family:'IBM Plex Mono',monospace;text-align:left;}
           </div>
           <div class="detail-actions" style="margin-inline:0;">
             <button class="btn btn-primary" id="openTplEditorBtn" data-ic="gear">فتح محرر النماذج</button>
-            <button class="btn btn-ghost" id="openCompanyBtn" data-ic="building">إعدادات الشركة والشعار</button>
           </div>
         </div>
       </div>
@@ -3151,9 +3150,82 @@ table.doc-items td.num{font-family:'IBM Plex Mono',monospace;text-align:left;}
           <label>كود مختصر (اختياري)</label>
           <input type="text" id="ce_code" dir="ltr" placeholder="OLY">
         </div>
+        <div class="field">
+          <label>لون المستندات</label>
+          <input type="color" id="ce_accent" style="height:42px;padding:3px;">
+        </div>
+        <div class="field">
+          <label>شرط الدفع الافتراضي</label>
+          <input type="text" id="ce_term" dir="ltr" placeholder="DA (180) DAYS FROM B/L DATE">
+        </div>
         <div class="field span2">
-          <label>سطور العنوان في التذييل (كل سطر منفصل)</label>
+          <label style="font-weight:400;cursor:pointer;">
+            <input type="checkbox" id="ce_default" style="width:auto;vertical-align:middle;">
+            اجعلها الشركة الافتراضية للشحنات الجديدة
+          </label>
+        </div>
+      </div>
+
+      <div class="section-title">الصور</div>
+      <div class="grid">
+        <div class="field">
+          <label>شعار الشركة (يظهر أعلى الفاتورة)</label>
+          <input type="file" id="ce_logoFile" accept=".pdf,image/*">
+          <div id="ce_logoPrev" class="img-prev"></div>
+          <label style="margin-top:10px;">حجم الشعار: <b id="ce_logoWVal">130</b> بكسل</label>
+          <input type="range" id="ce_logoW" min="60" max="300" step="5">
+        </div>
+        <div class="field">
+          <label>الختم / التوقيع</label>
+          <input type="file" id="ce_stampFile" accept=".pdf,image/*">
+          <div id="ce_stampPrev" class="img-prev"></div>
+        </div>
+        <div class="field">
+          <label>العلامة المائية (لو فاضية بيستخدم الشعار)</label>
+          <input type="file" id="ce_wmFile" accept="image/*">
+          <div id="ce_wmPrev" class="img-prev"></div>
+        </div>
+        <div class="field">
+          <label>شفافية العلامة المائية: <b id="ce_wmOpacityVal">7</b>%</label>
+          <input type="range" id="ce_wmOpacity" min="0" max="25" step="1">
+        </div>
+      </div>
+
+      <div class="section-title">مكان الختم والتوقيع</div>
+      <div class="grid">
+        <div class="field span2">
+          <label style="font-weight:400;color:var(--ink);cursor:pointer;display:inline-block;margin-left:20px;">
+            <input type="checkbox" id="ce_showStamp" style="width:auto;vertical-align:middle;">
+            إظهار الختم على الفاتورة
+          </label>
+          <label style="font-weight:400;color:var(--ink);cursor:pointer;display:inline-block;">
+            <input type="checkbox" id="ce_showSigLine" style="width:auto;vertical-align:middle;">
+            إظهار خط التوقيع
+          </label>
+        </div>
+        <div class="field">
+          <label>حجم الختم: <b id="ce_stampWVal">20</b>%</label>
+          <input type="range" id="ce_stampW" min="8" max="45" step="1">
+        </div>
+        <div class="field">
+          <label>من أعلى: <b id="ce_stampTVal">66</b>%</label>
+          <input type="range" id="ce_stampT" min="0" max="92" step="0.5">
+        </div>
+        <div class="field">
+          <label>من اليسار: <b id="ce_stampLVal">10</b>%</label>
+          <input type="range" id="ce_stampL" min="0" max="92" step="0.5">
+        </div>
+      </div>
+
+      <div class="section-title">التذييل</div>
+      <div class="grid">
+        <div class="field span2">
+          <label>عناوين الشركة (كل عنوان في سطر)</label>
           <textarea id="ce_footer" rows="3"></textarea>
+        </div>
+        <div class="field span2">
+          <label>عناوين الشركة بالإنجليزي (تُستخدم عند طباعة مستند بالإنجليزي)</label>
+          <textarea id="ce_footerEn" rows="3"></textarea>
         </div>
         <div class="field span2">
           <label>سطر أرقام التواصل</label>
@@ -3163,29 +3235,9 @@ table.doc-items td.num{font-family:'IBM Plex Mono',monospace;text-align:left;}
           <label>عبارة الإقرار على الفاتورة</label>
           <input type="text" id="ce_certify">
         </div>
-        <div class="field">
-          <label>لون المستندات</label>
-          <input type="color" id="ce_accent" style="height:42px;padding:3px;">
-        </div>
-        <div class="field">
-          <label>شرط الدفع الافتراضي</label>
-          <input type="text" id="ce_term" dir="ltr" placeholder="DA (180) DAYS FROM B/L DATE">
-        </div>
-        <div class="field">
-          <label>الشعار</label>
-          <input type="file" id="ce_logoFile" accept=".pdf,image/*">
-          <div id="ce_logoPrev" class="img-prev"></div>
-        </div>
-        <div class="field">
-          <label>الختم</label>
-          <input type="file" id="ce_stampFile" accept=".pdf,image/*">
-          <div id="ce_stampPrev" class="img-prev"></div>
-        </div>
         <div class="field span2">
-          <label style="font-weight:400;cursor:pointer;">
-            <input type="checkbox" id="ce_default" style="width:auto;vertical-align:middle;">
-            اجعلها الشركة الافتراضية للشحنات الجديدة
-          </label>
+          <label>عبارة الإقرار بالإنجليزي</label>
+          <input type="text" id="ce_certifyEn">
         </div>
       </div>
 
@@ -4333,168 +4385,6 @@ SWIFT: NBEGEGCX"></textarea>
     <div class="detail-actions" style="padding:18px 22px 26px;">
       <button class="btn btn-primary" id="clSaveBtn">حفظ</button>
       <button class="btn btn-ghost" id="clCancelBtn">إلغاء</button>
-    </div>
-  </div>
-</div>
-
-<div class="overlay" id="companyOverlay">
-  <div class="detail-card" style="max-width:720px;">
-    <div class="dh">
-      <div>
-        <h2>إعدادات الشركة</h2>
-        <div style="font-size:12px;color:var(--muted);margin-top:3px;">
-          دي البيانات اللي بتظهر على الفاتورة المبدئية والنهائية
-        </div>
-      </div>
-      <button class="close-x" id="companyCloseX" data-ic="close"></button>
-    </div>
-
-    <div style="padding:0 22px;">
-      <div class="field span2" style="margin-bottom:10px;">
-        <label>الشركة</label>
-        <select id="co_companyPicker"></select>
-      </div>
-      <div class="section-title">الهوية</div>
-      <div class="grid">
-        <div class="field span2">
-          <label>اسم الشركة (عربي)</label>
-          <input type="text" id="co_nameAr">
-        </div>
-        <div class="field span2">
-          <label>اسم الشركة (إنجليزي)</label>
-          <input type="text" id="co_nameEn">
-        </div>
-        <div class="field span2">
-          <label>سطر تعريفي تحت الاسم (اختياري)</label>
-          <input type="text" id="co_tagline">
-        </div>
-        <div class="field">
-          <label>اللون الأساسي للمستند</label>
-          <input type="color" id="co_accent" style="height:34px;padding:2px;">
-        </div>
-      </div>
-
-      <div class="section-title">رأس وتذييل الفاتورة</div>
-      <div class="grid">
-        <div class="field span2">
-          <label style="font-weight:400;color:var(--ink);cursor:pointer;display:inline-block;margin-left:20px;">
-            <input type="radio" name="co_brandMode" id="co_brandModeCustom" value="custom" style="width:auto;vertical-align:middle;">
-            إنشاء جديد — اسم الشركة والشعار مكتوبين
-          </label>
-          <label style="font-weight:400;color:var(--ink);cursor:pointer;display:inline-block;">
-            <input type="radio" name="co_brandMode" id="co_brandModeReady" value="ready" style="width:auto;vertical-align:middle;">
-            معد مسبقاً — صورة ترويسة وتذييل جاهزتين
-          </label>
-        </div>
-      </div>
-      <div class="grid" id="brandReadyFields" style="display:none;">
-        <div class="field">
-          <label>ترويسة جاهزة (تحل محل اسم الشركة والشعار)</label>
-          <input type="file" id="co_letterheadFile" accept="image/*">
-          <div id="co_letterheadPrev" class="img-prev"></div>
-          <label style="margin-top:10px;">عرض الترويسة: <b id="co_letterheadWVal">100</b>%</label>
-          <input type="range" id="co_letterheadW" min="30" max="100" step="1">
-        </div>
-        <div class="field">
-          <label>تذييل جاهز (يحل محل عناوين الشركة ورقم التواصل)</label>
-          <input type="file" id="co_footerImgFile" accept="image/*">
-          <div id="co_footerImgPrev" class="img-prev"></div>
-          <label style="margin-top:10px;">عرض التذييل: <b id="co_footerWVal">100</b>%</label>
-          <input type="range" id="co_footerW" min="30" max="100" step="1">
-        </div>
-      </div>
-
-      <div class="section-title">الصور</div>
-      <div class="grid">
-        <div class="field">
-          <label>شعار الشركة (يظهر أعلى الفاتورة)</label>
-          <input type="file" id="co_logoFile" accept="image/*">
-          <div id="co_logoPrev" class="img-prev"></div>
-          <label style="margin-top:10px;">حجم الشعار: <b id="co_logoWVal">130</b> بكسل</label>
-          <input type="range" id="co_logoW" min="60" max="300" step="5">
-        </div>
-        <div class="field">
-          <label>الختم / التوقيع</label>
-          <input type="file" id="co_stampFile" accept="image/*">
-          <div id="co_stampPrev" class="img-prev"></div>
-        </div>
-        <div class="field">
-          <label>العلامة المائية (لو فاضية بيستخدم الشعار)</label>
-          <input type="file" id="co_wmFile" accept="image/*">
-          <div id="co_wmPrev" class="img-prev"></div>
-        </div>
-        <div class="field">
-          <label>شفافية العلامة المائية: <b id="co_wmOpacityVal">7</b>%</label>
-          <input type="range" id="co_wmOpacity" min="0" max="25" step="1">
-        </div>
-      </div>
-
-      <div class="section-title">مكان الختم والتوقيع</div>
-      <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">
-        اسحب الختم بالماوس على المعاينة عشان تحدد مكانه على الفاتورة.
-      </div>
-      <div class="stamp-editor">
-        <div class="stamp-stage" id="stampStage">
-          <iframe id="stampPreview" scrolling="no"></iframe>
-          <div class="stamp-handle" id="stampHandle">
-            <div class="sh-img" id="shImg"></div>
-            <div class="sh-sig" id="shSig">التوقيع المعتمد</div>
-          </div>
-        </div>
-        <div class="stamp-ctrls">
-          <label style="font-weight:400;color:var(--ink);cursor:pointer;display:block;margin-bottom:10px;">
-            <input type="checkbox" id="co_showStamp" style="width:auto;vertical-align:middle;">
-            إظهار الختم على الفاتورة
-          </label>
-          <label style="font-weight:400;color:var(--ink);cursor:pointer;display:block;margin-bottom:14px;">
-            <input type="checkbox" id="co_showSigLine" style="width:auto;vertical-align:middle;">
-            إظهار خط التوقيع
-          </label>
-          <div class="field">
-            <label>حجم الختم: <b id="co_stampWVal">20</b>%</label>
-            <input type="range" id="co_stampW" min="8" max="45" step="1">
-          </div>
-          <div class="field">
-            <label>من أعلى: <b id="co_stampTVal">66</b>%</label>
-            <input type="range" id="co_stampT" min="0" max="92" step="0.5">
-          </div>
-          <div class="field">
-            <label>من اليسار: <b id="co_stampLVal">10</b>%</label>
-            <input type="range" id="co_stampL" min="0" max="92" step="0.5">
-          </div>
-          <button class="btn btn-ghost btn-small" id="stampResetPos" style="margin-top:10px;">إرجاع للمكان الافتراضي</button>
-        </div>
-      </div>
-
-      <div class="section-title">التذييل</div>
-      <div class="grid">
-        <div class="field span2">
-          <label>عناوين الشركة (كل عنوان في سطر)</label>
-          <textarea id="co_footerLines" rows="4"></textarea>
-        </div>
-        <div class="field span2">
-          <label>عناوين الشركة بالإنجليزي (تُستخدم عند طباعة مستند بالإنجليزي)</label>
-          <textarea id="co_footerLinesEn" rows="4"></textarea>
-        </div>
-        <div class="field span2">
-          <label>سطر أرقام التواصل</label>
-          <input type="text" id="co_contactLine">
-        </div>
-        <div class="field span2">
-          <label>سطر الإقرار (يظهر أسفل جدول البنود)</label>
-          <input type="text" id="co_certifyLine">
-        </div>
-        <div class="field span2">
-          <label>سطر الإقرار بالإنجليزي</label>
-          <input type="text" id="co_certifyLineEn">
-        </div>
-      </div>
-
-      <div class="detail-actions">
-        <button class="btn btn-primary" id="companySaveBtn">حفظ الإعدادات</button>
-        <button class="btn btn-ghost" id="companyPreviewBtn">معاينة الفاتورة</button>
-        <button class="btn btn-danger btn-small" id="companyResetBtn">استرجاع الافتراضي</button>
-      </div>
     </div>
   </div>
 </div>
@@ -8952,167 +8842,177 @@ async function loadCompanyCounters(){
   }catch(e){}
 }
 
+// نافذة "تعديل الشركة" تسوّد company مؤقتاً بإعدادات الشركة المفتوحة (نفس فلسفة محرر النماذج) —
+// فتُطبَّق تلقائياً على أي شاشة تانية بتقرأ company (مكان شعار البوليصة المبنية بالكود، أماكن الحقول، إلخ)
 function openCompanyModal(id){
   compEditId = id || null;
   const c = id ? companyById(id) : null;
-  const s = (c && c.settings) || {};
+  company = c
+    ? Object.assign({}, DEFAULT_COMPANY, c.settings||{}, {nameAr:c.name_ar||'', nameEn:c.name_en||'', tagline:c.tagline||''})
+    : Object.assign({}, DEFAULT_COMPANY);
+  company.stampPos = Object.assign({}, DEFAULT_COMPANY.stampPos, company.stampPos||{});
   document.getElementById('ceTitle').textContent = c ? ('تعديل: ' + c.name_ar) : 'شركة جديدة';
   document.getElementById('ceTplEditBtn').style.display = id ? '' : 'none';
-  document.getElementById('ce_nameAr').value  = c ? c.name_ar : '';
-  document.getElementById('ce_nameEn').value  = c ? (c.name_en||'') : '';
-  document.getElementById('ce_tagline').value = c ? (c.tagline||'') : '';
-  document.getElementById('ce_code').value    = c ? (c.code||'') : '';
-  document.getElementById('ce_footer').value  = s.footerLines || '';
-  document.getElementById('ce_contact').value = s.contactLine || '';
-  document.getElementById('ce_certify').value = s.certifyLine || '';
-  document.getElementById('ce_accent').value  = s.accent || '#B3272D';
-  document.getElementById('ce_term').value    = s.defaultTerm || '';
-  document.getElementById('ce_default').checked = c ? !!c.is_default : (companies.length === 0);
-  ceLogo = s.logo || ''; ceStamp = s.stamp || '';
-  ceLetterheadImg = s.letterheadImg || ''; ceFooterImg = s.footerImg || '';
-  ceLetterheadWidth = s.letterheadWidth || 100; ceFooterWidth = s.footerWidth || 100;
-  const ceReady = s.brandMode === 'ready';
-  document.getElementById('ce_brandModeCustom').checked = !ceReady;
-  document.getElementById('ce_brandModeReady').checked = ceReady;
-  document.getElementById('ceBrandReadyFields').style.display = ceReady ? '' : 'none';
-  document.getElementById('ce_letterheadW').value = ceLetterheadWidth;
-  document.getElementById('ce_letterheadWVal').textContent = ceLetterheadWidth;
-  document.getElementById('ce_footerW').value = ceFooterWidth;
-  document.getElementById('ce_footerWVal').textContent = ceFooterWidth;
-  renderCePreviews();
+  fillCeForm();
   companyEditOverlay.classList.add('open');
-  setTimeout(()=>document.getElementById('ce_nameAr').focus(), 80);
+  setTimeout(()=>{ document.getElementById('ce_nameAr').focus(); if(typeof syncLogoHeadHandle==='function') syncLogoHeadHandle(); }, 80);
 }
-let ceLogo = '', ceStamp = '';
-let ceLetterheadImg = '', ceFooterImg = '', ceLetterheadWidth = 100, ceFooterWidth = 100;
+function fillCeForm(){
+  document.getElementById('ce_nameAr').value  = company.nameAr||'';
+  document.getElementById('ce_nameEn').value  = company.nameEn||'';
+  document.getElementById('ce_tagline').value = company.tagline||'';
+  document.getElementById('ce_code').value    = compEditId ? (companyById(compEditId)?.code||'') : '';
+  document.getElementById('ce_footer').value   = company.footerLines||'';
+  document.getElementById('ce_footerEn').value = company.footerLinesEn||'';
+  document.getElementById('ce_contact').value  = company.contactLine||'';
+  document.getElementById('ce_certify').value   = company.certifyLine||'';
+  document.getElementById('ce_certifyEn').value = company.certifyLineEn||'';
+  document.getElementById('ce_accent').value  = company.accent||'#B3272D';
+  document.getElementById('ce_term').value    = company.defaultTerm||'';
+  document.getElementById('ce_default').checked = compEditId ? !!companyById(compEditId)?.is_default : (companies.length === 0);
+  document.getElementById('ce_logoW').value = company.logoWidth||130;
+  document.getElementById('ce_logoWVal').textContent = company.logoWidth||130;
+  document.getElementById('ce_wmOpacity').value = company.watermarkOpacity??7;
+  document.getElementById('ce_wmOpacityVal').textContent = company.watermarkOpacity??7;
+  document.getElementById('ce_showStamp').checked = !!company.showStampBox;
+  document.getElementById('ce_showSigLine').checked = !!company.showSigLine;
+  const sp = company.stampPos;
+  document.getElementById('ce_stampW').value = sp.width; document.getElementById('ce_stampWVal').textContent = sp.width;
+  document.getElementById('ce_stampT').value = sp.top;   document.getElementById('ce_stampTVal').textContent = sp.top;
+  document.getElementById('ce_stampL').value = sp.left;  document.getElementById('ce_stampLVal').textContent = sp.left;
+  const ready = company.brandMode === 'ready';
+  document.getElementById('ce_brandModeCustom').checked = !ready;
+  document.getElementById('ce_brandModeReady').checked = ready;
+  document.getElementById('ceBrandReadyFields').style.display = ready ? '' : 'none';
+  document.getElementById('ce_letterheadW').value = company.letterheadWidth||100;
+  document.getElementById('ce_letterheadWVal').textContent = company.letterheadWidth||100;
+  document.getElementById('ce_footerW').value = company.footerWidth||100;
+  document.getElementById('ce_footerWVal').textContent = company.footerWidth||100;
+  renderCePreviews();
+}
 function renderCePreviews(){
-  document.getElementById('ce_logoPrev').innerHTML  = ceLogo  ? `<img src="${ceLogo}">`  : '<span>لا يوجد</span>';
-  document.getElementById('ce_stampPrev').innerHTML = ceStamp ? `<img src="${ceStamp}">` : '<span>لا يوجد</span>';
-  document.getElementById('ce_letterheadPrev').innerHTML = ceLetterheadImg ? `<img src="${ceLetterheadImg}">` : '<span>لا يوجد</span>';
-  document.getElementById('ce_footerImgPrev').innerHTML  = ceFooterImg    ? `<img src="${ceFooterImg}">`     : '<span>لا يوجد</span>';
+  renderImgPrev('ce_logoPrev', company.logo, 'logo');
+  renderImgPrev('ce_stampPrev', company.stamp, 'stamp');
+  renderImgPrev('ce_wmPrev', company.watermark, 'watermark');
+  renderImgPrev('ce_letterheadPrev', company.letterheadImg, 'letterheadImg');
+  renderImgPrev('ce_footerImgPrev', company.footerImg, 'footerImg');
 }
-document.getElementById('ce_logoFile').addEventListener('change', async function(){
-  const f = this.files && this.files[0]; if(!f) return;
-  try{ ceLogo = await fileToScaledDataURL(f, 600); renderCePreviews(); }
-  catch(e){ alert('تعذّر قراءة الملف\n\nالسبب: ' + (e.message||e)); }
-  this.value='';
+[['ce_logoFile','logo',420], ['ce_stampFile','stamp',400], ['ce_wmFile','watermark',600],
+ ['ce_letterheadFile','letterheadImg',900], ['ce_footerImgFile','footerImg',900]].forEach(([inputId, key, maxDim])=>{
+  document.getElementById(inputId).addEventListener('change', async function(){
+    const f = this.files && this.files[0]; if(!f) return;
+    try{ company[key] = await fileToScaledDataURL(f, maxDim); renderCePreviews(); }
+    catch(e){ alert('تعذّر قراءة الملف\n\nالسبب: ' + (e.message||e)); }
+    this.value='';
+  });
 });
-document.getElementById('ce_stampFile').addEventListener('change', async function(){
-  const f = this.files && this.files[0]; if(!f) return;
-  try{ ceStamp = await fileToScaledDataURL(f, 600); renderCePreviews(); }
-  catch(e){ alert('تعذّر قراءة الملف\n\nالسبب: ' + (e.message||e)); }
-  this.value='';
-});
-document.getElementById('ce_letterheadFile').addEventListener('change', async function(){
-  const f = this.files && this.files[0]; if(!f) return;
-  try{ ceLetterheadImg = await fileToScaledDataURL(f, 900); renderCePreviews(); }
-  catch(e){ alert('تعذّر قراءة الملف\n\nالسبب: ' + (e.message||e)); }
-  this.value='';
-});
-document.getElementById('ce_footerImgFile').addEventListener('change', async function(){
-  const f = this.files && this.files[0]; if(!f) return;
-  try{ ceFooterImg = await fileToScaledDataURL(f, 900); renderCePreviews(); }
-  catch(e){ alert('تعذّر قراءة الملف\n\nالسبب: ' + (e.message||e)); }
-  this.value='';
+companyEditOverlay.addEventListener('click', e=>{
+  if(e.target.classList && e.target.classList.contains('rm')){
+    company[e.target.dataset.key] = '';
+    renderCePreviews();
+  }
 });
 document.querySelectorAll('input[name="ce_brandMode"]').forEach(radio=>{
   radio.addEventListener('change', function(){
     if(!this.checked) return;
+    company.brandMode = this.value;
     document.getElementById('ceBrandReadyFields').style.display = this.value==='ready' ? '' : 'none';
   });
 });
 document.getElementById('ce_letterheadW').addEventListener('input', function(){
-  ceLetterheadWidth = parseInt(this.value,10)||100;
-  document.getElementById('ce_letterheadWVal').textContent = ceLetterheadWidth;
+  company.letterheadWidth = parseInt(this.value,10)||100;
+  document.getElementById('ce_letterheadWVal').textContent = company.letterheadWidth;
 });
 document.getElementById('ce_footerW').addEventListener('input', function(){
-  ceFooterWidth = parseInt(this.value,10)||100;
-  document.getElementById('ce_footerWVal').textContent = ceFooterWidth;
+  company.footerWidth = parseInt(this.value,10)||100;
+  document.getElementById('ce_footerWVal').textContent = company.footerWidth;
 });
+document.getElementById('ce_logoW').addEventListener('input', function(){
+  company.logoWidth = parseInt(this.value,10)||130;
+  document.getElementById('ce_logoWVal').textContent = company.logoWidth;
+});
+document.getElementById('ce_wmOpacity').addEventListener('input', function(){
+  company.watermarkOpacity = parseInt(this.value,10);
+  document.getElementById('ce_wmOpacityVal').textContent = this.value;
+});
+document.getElementById('ce_showStamp').addEventListener('change', function(){ company.showStampBox = this.checked; });
+document.getElementById('ce_showSigLine').addEventListener('change', function(){ company.showSigLine = this.checked; });
+document.getElementById('ce_stampW').addEventListener('input', function(){
+  company.stampPos.width = parseFloat(this.value); document.getElementById('ce_stampWVal').textContent = this.value;
+});
+document.getElementById('ce_stampT').addEventListener('input', function(){
+  company.stampPos.top = parseFloat(this.value); document.getElementById('ce_stampTVal').textContent = this.value;
+});
+document.getElementById('ce_stampL').addEventListener('input', function(){
+  company.stampPos.left = parseFloat(this.value); document.getElementById('ce_stampLVal').textContent = this.value;
+});
+function ceCloseRestoreActive(){
+  if(compEditId !== activeCompanyId) applyActiveCompany();
+}
 document.getElementById('ceTplEditBtn').addEventListener('click', ()=>{
   if(!compEditId) return;
   companyEditOverlay.classList.remove('open');
   tplOpenEditor(compEditId);
 });
-document.getElementById('ceCancelBtn').addEventListener('click', ()=> companyEditOverlay.classList.remove('open'));
-companyEditOverlay.addEventListener('click', e=>{ if(e.target===companyEditOverlay) companyEditOverlay.classList.remove('open'); });
+document.getElementById('ceCloseX').addEventListener('click', ()=>{ companyEditOverlay.classList.remove('open'); ceCloseRestoreActive(); });
+document.getElementById('ceCancelBtn').addEventListener('click', ()=>{ companyEditOverlay.classList.remove('open'); ceCloseRestoreActive(); });
+companyEditOverlay.addEventListener('click', e=>{
+  if(e.target===companyEditOverlay){ companyEditOverlay.classList.remove('open'); ceCloseRestoreActive(); }
+});
 document.getElementById('addCompanyBtn').addEventListener('click', ()=> openCompanyModal(null));
 
-// معاينة حية: تبني فاتورة نموذجية ببيانات الشركة الجاري تحريرها
-function ceBuildPreviewSettings(){
-  const prev = compEditId ? (companyById(compEditId)?.settings || {}) : {};
-  const nameAr = document.getElementById('ce_nameAr').value.trim();
-  const nameEn = document.getElementById('ce_nameEn').value.trim();
-  return Object.assign({}, DEFAULT_COMPANY, prev, {
-    nameAr:      nameAr || nameEn,
-    nameEn:      nameEn,
-    tagline:     document.getElementById('ce_tagline').value.trim(),
-    footerLines: document.getElementById('ce_footer').value,
-    contactLine: document.getElementById('ce_contact').value.trim(),
-    certifyLine: document.getElementById('ce_certify').value.trim(),
-    accent:      document.getElementById('ce_accent').value,
-    logo: ceLogo, stamp: ceStamp,
-    brandMode: document.querySelector('input[name="ce_brandMode"]:checked')?.value || 'custom',
-    letterheadImg: ceLetterheadImg, letterheadWidth: ceLetterheadWidth,
-    footerImg: ceFooterImg, footerWidth: ceFooterWidth
-  });
+// معاينة حية: تقرأ الحقول المكتوبة الحالية داخل company قبل بناء فاتورة نموذجية بها
+function readCeForm(){
+  const nameArIn = document.getElementById('ce_nameAr').value.trim();
+  const nameEnIn = document.getElementById('ce_nameEn').value.trim();
+  company.nameAr = nameArIn || nameEnIn;
+  company.nameEn = nameEnIn;
+  company.tagline = document.getElementById('ce_tagline').value.trim();
+  company.footerLines = document.getElementById('ce_footer').value;
+  company.footerLinesEn = document.getElementById('ce_footerEn').value;
+  company.contactLine = document.getElementById('ce_contact').value.trim();
+  company.certifyLine = document.getElementById('ce_certify').value.trim();
+  company.certifyLineEn = document.getElementById('ce_certifyEn').value.trim();
+  company.accent = document.getElementById('ce_accent').value;
+  company.defaultTerm = document.getElementById('ce_term').value.trim();
+  return nameArIn || nameEnIn;
 }
 function ceRenderPreview(){
   const box = document.getElementById('cePreview');
+  readCeForm();
   const sample = {
     itemDesc:'خط انتاج ثلج بملحقاته', qty:'24', qtyUnit:'طن',
     unitPrice:'USD 1,583.33', totalAmount:'USD 38,000.00', totalQty:'24 طن',
-    exporter: document.getElementById('ce_nameAr').value.trim() ||
-              document.getElementById('ce_nameEn').value.trim() || 'اسم الشركة',
+    exporter: company.nameAr || 'اسم الشركة',
     exporterAddress:'العنوان',
     consignee:'اسم العميل', consigneeAddress:'جهة الوصول',
     proformaNo:'1001', proformaDate: toISODate(new Date()),
     invoiceNo:'1001',  invoiceDate: toISODate(new Date()),
     portLoading:'ميناء الشحن', portDischarge:'ميناء التفريغ',
     numberOfPackages:'400 طرد',
-    paymentTerm: document.getElementById('ce_term').value.trim() || 'DA (180) DAYS',
+    paymentTerm: company.defaultTerm || 'DA (180) DAYS',
     bankDetails:'BANK NAME\nIBAN\nSWIFT'
   };
-  const prevCompany = company;
   try{
-    company = ceBuildPreviewSettings();
     const html = invoiceSheet(sample, 'proforma');
     box.innerHTML = `<div class="ce-scale"><style>${PRINT_STYLES}</style>${html}</div>`;
   }catch(e){
     box.innerHTML = '<span class="ce-hint">تعذّر بناء المعاينة: ' + escapeHtml(e.message||'') + '</span>';
     console.error('company preview', e);
-  }finally{ company = prevCompany; }
+  }
 }
 document.getElementById('cePreviewBtn').addEventListener('click', ceRenderPreview);
 
 document.getElementById('ceSaveBtn').addEventListener('click', async ()=>{
-  const nameArIn = document.getElementById('ce_nameAr').value.trim();
-  const nameEnIn = document.getElementById('ce_nameEn').value.trim();
-  if(!nameArIn && !nameEnIn){ alert('اكتب اسم الشركة — بالعربي أو بالإنجليزي.'); return; }
-  // الاسم الأساسي: العربي إن وُجد، وإلا الإنجليزي
-  const nameAr = nameArIn || nameEnIn;
-  const prev = compEditId ? (companyById(compEditId)?.settings || {}) : {};
-  const settings = Object.assign({}, DEFAULT_COMPANY, prev, {
-    nameAr,
-    nameEn:      nameEnIn,
-    tagline:     document.getElementById('ce_tagline').value.trim(),
-    footerLines: document.getElementById('ce_footer').value,
-    contactLine: document.getElementById('ce_contact').value.trim(),
-    certifyLine: document.getElementById('ce_certify').value.trim(),
-    accent:      document.getElementById('ce_accent').value,
-    defaultTerm: document.getElementById('ce_term').value.trim(),
-    logo: ceLogo, stamp: ceStamp,
-    brandMode: document.querySelector('input[name="ce_brandMode"]:checked')?.value || 'custom',
-    letterheadImg: ceLetterheadImg, letterheadWidth: ceLetterheadWidth,
-    footerImg: ceFooterImg, footerWidth: ceFooterWidth
-  });
+  const nameAr = readCeForm();
+  if(!nameAr){ alert('اكتب اسم الشركة — بالعربي أو بالإنجليزي.'); return; }
   const row = {
     name_ar: nameAr,
-    name_en: settings.nameEn || null,
-    tagline: settings.tagline || null,
+    name_en: company.nameEn || null,
+    tagline: company.tagline || null,
     code: document.getElementById('ce_code').value.trim() || null,
     is_default: document.getElementById('ce_default').checked,
-    settings
+    settings: company
   };
   const saveBtn = document.getElementById('ceSaveBtn');
   const saveBtnOrig = saveBtn.textContent;
@@ -13962,9 +13862,6 @@ document.getElementById('docLangEnBtn').addEventListener('click', async ()=>{
   if(cb) cb('en');
 });
 
-// ===== لوحة إعدادات الشركة =====
-const companyOverlay = document.getElementById('companyOverlay');
-
 // تصغير الصور قبل التخزين عشان الملف ما يكبرش
 // يحوّل صورة أو PDF إلى صورة مصغّرة
 //   opts.format : 'png' (شفافية — للشعار والختم) أو 'jpeg' (حجم أصغر — للنماذج)
@@ -14031,341 +13928,6 @@ function renderImgPrev(id, dataUrl, key){
     : `<span class="none">لا توجد صورة</span>`;
 }
 
-function fillCompanyForm(){
-  document.getElementById('co_nameAr').value = company.nameAr||'';
-  document.getElementById('co_nameEn').value = company.nameEn||'';
-  document.getElementById('co_tagline').value = company.tagline||'';
-  document.getElementById('co_accent').value = company.accent||'#B3272D';
-  document.getElementById('co_footerLines').value = company.footerLines||'';
-  document.getElementById('co_footerLinesEn').value = company.footerLinesEn||'';
-  document.getElementById('co_contactLine').value = company.contactLine||'';
-  document.getElementById('co_certifyLine').value = company.certifyLine||'';
-  document.getElementById('co_certifyLineEn').value = company.certifyLineEn||'';
-  document.getElementById('co_wmOpacity').value = company.watermarkOpacity??7;
-  document.getElementById('co_logoW').value = company.logoWidth||130;
-  document.getElementById('co_logoWVal').textContent = company.logoWidth||130;
-  document.getElementById('co_wmOpacityVal').textContent = company.watermarkOpacity??7;
-  document.getElementById('co_showStamp').checked = !!company.showStampBox;
-  document.getElementById('co_showSigLine').checked = !!company.showSigLine;
-  renderImgPrev('co_logoPrev', company.logo, 'logo');
-  renderImgPrev('co_stampPrev', company.stamp, 'stamp');
-  renderImgPrev('co_wmPrev', company.watermark, 'watermark');
-
-  const ready = company.brandMode === 'ready';
-  document.getElementById('co_brandModeCustom').checked = !ready;
-  document.getElementById('co_brandModeReady').checked = ready;
-  document.getElementById('brandReadyFields').style.display = ready ? '' : 'none';
-  document.getElementById('co_letterheadW').value = company.letterheadWidth||100;
-  document.getElementById('co_letterheadWVal').textContent = company.letterheadWidth||100;
-  document.getElementById('co_footerW').value = company.footerWidth||100;
-  document.getElementById('co_footerWVal').textContent = company.footerWidth||100;
-  renderImgPrev('co_letterheadPrev', company.letterheadImg, 'letterheadImg');
-  renderImgPrev('co_footerImgPrev', company.footerImg, 'footerImg');
-}
-
-function readCompanyForm(){
-  company.nameAr = document.getElementById('co_nameAr').value.trim();
-  company.nameEn = document.getElementById('co_nameEn').value.trim();
-  company.tagline = document.getElementById('co_tagline').value.trim();
-  company.accent = document.getElementById('co_accent').value;
-  company.footerLines = document.getElementById('co_footerLines').value;
-  company.footerLinesEn = document.getElementById('co_footerLinesEn').value;
-  company.contactLine = document.getElementById('co_contactLine').value.trim();
-  company.certifyLine = document.getElementById('co_certifyLine').value.trim();
-  company.certifyLineEn = document.getElementById('co_certifyLineEn').value.trim();
-  company.watermarkOpacity = parseInt(document.getElementById('co_wmOpacity').value,10);
-  company.logoWidth = parseInt(document.getElementById('co_logoW').value,10)||130;
-}
-
-// نافذة "إعدادات الشركة" تعدّل على شركة واحدة تُختار من قائمة داخلها — لا تُغيَّر
-// "الشركة النشطة" في باقي التطبيق إلا لو كانت هي نفسها المُختارة والمحفوظة.
-let coEditCompanyId = null;
-function fillCoCompanyPicker(){
-  const sel = document.getElementById('co_companyPicker');
-  sel.innerHTML = companies.map(c=>`<option value="${c.id}">${escapeHtml(c.name_ar||c.name_en||'بدون اسم')}</option>`).join('');
-  sel.value = coEditCompanyId;
-}
-function loadCoEditCompany(id){
-  coEditCompanyId = id;
-  const c = companyById(id);
-  company = c
-    ? Object.assign({}, DEFAULT_COMPANY, c.settings||{}, {nameAr:c.name_ar||'', nameEn:c.name_en||'', tagline:c.tagline||''})
-    : Object.assign({}, DEFAULT_COMPANY);
-  company.stampPos = Object.assign({}, DEFAULT_COMPANY.stampPos, company.stampPos||{});
-  fillCompanyForm();
-  setTimeout(()=>{ refreshStampPreview(); syncLogoHeadHandle(); }, 60);
-}
-function coCloseRestoreActive(){
-  if(coEditCompanyId !== activeCompanyId) applyActiveCompany();
-}
-
-document.getElementById('openCompanyBtn').addEventListener('click', ()=>{
-  loadCoEditCompany(activeCompanyId);
-  fillCoCompanyPicker();
-  companyOverlay.classList.add('open');
-});
-document.getElementById('co_companyPicker').addEventListener('change', function(){
-  loadCoEditCompany(this.value);
-});
-document.getElementById('companyCloseX').addEventListener('click', ()=>{
-  companyOverlay.classList.remove('open');
-  coCloseRestoreActive();
-});
-companyOverlay.addEventListener('click', e=>{
-  if(e.target===companyOverlay){
-    companyOverlay.classList.remove('open');
-    coCloseRestoreActive();
-  }
-});
-
-document.getElementById('co_wmOpacity').addEventListener('input', function(){
-  document.getElementById('co_wmOpacityVal').textContent = this.value;
-});
-document.getElementById('co_logoW').addEventListener('input', function(){
-  document.getElementById('co_logoWVal').textContent = this.value;
-  company.logoWidth = parseInt(this.value,10)||130;
-  refreshStampPreview();
-});
-['br_color','br_color2','br_kpi2','br_kpi3','br_kpi4'].forEach(id=>{
-  const el = document.getElementById(id);
-  if(el) el.addEventListener('input', livePreviewColors);
-});
-document.getElementById('br_useGradient').addEventListener('change', livePreviewColors);
-
-function livePreviewColors(){
-  const prev = {color:branding.color, color2:branding.color2, useGradient:branding.useGradient,
-                kpi2:branding.kpi2, kpi3:branding.kpi3, kpi4:branding.kpi4};
-  branding.color  = document.getElementById('br_color').value;
-  branding.color2 = document.getElementById('br_color2').value;
-  branding.useGradient = document.getElementById('br_useGradient').checked;
-  branding.kpi2 = document.getElementById('br_kpi2').value;
-  branding.kpi3 = document.getElementById('br_kpi3').value;
-  branding.kpi4 = document.getElementById('br_kpi4').value;
-  applyBranding();
-  // القيم دي مش محفوظة لحد ما يضغط حفظ
-  Object.assign(branding, {}); // للتوضيح فقط
-}
-
-// قوالب ألوان جاهزة
-const COLOR_PRESETS = [
-  {n:'أحمر كلاسيكي', a:'#C8102E', b:'#E8536B'},
-  {n:'أزرق احترافي', a:'#1D4ED8', b:'#60A5FA'},
-  {n:'تركوازي', a:'#00857D', b:'#4FC3BC'},
-  {n:'ذهبي', a:'#B68A35', b:'#E0BE72'},
-  {n:'أخضر', a:'#166534', b:'#4ADE80'},
-  {n:'بنفسجي', a:'#6D28D9', b:'#A78BFA'},
-  {n:'رمادي وقور', a:'#334155', b:'#94A3B8'},
-];
-function renderPalettePresets(){
-  const el = document.getElementById('palettePresets');
-  if(!el) return;
-  el.innerHTML = COLOR_PRESETS.map((p,i)=>
-    `<button type="button" class="preset" data-i="${i}" title="${escapeHtml(p.n)}"
-      style="background:linear-gradient(135deg,${p.a},${p.b})"></button>`).join('');
-}
-document.getElementById('palettePresets').addEventListener('click', e=>{
-  const btn = e.target.closest('.preset');
-  if(!btn) return;
-  const p = COLOR_PRESETS[+btn.dataset.i];
-  document.getElementById('br_color').value = p.a;
-  document.getElementById('br_color2').value = p.b;
-  document.getElementById('br_useGradient').checked = true;
-  livePreviewColors();
-});
-
-document.getElementById('co_accent').addEventListener('change', function(){
-  company.accent = this.value;
-  refreshStampPreview();
-});
-
-document.querySelectorAll('input[name="co_brandMode"]').forEach(radio=>{
-  radio.addEventListener('change', function(){
-    if(!this.checked) return;
-    company.brandMode = this.value;
-    document.getElementById('brandReadyFields').style.display = this.value==='ready' ? '' : 'none';
-    refreshStampPreview();
-  });
-});
-document.getElementById('co_letterheadW').addEventListener('input', function(){
-  company.letterheadWidth = parseInt(this.value,10)||100;
-  document.getElementById('co_letterheadWVal').textContent = company.letterheadWidth;
-  refreshStampPreview();
-});
-document.getElementById('co_footerW').addEventListener('input', function(){
-  company.footerWidth = parseInt(this.value,10)||100;
-  document.getElementById('co_footerWVal').textContent = company.footerWidth;
-  refreshStampPreview();
-});
-
-[['co_logoFile','logo','co_logoPrev',420],
- ['co_stampFile','stamp','co_stampPrev',400],
- ['co_wmFile','watermark','co_wmPrev',600],
- ['co_letterheadFile','letterheadImg','co_letterheadPrev',900],
- ['co_footerImgFile','footerImg','co_footerImgPrev',900]].forEach(([inputId, key, prevId, maxDim])=>{
-  document.getElementById(inputId).addEventListener('change', async function(){
-    const f = this.files && this.files[0];
-    if(!f) return;
-    try{
-      company[key] = await fileToScaledDataURL(f, maxDim);
-      renderImgPrev(prevId, company[key], key);
-      refreshStampPreview();
-      if(key === 'logo') syncLogoHeadHandle();
-    }catch(e){
-      alert('تعذّر قراءة الصورة. جرّب صورة تانية (PNG أو JPG).');
-    }
-    this.value = '';
-  });
-});
-
-companyOverlay.addEventListener('click', e=>{
-  if(e.target.classList && e.target.classList.contains('rm')){
-    const key = e.target.dataset.key;
-    company[key] = '';
-    renderImgPrev({logo:'co_logoPrev', stamp:'co_stampPrev', watermark:'co_wmPrev', letterheadImg:'co_letterheadPrev', footerImg:'co_footerImgPrev'}[key], '', key);
-    if(key === 'logo') syncLogoHeadHandle();
-    if(key === 'letterheadImg' || key === 'footerImg') refreshStampPreview();
-  }
-});
-
-document.getElementById('companySaveBtn').addEventListener('click', async ()=>{
-  readCompanyForm();
-  const nameAr = company.nameAr || company.nameEn;
-  if(!nameAr){ alert('اكتب اسم الشركة — بالعربي أو بالإنجليزي.'); return; }
-  try{
-    await saveCompanyById(coEditCompanyId, company, {
-      name_ar: nameAr, name_en: company.nameEn || null, tagline: company.tagline || null
-    });
-  }catch(e){ dbError(e, 'تعذّر حفظ إعدادات الشركة'); return; }
-  addLog('edit', 'تحديث إعدادات الشركة: ' + nameAr);
-  renderCompaniesAdmin();
-  toast('تم حفظ إعدادات الشركة');
-  companyOverlay.classList.remove('open');
-  coCloseRestoreActive();
-});
-
-document.getElementById('companyPreviewBtn').addEventListener('click', ()=>{
-  readCompanyForm();
-  const sample = records[0] || {
-    itemDesc:'خط انتاج ثلج بملحقاته', qty:'24 طن', unitPrice:'USD 1,583.33',
-    totalAmount:'USD 38,000.00', totalQty:'24 طن', numberOfPackages:'400 طرد',
-    exporter: company.nameAr, exporterAddress:'القاهرة – مصر',
-    consignee:'اسم المستورد', consigneeAddress:'الخرطوم – السودان',
-    proformaNo:'1001', proformaDate:'2026-08-02',
-    portLoading:'Alexandria', portDischarge:'Port Sudan',
-    transportMeans:'BY SEA', departDate:'2026-08-15', destCountry:'Sudan',
-    paymentTerm:'DA (180) DAYS FROM B/L DATE'
-  };
-  openPrintWindow(invoiceSheet(sample, 'proforma'));
-});
-
-document.getElementById('companyResetBtn').addEventListener('click', async ()=>{
-  if(!confirm('استرجاع كل إعدادات الشركة للوضع الافتراضي؟ (الشعار والختم هيتمسحوا)')) return;
-  company = Object.assign({}, DEFAULT_COMPANY);
-  company.stampPos = Object.assign({}, DEFAULT_COMPANY.stampPos);
-  try{
-    await saveCompanyById(coEditCompanyId, company, {
-      name_ar: company.nameAr, name_en: company.nameEn || null, tagline: company.tagline || null
-    });
-  }catch(e){ dbError(e, 'تعذّر الاسترجاع'); return; }
-  addLog('edit', 'استرجاع الإعدادات الافتراضية لشركة: ' + company.nameAr);
-  renderCompaniesAdmin();
-  fillCompanyForm();
-  refreshStampPreview();
-});
-
-// ===== محرر مكان الختم =====
-const stampStage = document.getElementById('stampStage');
-const stampHandle = document.getElementById('stampHandle');
-
-function sampleRecordForPreview(){
-  return records[0] || {
-    itemDesc:'خط انتاج ثلج بملحقاته', qty:'24 طن', unitPrice:'USD 1,583.33',
-    totalAmount:'USD 38,000.00', totalQty:'24 طن', numberOfPackages:'400 طرد',
-    exporter: company.nameAr, exporterAddress:'القاهرة – مصر',
-    consignee:'اسم المستورد', consigneeAddress:'الخرطوم – السودان',
-    proformaNo:'1001', proformaDate:'2026-08-02',
-    portLoading:'Alexandria', portDischarge:'Port Sudan',
-    paymentTerm:'DA (180) DAYS FROM B/L DATE'
-  };
-}
-
-function refreshStampPreview(){
-  // المعاينة بدون الختم — الختم بيظهر كمقبض قابل للسحب فوقها
-  const saved = company.showStampBox;
-  company.showStampBox = false;
-  const html = invoiceSheet(sampleRecordForPreview(), 'proforma');
-  company.showStampBox = saved;
-  document.getElementById('stampPreview').srcdoc =
-    `<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8">
-     <style>${PRINT_STYLES}</style></head>
-     <body><div class="doc-page">${html}</div></body></html>`;
-  syncStampHandle();
-}
-
-function syncStampHandle(){
-  const sp = company.stampPos;
-  stampHandle.classList.toggle('hidden', !company.showStampBox);
-  stampHandle.style.top = sp.top + '%';
-  stampHandle.style.left = sp.left + '%';
-  stampHandle.style.width = sp.width + '%';
-  const shImg = document.getElementById('shImg');
-  shImg.style.backgroundImage = company.stamp ? `url(${company.stamp})` : 'none';
-  shImg.style.border = company.stamp ? 'none' : '1px dashed #bbb';
-  shImg.style.borderRadius = company.stamp ? '0' : '50%';
-  document.getElementById('shSig').style.display = company.showSigLine ? 'block' : 'none';
-  document.getElementById('co_stampW').value = sp.width;
-  document.getElementById('co_stampT').value = sp.top;
-  document.getElementById('co_stampL').value = sp.left;
-  document.getElementById('co_stampWVal').textContent = sp.width;
-  document.getElementById('co_stampTVal').textContent = sp.top;
-  document.getElementById('co_stampLVal').textContent = sp.left;
-}
-
-let stampDrag = null;
-stampHandle.addEventListener('pointerdown', e=>{
-  e.preventDefault();
-  stampHandle.setPointerCapture(e.pointerId);
-  const stage = stampStage.getBoundingClientRect();
-  const box = stampHandle.getBoundingClientRect();
-  stampDrag = {
-    dx: e.clientX - box.left, dy: e.clientY - box.top,
-    sw: stage.width, sh: stage.height,
-    sx: stage.left, sy: stage.top,
-    bw: box.width, bh: box.height
-  };
-});
-stampHandle.addEventListener('pointermove', e=>{
-  if(!stampDrag) return;
-  let left = (e.clientX - stampDrag.dx - stampDrag.sx) / stampDrag.sw * 100;
-  let top  = (e.clientY - stampDrag.dy - stampDrag.sy) / stampDrag.sh * 100;
-  const maxL = 100 - (stampDrag.bw / stampDrag.sw * 100);
-  const maxT = 100 - (stampDrag.bh / stampDrag.sh * 100);
-  company.stampPos.left = Math.round(Math.max(0, Math.min(maxL, left))*2)/2;
-  company.stampPos.top  = Math.round(Math.max(0, Math.min(maxT, top))*2)/2;
-  syncStampHandle();
-});
-stampHandle.addEventListener('pointerup', ()=>{ stampDrag = null; });
-stampHandle.addEventListener('pointercancel', ()=>{ stampDrag = null; });
-
-document.getElementById('co_stampW').addEventListener('input', function(){
-  company.stampPos.width = parseFloat(this.value); syncStampHandle();
-});
-document.getElementById('co_stampT').addEventListener('input', function(){
-  company.stampPos.top = parseFloat(this.value); syncStampHandle();
-});
-document.getElementById('co_stampL').addEventListener('input', function(){
-  company.stampPos.left = parseFloat(this.value); syncStampHandle();
-});
-document.getElementById('co_showStamp').addEventListener('change', function(){
-  company.showStampBox = this.checked; syncStampHandle();
-});
-document.getElementById('co_showSigLine').addEventListener('change', function(){
-  company.showSigLine = this.checked; syncStampHandle();
-});
-document.getElementById('stampResetPos').addEventListener('click', ()=>{
-  company.stampPos = Object.assign({}, DEFAULT_COMPANY.stampPos);
-  syncStampHandle();
-});
 
 // ===== محرر خانة شعار البوليصة المبنية بالكود =====
 const logoHeadStage = document.getElementById('logoHeadStage');
