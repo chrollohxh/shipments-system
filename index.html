@@ -10110,16 +10110,18 @@ const CMT_KIND = {note:'ملاحظة', return:'إرجاع للتعديل', appro
 
 async function loadComments(shipmentId){
   const el = document.getElementById('cmtList');
-  if(!el) return;
+  const quickEl = document.getElementById('cmList');
+  if(!el && !quickEl) return;
   try{
     const {data, error} = await sb.from('shipment_comments')
       .select('*').eq('shipment_id', shipmentId).order('created_at');
     if(error) throw error;
     if(!data || !data.length){
-      el.innerHTML = '<div class="cmt-empty">مفيش تعليقات بعد</div>';
+      if(el) el.innerHTML = '<div class="cmt-empty">مفيش تعليقات بعد</div>';
+      if(quickEl) quickEl.innerHTML = '<div class="cm-empty">لا توجد ملاحظات بعد</div>';
       return;
     }
-    el.innerHTML = data.map(c=>{
+    const commentsHtml = data.map(c=>{
       const who = users.find(u=>u.id===c.author_id);
       return `<div class="cmt-item ${c.kind}">
         <div class="cmt-head">
@@ -10130,9 +10132,11 @@ async function loadComments(shipmentId){
         <div class="cmt-body">${escapeHtml(c.body)}</div>
       </div>`;
     }).join('');
-    el.scrollTop = el.scrollHeight;
+    if(el){ el.innerHTML = commentsHtml; el.scrollTop = el.scrollHeight; }
+    if(quickEl){ quickEl.innerHTML = commentsHtml; quickEl.scrollTop = quickEl.scrollHeight; }
   }catch(e){
-    el.innerHTML = '<div class="cmt-empty">تعذّر تحميل التعليقات</div>';
+    if(el) el.innerHTML = '<div class="cmt-empty">تعذّر تحميل التعليقات</div>';
+    if(quickEl) quickEl.innerHTML = '<div class="cm-empty">تعذّر تحميل الملاحظات</div>';
     console.warn('comments', e);
   }
 }
@@ -10156,6 +10160,17 @@ async function sendComment(shipmentId){
   btn.disabled = false;
   if(ok){ inp.value=''; loadComments(shipmentId); toast('تم إضافة التعليق'); }
   else dbError({message:'فشل الحفظ'}, 'تعذّر إضافة التعليق');
+}
+async function sendQuickComment(shipmentId){
+  const inp = document.getElementById('cmInput');
+  const body = inp?.value.trim();
+  if(!body){ inp?.focus(); return; }
+  const btn = document.getElementById('cmSendBtn');
+  if(btn) btn.disabled = true;
+  const ok = await addComment(shipmentId, body, 'note');
+  if(btn) btn.disabled = false;
+  if(ok){ inp.value=''; loadComments(shipmentId); toast('تمت إضافة الملاحظة'); }
+  else dbError({message:'فشل الحفظ'}, 'تعذّر إضافة الملاحظة');
 }
 
 // ===== الإشعارات =====
@@ -10503,9 +10518,8 @@ async function approveShipment(id){
     r.status='sent'; r.reviewNote='';
     await addComment(id, 'تم اعتماد الشحنة', 'approve');
     addLog('edit','اعتماد شحنة: '+(r.itemDesc||'').slice(0,40));
-    await addComment(id, 'تم اعتماد الشحنة', 'approve');
     closeAllOverlays();
-    render(); renderSea(); renderIssued(); renderDrafts(); renderReview(); renderReview(); renderDashboard();
+    render(); renderSea(); renderIssued(); renderDrafts(); renderReview(); renderDashboard();
     toast('تم اعتماد الشحنة ✓');
   }catch(e){ dbError(e,'تعذّر الاعتماد'); }
   finally{ netEnd(); }
@@ -10533,10 +10547,9 @@ document.getElementById('reviewSendBtn').addEventListener('click', async ()=>{
     if(r){ r.status='rework'; r.reviewNote=note; }
     await addComment(reviewTargetId, note, 'return');
     addLog('edit','إرجاع شحنة للتعديل: '+((r&&r.itemDesc)||'').slice(0,40));
-    await addComment(reviewTargetId, note, 'return');
     reviewOverlay.classList.remove('open');
     closeAllOverlays();
-    render(); renderSea(); renderIssued(); renderDrafts(); renderReview(); renderReview();
+    render(); renderSea(); renderIssued(); renderDrafts(); renderReview();
     toast('تم إرجاع الشحنة للموظف مع الملاحظة');
   }catch(e){ dbError(e,'تعذّر الإرجاع'); }
   finally{ netEnd(); }
@@ -10600,7 +10613,6 @@ async function doSubmitForReview(id){
     r.status='review'; r.reviewNote='';
     await addComment(id, 'تم إرسال الشحنة للمراجعة', 'submit');
     addLog('edit','إرسال شحنة للمراجعة: '+(r.itemDesc||'').slice(0,40));
-    await addComment(id, 'أُرسلت الشحنة للاعتماد', 'submit');
     preSendOverlay.classList.remove('open');
     closeAllOverlays();
     if(isStaffRole()){ allowStaffRecords = false; switchView('tasks'); }
@@ -11687,8 +11699,6 @@ function openDetail(id){
     overlay.classList.remove('open');
     fillFormForEdit(r);
   });
-  loadComments(id);
-  document.getElementById('cmSendBtn').addEventListener('click', ()=> addComment(id));
   loadShipmentTimeline(r);
   loadShipmentFiles(id);
   const sfInput = document.getElementById('sf_files');
@@ -11731,8 +11741,8 @@ function openDetail(id){
   loadComments(id);
   const cs = document.getElementById('cmtSendBtn');
   if(cs) cs.addEventListener('click', ()=> sendComment(id));
-  const dupBtn = document.getElementById('dupBtn');
-  if(dupBtn) dupBtn.addEventListener('click', ()=> duplicateShipment(id));
+  const quickCommentBtn = document.getElementById('cmSendBtn');
+  if(quickCommentBtn) quickCommentBtn.addEventListener('click', ()=> sendQuickComment(id));
   const stBtn = document.getElementById('statusBtn');
   if(stBtn) stBtn.addEventListener('click', async ()=>{
     const rec = records.find(x=>x.id===id);
@@ -14390,21 +14400,22 @@ const TPL_LABELS = {cert:'شهادة المنشأ (بري)', bol:'بوليصة �
 const TPL_IMG_KEY = {cert:'certImg', bol:'bolImg', certSea:'certImgSea', bolSea:'bolImgSea'};
 let tplCurrentDoc = 'cert';
 let tplSelectedKey = null;
+const BOL_FALLBACK_IMG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='210' height='297'%3E%3Crect width='210' height='297' fill='white'/%3E%3Crect x='8' y='8' width='194' height='281' fill='none' stroke='%231268F3' stroke-width='1'/%3E%3Ctext x='105' y='148' text-anchor='middle' font-family='Arial' font-size='8' fill='%2364748B'%3EShipping Bill Template%3C/text%3E%3C/svg%3E";
 
 function tplGetImg(doc){
   if(activeBolTplId && (doc === 'bol' || doc === 'bolSea')){
     const t = bolTplById(activeBolTplId);
     if(t && t.image) return t.image;
   }
-  if(doc==='cert')    return company.certImg    || CERT_IMG;
-  if(doc==='bol')     return company.bolImg     || BOL_IMG;
-  if(doc==='certSea') return company.certImgSea || CERT_SEA_IMG;
-  if(doc==='bolSea')  return company.bolImgSea  || company.bolImg  || BOL_IMG;
+  if(doc==='cert')    return company?.certImg    || CERT_IMG;
+  if(doc==='bol')     return company?.bolImg     || BOL_FALLBACK_IMG;
+  if(doc==='certSea') return company?.certImgSea || CERT_SEA_IMG;
+  if(doc==='bolSea')  return company?.bolImgSea  || company?.bolImg || BOL_FALLBACK_IMG;
   // البوليصة المبنية بالكود بتخطيط حر — لا صورة مرفوعة، خلفية بيضاء فارغة بأبعاد A4
   if(doc==='bolCodedFree' || doc==='bolSeaCodedFree'){
     return "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='210' height='297'%3E%3Crect width='210' height='297' fill='white'/%3E%3C/svg%3E";
   }
-  return BOL_IMG;
+  return BOL_FALLBACK_IMG;
 }
 function isSea(r){ return (r && r.shipType) === 'sea'; }
 
