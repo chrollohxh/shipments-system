@@ -1752,6 +1752,7 @@ body.role-staff #navWallet,body.role-staff #navAdmin{display:flex !important;}
 @media(max-width:1180px){.shipment-dashboard .db-hero-stats,.db-three-grid,.db-distribution-grid{grid-template-columns:1fr 1fr;}.db-three-grid .db-panel:last-child{grid-column:span 2;}.db-insight{min-height:210px;}.db-donut-box{min-height:190px;}}
 @media(max-width:700px){.shipment-dashboard .db-hero-stats,.db-three-grid,.db-distribution-grid{grid-template-columns:1fr;}.db-three-grid .db-panel:last-child{grid-column:auto;}.db-hero{padding:20px;}.db-hero-art{display:none;}.db-stat-grid{gap:10px;}.db-panel{padding:15px;}}
 </style>
+  <link rel="stylesheet" href="wizard.css">
 </head>
 <body>
 
@@ -14756,5 +14757,6 @@ document.getElementById('tplResetBtn').addEventListener('click', ()=>{
   switchView(isStaffRole() ? 'tasks' : 'dashboard');
 })();
 </script>
+<script src="wizard.js"></script>
 </body>
 </html>
