@@ -12532,13 +12532,17 @@ function invoiceSheet(r, kind, lang){
     ? `<div class="inv-watermark"><img src="${wmSrc}" style="opacity:${(c.watermarkOpacity||7)/100}"></div>`
     : '';
 
+  const brandLayout = c.brandLayout || {};
+  const logoPos = Object.assign({top:4,left:72,width:20}, brandLayout.logo||{});
+  const letterheadPos = Object.assign({top:1,left:0,width:100}, brandLayout.letterhead||{});
+  const footerPos = Object.assign({top:87,left:0,width:100}, brandLayout.footer||{});
   const logoHtml = c.logo
-    ? `<img class="inv-logo" src="${c.logo}" alt="" style="max-width:${c.logoWidth||130}px;">`
+    ? `<img class="inv-logo" src="${c.logo}" alt="" style="max-width:${c.logoWidth||130}px;position:relative;left:${logoPos.left-72}%;top:${logoPos.top-4}%;">`
     : `<div class="inv-logo-ph">${t.logoPh}</div>`;
 
   const isReadyBrand = c.brandMode === 'ready';
   const headerHtml = (isReadyBrand && c.letterheadImg)
-    ? `<header class="inv-head inv-head-img"><img src="${c.letterheadImg}" alt="" style="width:${c.letterheadWidth||100}%;"></header>`
+    ? `<header class="inv-head inv-head-img"><img src="${c.letterheadImg}" alt="" style="width:${c.letterheadWidth||100}%;position:relative;left:${letterheadPos.left}%;top:${letterheadPos.top-1}%;"></header>`
     : `<header class="inv-head">
       <div class="inv-head-txt">
         ${lang==='en'
@@ -12648,7 +12652,7 @@ function invoiceSheet(r, kind, lang){
     ${r.notes?`<div class="inv-notes"><span class="lbl">${t.notes}</span>${esc(r.notes)}</div>`:''}
 
     ${(isReadyBrand && c.footerImg)
-      ? `<footer class="inv-foot inv-foot-img"><img src="${c.footerImg}" alt="" style="width:${c.footerWidth||100}%;"></footer>`
+      ? `<footer class="inv-foot inv-foot-img"><img src="${c.footerImg}" alt="" style="width:${c.footerWidth||100}%;position:relative;left:${footerPos.left}%;top:${footerPos.top-87}%;"></footer>`
       : `<footer class="inv-foot">
       <div class="inv-foot-bar"></div>
       <div class="inv-foot-lines">${footerLines}</div>

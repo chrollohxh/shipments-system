@@ -53,6 +53,62 @@
     shell.append(side, main); host.append(shell);
 
     const append = (panel, ...nodes) => nodes.filter(Boolean).forEach(node => panel.append(node));
+    function addLayoutEditor(panel) {
+      const defaults = {
+        logo: { top: 4, left: 72, width: 20 },
+        letterhead: { top: 1, left: 0, width: 100 },
+        footer: { top: 87, left: 0, width: 100 }
+      };
+      company.brandLayout = company.brandLayout || {};
+      Object.keys(defaults).forEach(key => company.brandLayout[key] = Object.assign({}, defaults[key], company.brandLayout[key] || {}));
+      const editor = document.createElement('section'); editor.className = 'cew-layout-editor';
+      editor.innerHTML = `<div class="cew-layout-head"><strong>ضبط مواضع الهوية على المستند</strong><span>اسحب العنصر داخل الورقة، ثم استخدم شريط الحجم. تُحفظ المواضع عند حفظ الشركة.</span></div><div class="cew-layout-body"><div class="cew-layout-canvas"></div><div class="cew-layout-tools"><h4>العنصر المحدد</h4><p id="cewLayoutHint">اختر عنصراً أو اسحبه.</p><div class="cew-layout-select"><button type="button" data-key="logo">الشعار</button><button type="button" data-key="stamp">الختم</button><button type="button" data-key="letterhead">الترويسة</button><button type="button" data-key="footer">التذييل</button></div><div class="cew-layout-size"><label>الحجم: <span class="cew-layout-value">—</span></label><input type="range" min="5" max="100" step="1" disabled></div><button type="button" class="btn btn-ghost btn-small cew-layout-reset">استرجاع موضع العنصر</button></div></div>`;
+      const canvas = editor.querySelector('.cew-layout-canvas');
+      const hint = editor.querySelector('#cewLayoutHint');
+      const size = editor.querySelector('input[type="range"]');
+      const value = editor.querySelector('.cew-layout-value');
+      let selected = 'stamp';
+      const itemInfo = {
+        logo: { label: 'الشعار', source: () => company.logo, pos: () => company.brandLayout.logo, max: 45 },
+        stamp: { label: 'الختم', source: () => company.stamp, pos: () => company.stampPos, max: 45 },
+        letterhead: { label: 'الترويسة', source: () => company.letterheadImg, pos: () => company.brandLayout.letterhead, max: 100 },
+        footer: { label: 'التذييل', source: () => company.footerImg, pos: () => company.brandLayout.footer, max: 100 }
+      };
+      const syncExistingControls = key => {
+        const p = itemInfo[key].pos();
+        if (key === 'stamp') {
+          ['W','T','L'].forEach((part, index) => { const input = document.getElementById('ce_stamp' + part); if (input) input.value = [p.width,p.top,p.left][index]; });
+          document.getElementById('ce_stampWVal').textContent = p.width; document.getElementById('ce_stampTVal').textContent = p.top; document.getElementById('ce_stampLVal').textContent = p.left;
+        }
+        if (key === 'logo') { company.logoWidth = Math.round(p.width * 6.5); document.getElementById('ce_logoW').value = company.logoWidth; document.getElementById('ce_logoWVal').textContent = company.logoWidth; }
+        if (key === 'letterhead') { company.letterheadWidth = Math.round(p.width); document.getElementById('ce_letterheadW').value = company.letterheadWidth; document.getElementById('ce_letterheadWVal').textContent = company.letterheadWidth; }
+        if (key === 'footer') { company.footerWidth = Math.round(p.width); document.getElementById('ce_footerW').value = company.footerWidth; document.getElementById('ce_footerWVal').textContent = company.footerWidth; }
+      };
+      const draw = () => {
+        canvas.querySelectorAll('.cew-layout-item').forEach(el => el.remove());
+        Object.entries(itemInfo).forEach(([key, info]) => {
+          const p = info.pos(); const item = document.createElement('div'); item.className = 'cew-layout-item' + (selected === key ? ' selected' : ''); item.dataset.key = key;
+          item.style.cssText = `top:${p.top}%;left:${p.left}%;width:${p.width}%;`;
+          const src = info.source(); item.innerHTML = src ? `<img src="${src}" alt="${info.label}">` : `<div class="cew-layout-placeholder">${info.label}</div>`;
+          item.addEventListener('pointerdown', event => {
+            selected = key;
+            canvas.querySelectorAll('.cew-layout-item').forEach(el => el.classList.toggle('selected', el === item));
+            hint.textContent = info.label + ' — اسحبه لتغيير الموضع.'; size.max = info.max; size.value = p.width; value.textContent = Math.round(p.width) + '%';
+            item.setPointerCapture(event.pointerId);
+            const start = { x:event.clientX, y:event.clientY, top:p.top, left:p.left };
+            const move = moveEvent => { const rect = canvas.getBoundingClientRect(); p.left = Math.max(0, Math.min(100 - p.width, start.left + (moveEvent.clientX-start.x)/rect.width*100)); p.top = Math.max(0, Math.min(100 - 4, start.top + (moveEvent.clientY-start.y)/rect.height*100)); item.style.left = p.left + '%'; item.style.top = p.top + '%'; };
+            item.addEventListener('pointermove', move); item.addEventListener('pointerup', () => { item.removeEventListener('pointermove', move); syncExistingControls(key); }, { once:true });
+          }); canvas.append(item);
+        });
+        const current = itemInfo[selected]; const p = current.pos();
+        hint.textContent = current.label + ' — اسحبه لتغيير الموضع.'; size.disabled = false; size.max = current.max; size.value = p.width; value.textContent = Math.round(p.width) + '%';
+        editor.querySelectorAll('.cew-layout-select button').forEach(button => button.classList.toggle('active', button.dataset.key === selected));
+      };
+      editor.querySelectorAll('.cew-layout-select button').forEach(button => button.addEventListener('click', () => { selected = button.dataset.key; draw(); }));
+      size.addEventListener('input', () => { itemInfo[selected].pos().width = Number(size.value); syncExistingControls(selected); draw(); });
+      editor.querySelector('.cew-layout-reset').addEventListener('click', () => { if (selected === 'stamp') Object.assign(company.stampPos, { top:66, left:10, width:20 }); else Object.assign(company.brandLayout[selected], defaults[selected]); syncExistingControls(selected); draw(); });
+      panel.append(editor); draw();
+    }
     append(panels[0], initialGrid);
     const docs = document.createElement('div'); docs.className = 'cew-upload-card'; append(docs, imagesTitle, imageGrid, brandTitle, brandGrid, brandFiles); panels[1].append(docs);
     append(panels[2], stampTitle, stampGrid);
@@ -63,7 +119,9 @@
     panels[2].append(templateActions);
     append(panels[2], footerTitle, footerGrid);
     const summary = document.createElement('div'); summary.className = 'cew-summary'; summary.id = 'cewSummary';
-    append(panels[3], previewTitle, summary, previewBar, preview, actions);
+    append(panels[3], previewTitle);
+    addLayoutEditor(panels[3]);
+    append(panels[3], summary, previewBar, preview, actions);
     panels.forEach((panel, index) => {
       const nav = document.createElement('div'); nav.className = 'cew-actions';
       if (index) { const back = document.createElement('button'); back.type = 'button'; back.className = 'btn btn-ghost'; back.textContent = 'السابق'; back.addEventListener('click', () => setStep(index)); nav.append(back); }
