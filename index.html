@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>سجل الشحنات والمستندات</title>
+<title>منصة جاهز</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" onload="this.onload=null;this.rel='stylesheet'">
@@ -13,10 +13,10 @@
 <style>
 
 :root{
-  /* ===== هوية فيسبوك (أزرق) ===== */
-  --brand:#1877F2;
-  --brand-dark:#1462C6;
-  --brand-light:#E7F3FF;
+  /* ===== هوية واتساب (أخضر) ===== */
+  --brand:#25D366;
+  --brand-dark:#1EAD54;
+  --brand-light:#EBFBF1;
   --teal:#00857D;
   --teal-dark:#006B64;
   --teal-light:#E6F4F3;
@@ -34,10 +34,10 @@
   --dark:#1F2933;
   --radius:10px;
   --radius-lg:16px;
-  --ring:0 0 0 3px rgba(24,119,242,.18);
-  --brand2:#69A7F7;
-  --bar-fill:linear-gradient(90deg,#1877F2,#69A7F7);
-  --chart-fill:linear-gradient(180deg,#69A7F7,#1877F2);
+  --ring:0 0 0 3px rgba(37,211,102,.18);
+  --brand2:#71E29C;
+  --bar-fill:linear-gradient(90deg,#25D366,#71E29C);
+  --chart-fill:linear-gradient(180deg,#71E29C,#25D366);
   --kpi2:#00857D; --kpi3:#F5A623; --kpi4:#2E7D32; --kpi5:#3F6FB8;
   --ease:cubic-bezier(.4,0,.2,1);
   --shadow-sm:0 1px 3px rgba(0,0,0,.07);
@@ -238,7 +238,7 @@ body{padding-right:230px;}
 
 /* ===== داشبورد بروفايل (عميل / مستخدم) — بانر + معلومات + سجل نشاط ===== */
 .pd-banner{
-  height:110px;background:linear-gradient(120deg,var(--brand) 0%,var(--brand2) 55%,#AECFFA 100%);
+  height:110px;background:linear-gradient(120deg,var(--brand) 0%,var(--brand2) 55%,#B3F0C9 100%);
 }
 .pd-headrow{display:flex;align-items:flex-end;gap:18px;padding:0 26px 18px;margin-top:-46px;position:relative;flex-wrap:wrap;}
 .pd-photo{
@@ -578,7 +578,7 @@ body{padding-right:230px;}
 
 /* ===== لوحة المعلومات ===== */
 .dash-welcome{
-  background:linear-gradient(120deg,var(--brand) 0%,var(--brand2) 60%,#AECFFA 100%);
+  background:linear-gradient(120deg,var(--brand) 0%,var(--brand2) 60%,#B3F0C9 100%);
   border-radius:var(--radius-lg);padding:24px 28px;margin-bottom:20px;
   display:flex;align-items:center;justify-content:space-between;gap:16px;color:#fff;
   box-shadow:var(--shadow);
@@ -1612,7 +1612,7 @@ table.doc-items td.num{font-family:'IBM Plex Mono',monospace;text-align:left;}
   <div class="lock-form-panel">
   <div class="lock-card" id="lockCard">
     <div class="lock-logo" id="lockLogo"></div>
-    <h2 id="lockTitle">سجل الشحنات والمستندات</h2>
+    <h2 id="lockTitle">منصة جاهز</h2>
     <div class="lock-sub" id="lockSub">سجّل الدخول للمتابعة</div>
 
     <div class="lg-field">
@@ -1656,7 +1656,7 @@ table.doc-items td.num{font-family:'IBM Plex Mono',monospace;text-align:left;}
 </div>
 
 <div class="o-topstrip">
-  <div class="ts-left"><span class="ts-dot"></span><span id="tsSystemName">نظام إدارة الشحنات والمستندات</span><span id="tsNet" class="ts-net"></span></div>
+  <div class="ts-left"><span class="ts-dot"></span><span id="tsSystemName">منصة جاهز</span><span id="tsNet" class="ts-net"></span></div>
   <div id="tsUser">—</div>
 </div>
 
@@ -1664,7 +1664,7 @@ table.doc-items td.num{font-family:'IBM Plex Mono',monospace;text-align:left;}
   <aside class="app-sidebar">
   <div class="o-brand">
     <div class="o-logo"></div>
-    <div>الشحنات<small>سجل موحّد للمستندات</small></div>
+    <div>جاهز<small>طريقك نحو معاملات أكثر دقة</small></div>
   </div>
   <div class="o-menu">
     <button class="navtab active" data-view="dashboard" id="navDashboard" data-ic="dashboard">لوحة المعلومات</button>
@@ -1720,7 +1720,7 @@ table.doc-items td.num{font-family:'IBM Plex Mono',monospace;text-align:left;}
   <!-- ===== لوحة المعلومات ===== -->
   <div class="view active" id="viewDashboard">
     <div class="dash-toolbar">
-      <button class="btn btn-ghost btn-small" id="dashSettingsBtn" data-ic="palette">ألوان لوحة المعلومات</button>
+      <button class="btn btn-ghost btn-small" id="dashSettingsBtn" data-ic="palette" style="display:none;">ألوان لوحة المعلومات</button>
     </div>
     <div class="dash-welcome">
       <div class="dash-welcome-text">
@@ -5566,13 +5566,13 @@ function renderLog(){
 // ===== الهوية والأيقونات =====
 const ICON_SET = ['ship','box','doc','factory','anchor','truck','plane','building','clipboard','invoice','globe','gear','chart','tag','folder','briefcase'];
 const DEFAULT_BRAND = {
-  systemName:'نظام إدارة الشحنات والمستندات',
-  shortName:'الشحنات',
+  systemName:'منصة جاهز',
+  shortName:'جاهز',
   icon:'ship',
   iconImg:'',
   loginImg:'',
-  color:'#1877F2',
-  color2:'#69A7F7',      // اللون الثانوي للتدرجات
+  color:'#25D366',
+  color2:'#71E29C',      // اللون الثانوي للتدرجات
   useGradient:true,      // تدرج أم لون واحد
   kpi2:'#00857D', kpi3:'#F5A623', kpi4:'#2E7D32',
   animations:true
@@ -5610,7 +5610,7 @@ function applyBranding(){
   const sn = document.getElementById('tsSystemName'); if(sn) sn.textContent = branding.systemName;
   const lt = document.getElementById('lockTitle'); if(lt) lt.textContent = branding.systemName;
   const bl = document.querySelector('.o-brand > div:not(.o-logo)');
-  if(bl) bl.innerHTML = `${escapeHtml(branding.shortName)}<small>سجل موحّد للمستندات</small>`;
+  if(bl) bl.innerHTML = `${escapeHtml(branding.shortName)}<small>طريقك نحو معاملات أكثر دقة</small>`;
   const lg = document.querySelector('.o-brand .o-logo'); if(lg){ lg.innerHTML = iconHtml(); lg.dataset.icDone='1'; }
   const ll = document.getElementById('lockLogo'); if(ll){ ll.innerHTML = iconHtml(44); ll.dataset.icDone='1'; }
   document.title = branding.systemName;
@@ -11707,7 +11707,7 @@ function invoiceLikeSheet(r, kind){
       </div>
     </div>
     ${r.notes ? `<div class="doc-block" style="margin-bottom:20px;"><div class="lbl">ملاحظات</div><div style="font-size:12px;">${escapeHtml(r.notes)}</div></div>` : ''}
-    <div class="doc-footer">تم إنشاء هذا المستند من سجل الشحنات والمستندات</div>
+    <div class="doc-footer">تم إنشاء هذا المستند من منصة جاهز</div>
   </div>`;
 }
 
