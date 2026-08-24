@@ -4555,6 +4555,7 @@ SWIFT: NBEGEGCX"></textarea>
         <button class="tpl-tab active" data-doc="cert" id="tabCert">شهادة المنشأ (بري)</button>
         <button class="tpl-tab" data-doc="bol" id="tabBol">بوليصة الشحن (بري)</button>
         <button class="tpl-tab" data-doc="certSea" id="tabCertSea">شهادة المنشأ (بحري)</button>
+        <button class="tpl-tab" data-doc="certWordCoded" id="tabCertWordCoded">شهادة منشأ مبنية بالكود</button>
         <button class="tpl-tab" data-doc="bolSea" id="tabBolSea">بوليصة الشحن (بحري)</button>
         <button class="tpl-tab" data-doc="bolCodedFree" id="tabBolCodedFree">بوليصة برية — تخطيط حر</button>
         <button class="tpl-tab" data-doc="bolSeaCodedFree" id="tabBolSeaCodedFree">بوليصة بحرية — تخطيط حر</button>
@@ -7326,9 +7327,10 @@ function fillCertPicker(selected, shipType){
   let opts = '<option value="">— صورة مرفوعة —</option>';
   if(company.certCoded){
     opts += '<option value="coded">شهادة منشأ مبنية بالكود — HTML</option>';
+    opts += '<option value="coded-word">شهادة منشأ مبنية بالكود — نموذج Word</option>';
   }
   sel.innerHTML = opts;
-  if(selected === 'coded' && company.certCoded) sel.value = 'coded';
+  if((selected === 'coded' || selected === 'coded-word') && company.certCoded) sel.value = selected;
 }
 
 // ---- لوحة الإدارة ----
@@ -11308,7 +11310,8 @@ async function saveShipment(status, opts){
     bolTemplateId: (bolPick === 'coded' || bolPick === 'coded-sea') ? null : (bolPick || null),
     bolCoded: bolPick === 'coded',
     bolSeaCoded: bolPick === 'coded-sea',
-    certCoded: certPick === 'coded',
+    certCoded: certPick === 'coded' || certPick === 'coded-word',
+    certWordCoded: certPick === 'coded-word',
     taskRef: document.getElementById('f_taskRef').value.trim(),
     itemDesc: document.getElementById('f_itemDesc').value,
     qty: document.getElementById('f_qty').value,
@@ -11781,7 +11784,7 @@ function fillFormForEdit(r){
   document.getElementById('editId').value = r.id;
   fillFormCompanies(r.companyId);
   fillBolPicker(r.bolCoded ? 'coded' : (r.bolSeaCoded ? 'coded-sea' : r.bolTemplateId), r.shipType);
-  fillCertPicker(r.certCoded ? 'coded' : '', r.shipType);
+  fillCertPicker(r.certCoded ? (r.certWordCoded ? 'coded-word' : 'coded') : '', r.shipType);
   setTimeout(autoOpenAdv, 0);
   document.getElementById('f_shipType').value = r.shipType || 'land';
   document.getElementById('f_taskRef').value = r.taskRef || '';
@@ -12939,6 +12942,21 @@ function bolSheetCoded(r, lang){
 </div>`;
 }
 
+function certSheetWord(r, lang){
+  const c = company || {};
+  const v = certValues(r);
+  const date = v.certDateLeft || r.certDate || r.invoiceDate || '';
+  const transport = r.transportMeans || (isSea(r) ? 'BY SEA' : 'BY LAND');
+  const goods = [r.itemDesc, r.item2Desc, r.item3Desc, r.item4Desc, r.item5Desc].filter(Boolean).join('<br>');
+  const quantity = [r.qty, r.qtyUnit].filter(Boolean).join(' ') || v.packages || '';
+  const logo = c.certLogo || c.logo || '';
+  const stamp = c.certStamp || c.stamp || '';
+  const field = (en, ar, value, cls='') => `<div class="coo-field ${cls}"><b dir="ltr">${en}</b><b dir="rtl">${ar}</b><span>${esc(value||'')}</span></div>`;
+  return `<style>
+    .coo-sheet{width:210mm;min-height:297mm;margin:0 auto;padding:8mm;font-family:Arial,sans-serif;color:#111;background:#fff;font-size:8px;line-height:1.22}.coo-grid{display:grid;grid-template-columns:44% 56%;border:1px solid #111}.coo-field{min-height:16mm;border-bottom:1px solid #111;padding:3mm;position:relative}.coo-field:last-child{border-bottom:0}.coo-field b{display:block;font-size:7px}.coo-field b[dir=rtl]{position:absolute;top:3mm;left:3mm;color:#9b0000}.coo-field span{display:block;margin-top:3mm;white-space:pre-line;font-size:8px}.coo-country{padding:3mm;border-bottom:1px solid #111;min-height:42mm;text-align:right}.coo-country img{max-width:30mm;max-height:18mm;float:left}.coo-meta{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid #111}.coo-meta div{padding:2mm;border-left:1px solid #111}.coo-original{text-align:center;color:#1111cc;font-weight:700;font-size:11px;padding:1mm;border-bottom:1px solid #111}.coo-info{display:grid;grid-template-columns:44% 56%;border:1px solid #111;border-top:0}.coo-goods{display:grid;grid-template-columns:15% 65% 20%;min-height:105mm;border:1px solid #111;border-top:0}.coo-goods>div{padding:2mm;border-left:1px solid #111}.coo-goods h4{margin:0 0 2mm;font-size:7px}.coo-end{text-align:center;font-size:7px;margin-top:3mm}.coo-cert{border:1px solid #111;border-top:0;min-height:56mm;padding:3mm;position:relative}.coo-cert h3{font-size:8px;margin:0 0 4mm}.coo-cert .ar{float:left;text-align:right;max-width:52%;font-weight:700}.coo-sign{position:absolute;bottom:8mm;left:12mm;max-width:34mm;max-height:20mm}.coo-stamp{position:absolute;bottom:7mm;right:10mm;max-width:30mm;max-height:30mm;opacity:.9}.coo-verify{position:absolute;bottom:2mm;right:3mm;font-size:6px}.coo-qr{position:absolute;bottom:3mm;left:4mm;width:13mm;height:13mm;border:2px solid #111;background:repeating-linear-gradient(45deg,#111 0 2px,#fff 2px 4px)}@media print{.coo-sheet{margin:0}@page{size:A4;margin:0}}</style>
+  <div class="doc-sheet coo-sheet"><div class="coo-grid"><div>${field('1. EXPORTER (NAME, ADDRESS, COUNTRY)','المصدر',r.exporter||c.nameAr)}${field('2. CONSIGNEE (NAME, ADDRESS, COUNTRY)','المستورد',r.consignee)}</div><div><div class="coo-country">${logo?`<img src="${logo}" alt="">`:''}<b dir="rtl">${esc(r.countryOrigin||'')}</b><br><b dir="ltr">${esc(c.nameEn||'')}</b></div><div class="coo-meta"><div>Certificate No. <b>${esc(v.certNo)}</b></div><div>Date <b>${esc(date)}</b></div></div><div class="coo-original">ORIGINAL</div></div></div><div class="coo-info"><div>${field("3. Means of Transport: Vessel's Name/Flight No.",'وسيلة النقل',transport)}${field('4. Estimated Date of Departure','التاريخ المتوقع للمغادرة',r.departureDate||r.billDate)}${field('5. Port of Discharge','ميناء / مكان التفريغ',r.portDischarge)}</div><div>${field('6. Country of Final Destination','بلد الوجهة الأخيرة',r.countryFinal||r.portDischarge)}${field('7. Invoice No. and Date','رقم وتاريخ الفاتورة',[v.invoiceNoTop,v.invoiceDateTop].filter(Boolean).join(' / '))}${field('8. Country of Origin of Goods','بلد منشأ البضاعة',r.countryOrigin)}</div></div><div class="coo-goods"><div><h4>9. Marks & Numbers<br>العلامات والأرقام</h4>${esc(r.marksNumbers)}</div><div><h4>10. No. and Kind of Packages, Description of Goods<br>عدد ونوع التعبئة، وصف البضاعة</h4>${goods||esc(r.itemDesc)}<div class="coo-end">---- End of Description ----</div></div><div><h4>11. Quantity & Unit<br>الكمية والوحدة</h4>${esc(quantity)}</div></div><div class="coo-cert"><h3>12. CERTIFICATION BY THE COMPETENT AUTHORITY <span dir="rtl">تصديق جهة الإصدار</span></h3><div>We hereby certify that the goods described in this certificate have been produced in the country shown above according to the available documents and records.</div><div class="ar" dir="rtl">نشهد بأن البضاعة الموضحة في هذه الشهادة من منشأ البلد المذكور أعلاه وفقاً للمستندات والسجلات المتاحة.</div>${stamp?`<img class="coo-stamp" src="${stamp}" alt="">`:''}<div class="coo-sign">Authorized Signatory<br><span dir="rtl">المخول بالتوقيع</span></div><div class="coo-qr"></div><div class="coo-verify">Verify ID: ${esc(v.certNo)}<br>${esc(r.verifyUrl||'')}</div></div></div>`;
+}
+
 function certSheetCoded(r, lang){
   lang = (lang==='en') ? 'en' : 'ar';
   const ltrCls = lang==='en' ? ' bol-ltr' : '';
@@ -13508,7 +13526,10 @@ function docKindIsCoded(r, kind){
 function buildSheetInner(r, kind, lang){
   lang = (lang==='en') ? 'en' : 'ar';
   if(kind==='proforma' || kind==='invoice' || kind==='packing') return invoiceSheet(r, kind, lang);
-  if(kind==='cert') return (!isSea(r) && r.certCoded) ? certSheetCoded(r, lang) : certSheet(r);
+  if(kind==='cert'){
+    if(!isSea(r) && r.certWordCoded) return certSheetWord(r, lang);
+    return (!isSea(r) && r.certCoded) ? certSheetCoded(r, lang) : certSheet(r);
+  }
   if(kind==='bol'){
     if(r.bolCoded) return bolSheetCoded(r, lang);
     if(r.bolSeaCoded) return bolSeaSheetCoded(r, lang);
@@ -14491,8 +14512,22 @@ function tplValuesFor(doc){
 }
 
 function tplRenderCanvas(){
-  document.getElementById('tplCanvasImg').src = tplGetImg(tplCurrentDoc);
   const canvas = document.getElementById('tplCanvas');
+  const preview = canvas.querySelector('.tpl-code-preview');
+  if(tplCurrentDoc === 'certWordCoded'){
+    document.getElementById('tplCanvasImg').style.display = 'none';
+    canvas.querySelectorAll('.tpl-drag-box').forEach(el=>el.remove());
+    const codePreview = preview || document.createElement('div');
+    codePreview.className = 'tpl-code-preview';
+    codePreview.innerHTML = certSheetWord(tplPreviewRecord(), 'ar');
+    if(!preview) canvas.appendChild(codePreview);
+    document.getElementById('tplSide').innerHTML = '<div class="tpl-side-empty"><b>شهادة منشأ مبنية بالكود</b><br>عرض وتحرير شهادة المنشأ حسب تصميم Word. تستخدم بيانات الشحنة الحالية عند الطباعة.</div>';
+    document.querySelectorAll('.tpl-tab').forEach(el=>el.classList.toggle('active', el.dataset.doc===tplCurrentDoc));
+    return;
+  }
+  if(preview) preview.remove();
+  document.getElementById('tplCanvasImg').style.display = '';
+  document.getElementById('tplCanvasImg').src = tplGetImg(tplCurrentDoc);
   canvas.querySelectorAll('.tpl-drag-box').forEach(el=>el.remove());
   const defs = TEMPLATE_FIELDS[tplCurrentDoc];
   const vals = tplValuesFor(tplCurrentDoc);
@@ -14530,7 +14565,7 @@ function tplRenderCanvas(){
     box.addEventListener('click', (e)=>{ e.stopPropagation(); tplSelectField(def.key); });
     canvas.appendChild(box);
   });
-  ['cert','bol','certSea','bolSea','bolCodedFree','bolSeaCodedFree'].forEach(k=>{
+  ['cert','bol','certSea','bolSea','certWordCoded','bolCodedFree','bolSeaCodedFree'].forEach(k=>{
     const el = document.getElementById('tab'+k.charAt(0).toUpperCase()+k.slice(1));
     if(el) el.classList.toggle('active', tplCurrentDoc===k);
   });
@@ -14724,7 +14759,7 @@ function tplEndDrag(e){
 
 document.getElementById('openTplEditorBtn').addEventListener('click', tplOpenEditor);
 document.getElementById('tplCloseBtn').addEventListener('click', tplCloseEditor);
-[['tabCert','cert'],['tabBol','bol'],['tabCertSea','certSea'],['tabBolSea','bolSea'],
+[['tabCert','cert'],['tabBol','bol'],['tabCertSea','certSea'],['tabCertWordCoded','certWordCoded'],['tabBolSea','bolSea'],
  ['tabBolCodedFree','bolCodedFree'],['tabBolSeaCodedFree','bolSeaCodedFree']].forEach(([id,doc])=>{
   const el = document.getElementById(id);
   if(el) el.addEventListener('click', ()=>{ tplCurrentDoc=doc; tplSelectedKey=null; tplRenderCanvas(); });
