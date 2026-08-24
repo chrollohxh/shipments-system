@@ -13497,6 +13497,9 @@ function buildSheetInner(r, kind, lang){
   if(kind==='bol'){
     if(r.bolCoded) return bolSheetCoded(r, lang);
     if(r.bolSeaCoded) return bolSeaSheetCoded(r, lang);
+    // Some legacy shipments have no uploaded B/L background. Use the coded
+    // document instead of allowing a missing legacy image to break the package.
+    if(!company?.bolImg && !company?.bolImgSea) return isSea(r) ? bolSeaSheetCoded(r, lang) : bolSheetCoded(r, lang);
     return bolSheet(r);
   }
   return invoiceLikeSheet(r, kind);
