@@ -1756,6 +1756,7 @@ body.role-staff #navWallet,body.role-staff #navAdmin{display:flex !important;}
   <link rel="stylesheet" href="company-wizard.css">
   <link rel="stylesheet" href="profile-panel.css">
   <link rel="stylesheet" href="modal-layout.css">
+  <link rel="stylesheet" href="shipment-detail.css">
 </head>
 <body>
 
@@ -13940,9 +13941,15 @@ function buildStandaloneDocHtml(bodyHtml, title){
     + '<body><div class="doc-page">' + bodyHtml + '</div></body></html>';
 }
 function openPrintWindow(bodyHtml){
+  const full = buildStandaloneDocHtml(bodyHtml);
+  const blob = new Blob([full], {type:'text/html;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
   const w = window.open('', '_blank');
   if(!w){
-    alert('المتصفح منع فتح نافذة جديدة. من فضلك اسمح بالنوافذ المنبثقة (Pop-ups) لهذا الموقع وحاول تاني.');
+    // لا نترك المستخدم بلا نتيجة عند حظر النوافذ المنبثقة؛ نعرض المستند داخل الموقع.
+    openPdfPreview(url, 'معاينة حزمة المستندات');
+    toast('تم فتح معاينة داخلية لأن المتصفح منع نافذة الطباعة.');
+    setTimeout(()=>{ try{ URL.revokeObjectURL(url); }catch(e){} }, 60000);
     return;
   }
   // شاشة انتظار فورية عشان المستخدم ما يحسش إن البرنامج علّق
@@ -13953,11 +13960,7 @@ function openPrintWindow(bodyHtml){
     w.document.close();
   }catch(e){}
 
-  const full = buildStandaloneDocHtml(bodyHtml);
-
   // Blob URL أسرع بكتير من document.write مع المستندات الكبيرة (صور base64)
-  const blob = new Blob([full], {type:'text/html;charset=utf-8'});
-  const url = URL.createObjectURL(blob);
   w.location.href = url;
 
   const tryPrint = ()=>{ try{ w.focus(); w.print(); }catch(e){} };
@@ -14165,15 +14168,17 @@ document.getElementById('docLangArBtn').addEventListener('click', async ()=>{
   const cb = docLangChoiceCb, r = docLangTargetRecord;
   closeDocLangOverlay();
   if(!r) return;
-  await persistDocLangSilently(r, 'ar');
+  // افتح المستند أثناء تفاعل المستخدم نفسه؛ انتظار الشبكة هنا يجعل المتصفح يمنع نافذة الطباعة.
   if(cb) cb('ar');
+  persistDocLangSilently(r, 'ar');
 });
 document.getElementById('docLangEnBtn').addEventListener('click', async ()=>{
   const cb = docLangChoiceCb, r = docLangTargetRecord;
   closeDocLangOverlay();
   if(!r) return;
-  await persistDocLangSilently(r, 'en');
+  // نفس السبب: حفظ اللغة لا يجب أن يؤخر فتح ملف PDF أو الطباعة.
   if(cb) cb('en');
+  persistDocLangSilently(r, 'en');
 });
 
 // تصغير الصور قبل التخزين عشان الملف ما يكبرش
@@ -14817,5 +14822,6 @@ document.getElementById('tplResetBtn').addEventListener('click', ()=>{
 </script>
 <script src="wizard.js"></script>
 <script src="company-wizard.js"></script>
+<script src="shipment-detail.js"></script>
 </body>
 </html>
