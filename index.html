@@ -1754,6 +1754,7 @@ body.role-staff #navWallet,body.role-staff #navAdmin{display:flex !important;}
 </style>
   <link rel="stylesheet" href="wizard.css">
   <link rel="stylesheet" href="company-wizard.css">
+  <link rel="stylesheet" href="profile-panel.css">
 </head>
 <body>
 
@@ -4358,7 +4359,7 @@ SWIFT: NBEGEGCX"></textarea>
       </div>
       <button class="close-x" id="profileCloseX" data-ic="close"></button>
     </div>
-    <div style="padding:0 26px;">
+    <div class="profile-content">
       <div class="pf-head">
         <div class="pf-avatar" id="pfAvatar">?</div>
         <div class="pf-meta">
@@ -4368,6 +4369,8 @@ SWIFT: NBEGEGCX"></textarea>
         </div>
       </div>
 
+      <div class="profile-layout">
+      <div class="profile-settings">
       <div class="grid">
         <div class="field span2">
           <label>صورة الملف الشخصي</label>
@@ -4407,9 +4410,13 @@ SWIFT: NBEGEGCX"></textarea>
         </div>
       </div>
       <div class="pf-msg" id="pfMsg"></div>
+      </div>
 
-      <div class="section-title">آخر نشاطك</div>
-      <div class="pd-timeline" id="pfTimeline" style="max-height:220px;overflow-y:auto;margin-bottom:16px;"></div>
+      <aside class="profile-activity">
+        <div class="section-title">آخر نشاطك</div>
+        <div class="pd-timeline" id="pfTimeline" style="max-height:220px;overflow-y:auto;margin-bottom:16px;"></div>
+      </aside>
+      </div>
 
       <div class="detail-actions">
         <button class="btn btn-primary" id="pfSaveBtn">حفظ التغييرات</button>
