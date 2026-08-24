@@ -11676,7 +11676,12 @@ function openDetail(id){
   document.getElementById('closeDetail').addEventListener('click', ()=> overlay.classList.remove('open'));
   renderDocOrderList(r);
   wireDocActionButtons(r);
-  document.getElementById('packageBtn').addEventListener('click', ()=> chooseDocLang(r, lang=> mergeFullPackage(r, lang, document.getElementById('packageBtn'))));
+  document.getElementById('packageBtn').addEventListener('click', ()=> chooseDocLang(r, async lang=>{
+    // Keep the original reliable local print flow for the main package action.
+    // The separate "merge in one file" action remains available when needed.
+    printPackage(r, lang);
+    await mergePackageAttachmentsPdf(r);
+  }));
   document.getElementById('mergeAllBtn').addEventListener('click', ()=> chooseDocLang(r, lang=> mergeFullPackage(r, lang)));
   document.getElementById('editBtn').addEventListener('click', ()=>{
     overlay.classList.remove('open');
