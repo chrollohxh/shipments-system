@@ -52,8 +52,7 @@
   append(steps[4], [...takeAdvBlock('تفاصيل الشحن'), ...takeAdvBlock('التحصيل'), ...takeAdvBlock('العنوان البنكي'), ...takeAdvBlock('ملاحظات')]);
   const summary = document.createElement('div');
   summary.className = 'wizard-summary'; summary.id = 'wizardSummary';
-  steps[4].insertBefore(summary, actions);
-  steps[4].append(actions);
+  steps[4].append(summary, actions);
 
   steps.forEach((step, index) => {
     if (index < 4) {
