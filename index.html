@@ -1621,6 +1621,113 @@ table.doc-items td.num{font-family:'IBM Plex Mono',monospace;text-align:left;}
 .doc-block .kv span:last-child{font-family:'IBM Plex Mono',monospace;font-weight:600;}
 .doc-footer{margin-top:30px;padding-top:14px;border-top:1px dashed #D8CFB8;font-size:11px;color:#8a8574;text-align:center;}
 .stamp-note{font-size:10px;color:#B33A3A;font-family:'IBM Plex Mono',monospace;text-align:center;margin-top:14px;border:1px dashed #B33A3A;padding:8px;}
+/* ===== إعادة تصميم واجهة التطبيق الرئيسية ===== */
+:root{
+  --brand:#0E67D8;
+  --brand-dark:#0754B7;
+  --brand-light:#EAF4FF;
+  --teal:#0D8E87;
+  --teal-dark:#08736E;
+  --teal-light:#E4F7F5;
+  --bg:#F4F8FC;
+  --ink:#102A43;
+  --body:#486581;
+  --muted:#7B93A8;
+  --border:#E3EBF3;
+  --border-soft:#EEF3F8;
+  --radius:14px;
+  --radius-lg:22px;
+  --shadow-sm:0 4px 14px rgba(25,65,100,.05);
+  --shadow:0 12px 30px rgba(25,65,100,.09);
+  --shadow-lg:0 22px 45px rgba(9,44,76,.16);
+}
+body{padding-right:258px;background:var(--bg);}
+.app-sidebar{
+  width:258px;padding:26px 15px 16px;overflow:hidden;
+  background:linear-gradient(180deg,#0A3768 0%,#06284E 100%);
+  border-left:0;box-shadow:-12px 0 34px rgba(5,36,70,.16);
+}
+.app-sidebar::after{
+  content:'';position:absolute;width:220px;height:220px;left:-125px;bottom:-88px;
+  border-radius:50%;background:rgba(78,169,255,.13);filter:blur(2px);pointer-events:none;
+}
+.app-sidebar .o-brand{position:relative;z-index:1;margin:0 5px 30px;padding:0;color:#fff;}
+.app-sidebar .o-brand .o-logo{width:46px;height:46px;border-radius:15px;background:#fff;color:var(--brand);box-shadow:0 8px 20px rgba(0,0,0,.16);}
+.app-sidebar .o-brand small{color:#B8D0E8;font-size:10px;}
+.app-sidebar .o-menu{position:relative;z-index:1;gap:5px;}
+.app-sidebar .o-menu button{
+  min-height:45px;padding:11px 13px;color:#C7D9EB;border-radius:12px;
+  font-size:13.5px;font-weight:600;transition:background .2s var(--ease),color .2s var(--ease),transform .2s var(--ease);
+}
+.app-sidebar .o-menu button::after{display:none;}
+.app-sidebar .o-menu button:hover{color:#fff;background:rgba(255,255,255,.10);transform:translateX(-2px);}
+.app-sidebar .o-menu button.active{color:#fff;background:#1677E8;box-shadow:0 8px 18px rgba(0,0,0,.16);}
+.app-sidebar .o-menu button .ic{width:18px;height:18px;margin-inline-end:9px;}
+.app-sidebar .nav-badge{margin-inline-start:auto;background:rgba(255,255,255,.20);color:#fff;border:0;}
+.o-topstrip{height:32px;padding:6px 28px;background:#EAF2FA;color:#66849F;font-size:11px;}
+.o-topstrip .ts-dot{background:#19B887;box-shadow:0 0 0 3px rgba(25,184,135,.14);}
+.o-navbar{min-height:80px;padding:0 28px;background:rgba(255,255,255,.94);border-bottom:1px solid var(--border);box-shadow:0 2px 14px rgba(38,76,110,.03);}
+.o-navbar-right{gap:11px;}
+.o-badge-count{background:var(--brand-light);color:var(--brand);border:0;padding:7px 13px;}
+.o-profile{border-color:var(--border);padding:5px 7px 5px 14px;box-shadow:var(--shadow-sm);}
+.o-avatar{background:linear-gradient(135deg,#1C84F5,#0B5FC1);}
+.o-usermenu{border-color:var(--border);box-shadow:var(--shadow-sm);}
+.o-usermenu.danger{color:#D64C4C;border-color:#F2D6D6;}
+.o-control-panel{padding:22px 30px 8px;background:transparent;border:0;}
+.o-breadcrumb{font-size:25px;color:var(--ink);}
+.o-breadcrumb .crumb-parent,.o-breadcrumb .sep{display:none;}
+.wrap{max-width:1540px;margin:0 auto;padding:14px 30px 64px;}
+.dash-toolbar{margin-bottom:0;}
+.dash-welcome{
+  min-height:158px;margin-bottom:22px;padding:28px 34px;border-radius:22px;
+  background:linear-gradient(118deg,#0A5BBC 0%,#1C8AF1 58%,#63B7FF 100%);
+  box-shadow:0 18px 34px rgba(11,98,199,.22);position:relative;overflow:hidden;
+}
+.dash-welcome::before{content:'';position:absolute;width:270px;height:270px;border:42px solid rgba(255,255,255,.09);border-radius:50%;left:-48px;top:-154px;}
+.dash-welcome::after{content:'';position:absolute;width:125px;height:125px;border:18px solid rgba(255,255,255,.10);border-radius:50%;left:140px;bottom:-78px;}
+.dash-welcome-text{position:relative;z-index:1;}
+.dash-welcome-title{font-size:24px;letter-spacing:-.3px;}
+.dash-welcome-sub{font-size:14px;margin-top:7px;}
+.dash-welcome-ico{position:relative;z-index:1;width:104px;height:104px;border-radius:30px;background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.22);}
+.dash-welcome-ico .ic{width:54px;height:54px;color:#fff;}
+.trust-row{display:none;}
+.kpi-grid{grid-template-columns:repeat(5,minmax(0,1fr));gap:16px;margin-bottom:22px;}
+.kpi{min-height:156px;padding:18px;border-radius:17px;border:1px solid var(--border);box-shadow:var(--shadow-sm);}
+.kpi:hover{transform:translateY(-3px);box-shadow:var(--shadow);border-color:#D6E5F3;}
+.kpi-ico{width:39px;height:39px;margin-bottom:11px;border-radius:12px;}
+.kpi .kpi-label{font-size:12.5px;margin-bottom:7px;}
+.kpi .kpi-val{font-size:25px;}
+.kpi .kpi-sub{font-size:11.5px;}
+.dash-grid{gap:18px;margin-bottom:18px;}
+.dash-card{border-radius:18px;border-color:var(--border);box-shadow:var(--shadow-sm);}
+.dash-card h3{padding:17px 20px;font-size:15px;background:#fff;color:var(--ink);}
+.dash-card > div:not(.chart),.dash-card > ul{padding:18px 20px;}
+.recent-ship-grid{gap:12px;}
+.recent-ship-card{border-radius:13px;background:#F9FCFF;border-color:#E5EDF5;}
+.recent-ship-card:hover{box-shadow:0 8px 18px rgba(24,83,135,.1);}
+.recent-ship-body{padding:14px 15px;}
+.docbar{height:8px;background:#EDF3F8;}
+.donut::after{background:#fff;}
+.dash-empty{padding:30px 10px;}
+.btn-primary{box-shadow:0 7px 16px rgba(14,103,216,.22);}
+.mobile-menu-btn{display:none;}
+@media(max-width:1180px){.kpi-grid{grid-template-columns:repeat(3,minmax(0,1fr));}}
+@media(max-width:860px){
+  body{padding-right:0;}
+  .app-sidebar{transform:translateX(100%);transition:transform .25s var(--ease);}
+  .app-sidebar.is-open{transform:translateX(0);}
+  .o-topstrip{padding-inline:16px;}
+  .o-navbar{padding:0 16px;min-height:70px;}
+  .o-control-panel{padding:18px 16px 6px;}
+  .wrap{padding:12px 16px 50px;}
+  .mobile-menu-btn{display:inline-flex;}
+  .o-badge-count,.o-pname,.o-usermenu.danger{display:none;}
+  .kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
+  .kpi{min-height:142px;padding:14px;}
+  .dash-welcome{min-height:138px;padding:24px;border-radius:18px;}
+  .dash-welcome-title{font-size:20px;}
+}
+@media(max-width:480px){.kpi-grid{grid-template-columns:1fr;}.o-breadcrumb{font-size:21px;}}
 </style>
 </head>
 <body>
@@ -1685,18 +1792,18 @@ table.doc-items td.num{font-family:'IBM Plex Mono',monospace;text-align:left;}
     <div>جاهز<small>طريقك نحو معاملات أكثر دقة</small></div>
   </div>
   <div class="o-menu">
-    <button class="navtab active" data-view="dashboard" id="navDashboard" data-ic="dashboard">لوحة المعلومات</button>
-    <button class="navtab" data-view="tasks" id="navTasks" data-ic="clipboard">المهام <span class="nav-badge tasks" id="tasksBadge">0</span></button>
-    <button class="navtab" data-view="records" id="navRecords" data-ic="box">الشحنات <span class="nav-badge all" id="allBadge">0</span></button>
-    <button class="navtab" data-view="createShip" id="navCreateShip" data-ic="plus">إنشاء شحنة</button>
+    <button class="navtab active" data-view="dashboard" id="navDashboard" data-ic="dashboard">الرئيسية</button>
+    <button class="navtab" data-view="tasks" id="navTasks" data-ic="clipboard">جدول المهام <span class="nav-badge tasks" id="tasksBadge">0</span></button>
+    <button class="navtab" data-view="createShip" id="navCreateShip" data-ic="plus">انشاء عملية</button>
     <button class="navtab" data-view="activityLog" id="navActivityLog" data-ic="history">سجل العمليات</button>
-    <button class="navtab" data-view="review" id="navReview" data-ic="checkCircle" style="display:none;">الاعتماد <span class="nav-badge review" id="reviewBadge">0</span></button>
+    <button class="navtab" data-view="review" id="navReview" data-ic="checkCircle" style="display:none;">الاعتمادات <span class="nav-badge review" id="reviewBadge">0</span></button>
     <button class="navtab" data-view="money" id="navMoney" data-ic="bank" style="display:none;">التحصيل <span class="nav-badge money" id="moneyBadge">0</span></button>
-    <button class="navtab" data-view="wallet" id="navWallet" data-ic="bank" style="display:none;">محفظة العملاء</button>
+    <button class="navtab" data-view="wallet" id="navWallet" data-ic="bank" style="display:none;">محفظة العميل</button>
     <button class="navtab" data-view="admin" id="navAdmin" style="display:none;" data-ic="shield">لوحة التحكم</button>
   </div>
   </aside>
   <div class="o-navbar-right">
+    <button class="o-usermenu mobile-menu-btn" id="mobileMenuBtn" data-ic="list" title="فتح القائمة">القائمة</button>
     <span class="o-badge-count"><b id="totalCount">0</b> شحنة</span>
     <div class="notif-wrap">
       <button class="o-usermenu notif-btn" id="notifBtn" data-ic="warning" title="الإشعارات">
@@ -10436,7 +10543,13 @@ document.querySelectorAll('.ship-tab').forEach(t=>{
   t.addEventListener('click', ()=> switchShipTab(t.dataset.ship));
 });
 document.querySelectorAll('.navtab').forEach(tab=>{
-  tab.addEventListener('click', ()=> switchView(tab.dataset.view));
+  tab.addEventListener('click', ()=>{
+    switchView(tab.dataset.view);
+    document.querySelector('.app-sidebar').classList.remove('is-open');
+  });
+});
+document.getElementById('mobileMenuBtn').addEventListener('click', ()=>{
+  document.querySelector('.app-sidebar').classList.toggle('is-open');
 });
 document.getElementById('crumbRoot').addEventListener('click', ()=> switchView('dashboard'));
 
