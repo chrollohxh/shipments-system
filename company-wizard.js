@@ -22,6 +22,7 @@
     const host = document.getElementById('ceSaveBtn').closest('div[style]');
     if (!host) return;
     overlay.dataset.companyWizardReady = '1';
+    host.classList.add('cew-host');
     const children = [...host.children];
     const initialGrid = children.find(el => el.classList.contains('grid') && el.querySelector('#ce_nameAr'));
     const imagesTitle = children.find(el => el.classList.contains('section-title') && el.textContent.trim() === 'الصور');
@@ -54,7 +55,13 @@
     const append = (panel, ...nodes) => nodes.filter(Boolean).forEach(node => panel.append(node));
     append(panels[0], initialGrid);
     const docs = document.createElement('div'); docs.className = 'cew-upload-card'; append(docs, imagesTitle, imageGrid, brandTitle, brandGrid, brandFiles); panels[1].append(docs);
-    append(panels[2], stampTitle, stampGrid, footerTitle, footerGrid);
+    append(panels[2], stampTitle, stampGrid);
+    const templateActions = document.createElement('div'); templateActions.className = 'cew-template-actions';
+    templateActions.innerHTML = '<span>يمكنك ضبط المقاس هنا، ولتحريك الختم والترويسة بحرية افتح محرر النماذج.</span>';
+    const templateButton = document.getElementById('ceTplEditBtn');
+    if (templateButton) templateActions.append(templateButton);
+    panels[2].append(templateActions);
+    append(panels[2], footerTitle, footerGrid);
     const summary = document.createElement('div'); summary.className = 'cew-summary'; summary.id = 'cewSummary';
     append(panels[3], previewTitle, summary, previewBar, preview, actions);
     panels.forEach((panel, index) => {
