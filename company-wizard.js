@@ -62,7 +62,7 @@
       company.brandLayout = company.brandLayout || {};
       Object.keys(defaults).forEach(key => company.brandLayout[key] = Object.assign({}, defaults[key], company.brandLayout[key] || {}));
       const editor = document.createElement('section'); editor.className = 'cew-layout-editor';
-      editor.innerHTML = `<div class="cew-layout-head"><strong>ضبط مواضع الهوية على المستند</strong><span>اسحب العنصر داخل الورقة، ثم استخدم شريط الحجم. تُحفظ المواضع عند حفظ الشركة.</span></div><div class="cew-layout-body"><div class="cew-layout-canvas"></div><div class="cew-layout-tools"><h4>العنصر المحدد</h4><p id="cewLayoutHint">اختر عنصراً أو اسحبه.</p><div class="cew-layout-select"><button type="button" data-key="logo">الشعار</button><button type="button" data-key="stamp">الختم</button><button type="button" data-key="letterhead">الترويسة</button><button type="button" data-key="footer">التذييل</button></div><div class="cew-layout-size"><label>الحجم: <span class="cew-layout-value">—</span></label><input type="range" min="5" max="100" step="1" disabled></div><button type="button" class="btn btn-ghost btn-small cew-layout-reset">استرجاع موضع العنصر</button></div></div>`;
+      editor.innerHTML = `<div class="cew-layout-head"><strong>استوديو هوية الشركة</strong><span>محرر خاص بالشعارات والأختام والترويسة والتذييل لهذه الشركة فقط. اسحب العنصر ثم غيّر حجمه واحفظ الشركة.</span></div><div class="cew-layout-body"><div class="cew-layout-canvas"></div><div class="cew-layout-tools"><h4>العنصر المحدد</h4><p id="cewLayoutHint">اختر عنصراً أو اسحبه.</p><div class="cew-layout-select"><button type="button" data-key="logo">الشعار</button><button type="button" data-key="stamp">الختم</button><button type="button" data-key="letterhead">الترويسة</button><button type="button" data-key="footer">التذييل</button></div><div class="cew-layout-size"><label>الحجم: <span class="cew-layout-value">—</span></label><input type="range" min="5" max="100" step="1" disabled></div><button type="button" class="btn btn-ghost btn-small cew-layout-reset">استرجاع موضع العنصر</button></div></div>`;
       const canvas = editor.querySelector('.cew-layout-canvas');
       const hint = editor.querySelector('#cewLayoutHint');
       const size = editor.querySelector('input[type="range"]');
@@ -111,13 +111,10 @@
     }
     append(panels[0], initialGrid);
     const docs = document.createElement('div'); docs.className = 'cew-upload-card'; append(docs, imagesTitle, imageGrid, brandTitle, brandGrid, brandFiles); panels[1].append(docs);
-    append(panels[2], stampTitle, stampGrid);
-    const templateActions = document.createElement('div'); templateActions.className = 'cew-template-actions';
-    templateActions.innerHTML = '<span>يمكنك ضبط المقاس هنا، ولتحريك الختم والترويسة بحرية افتح محرر النماذج.</span>';
-    const templateButton = document.getElementById('ceTplEditBtn');
-    if (templateButton) templateActions.append(templateButton);
-    panels[2].append(templateActions);
-    append(panels[2], footerTitle, footerGrid);
+    append(panels[2], stampTitle, stampGrid, footerTitle, footerGrid);
+    // محرر النماذج العام خاص بمستندات الشحن؛ لا نعرضه في إعدادات الشركة.
+    const legacyTemplateButton = document.getElementById('ceTplEditBtn');
+    if (legacyTemplateButton) legacyTemplateButton.style.display = 'none';
     const summary = document.createElement('div'); summary.className = 'cew-summary'; summary.id = 'cewSummary';
     append(panels[3], previewTitle);
     addLayoutEditor(panels[3]);
@@ -159,6 +156,11 @@
     overlay.addEventListener('change', () => { updateSummary(); updateProgress([...panels].findIndex(p => p.classList.contains('active'))); });
     setStep(Number(sessionStorage.getItem(storageKey)) || 1);
   }
-  new MutationObserver(() => { if (overlay.classList.contains('open')) build(); }).observe(overlay, { attributes: true, attributeFilter: ['class'] });
+  new MutationObserver(() => {
+    if (!overlay.classList.contains('open')) return;
+    build();
+    const legacyTemplateButton = document.getElementById('ceTplEditBtn');
+    if (legacyTemplateButton) legacyTemplateButton.style.display = 'none';
+  }).observe(overlay, { attributes: true, attributeFilter: ['class'] });
   if (overlay.classList.contains('open')) build();
 })();
