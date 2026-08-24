@@ -4562,7 +4562,6 @@ SWIFT: NBEGEGCX"></textarea>
       </div>
       <span id="tplEditorTitle" class="tpl-editing"></span>
       <div class="tpl-editor-actions">
-        <label class="tpl-chk">الشركة: <select id="tplCompanyPicker" style="width:auto;min-width:140px;"></select></label>
         <label class="tpl-chk"><input type="checkbox" id="tplPrevChk" checked> معاينة النصوص</label>
         <label class="tpl-chk"><input type="checkbox" id="tplRealChk"> بيانات شحنة حقيقية</label>
         <label class="btn btn-ghost btn-small" style="cursor:pointer;margin:0;">
@@ -12943,20 +12942,19 @@ function bolSheetCoded(r, lang){
 }
 
 function certSheetWord(r, lang){
-  const c = company || {};
+  // This certificate is a standalone document, not a company-branded template.
+  const c = {};
   const v = certValues(r);
   const date = v.certDateLeft || r.certDate || r.invoiceDate || '';
   const transport = r.transportMeans || (isSea(r) ? 'BY SEA' : 'BY LAND');
   const goods = [r.itemDesc, r.item2Desc, r.item3Desc, r.item4Desc, r.item5Desc].filter(Boolean).join('<br>');
   const quantity = [r.qty, r.qtyUnit].filter(Boolean).join(' ') || v.packages || '';
-  const logo = c.certLogo || c.logo || '';
-  const stamp = c.certStamp || c.stamp || '';
-  const logoPos = Object.assign({top:5,left:5,width:36}, c.certWordLogoPos || c.logoPos || {});
-  const stampPos = Object.assign({top:78,left:8,width:18}, c.certStampPos || {});
+  const logo = '';
+  const stamp = '';
   const field = (en, ar, value, cls='') => `<div class="coo-field ${cls}"><b dir="ltr">${en}</b><b dir="rtl">${ar}</b><span>${esc(value||'')}</span></div>`;
   return `<style>
     .coo-sheet{width:210mm;min-height:297mm;margin:0 auto;padding:8mm;font-family:Arial,sans-serif;color:#111;background:#fff;font-size:8px;line-height:1.22;position:relative}.coo-grid{display:grid;grid-template-columns:44% 56%;border:1px solid #111}.coo-field{min-height:16mm;border-bottom:1px solid #111;padding:3mm;position:relative}.coo-field:last-child{border-bottom:0}.coo-field b{display:block;font-size:7px}.coo-field b[dir=rtl]{position:absolute;top:3mm;left:3mm;color:#9b0000}.coo-field span{display:block;margin-top:3mm;white-space:pre-line;font-size:8px}.coo-country{padding:3mm;border-bottom:1px solid #111;min-height:42mm;text-align:right}.coo-meta{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid #111}.coo-meta div{padding:2mm;border-left:1px solid #111}.coo-original{text-align:center;color:#1111cc;font-weight:700;font-size:11px;padding:1mm;border-bottom:1px solid #111}.coo-info{display:grid;grid-template-columns:44% 56%;border:1px solid #111;border-top:0}.coo-goods{display:grid;grid-template-columns:15% 65% 20%;min-height:105mm;border:1px solid #111;border-top:0}.coo-goods>div{padding:2mm;border-left:1px solid #111}.coo-goods h4{margin:0 0 2mm;font-size:7px}.coo-end{text-align:center;font-size:7px;margin-top:3mm}.coo-cert{border:1px solid #111;border-top:0;min-height:56mm;padding:3mm;position:relative}.coo-cert h3{font-size:8px;margin:0 0 4mm}.coo-cert .ar{float:left;text-align:right;max-width:52%;font-weight:700}.coo-sign{position:absolute;bottom:8mm;left:12mm}.coo-logo,.coo-stamp{position:absolute;object-fit:contain;z-index:2}.coo-verify{position:absolute;bottom:2mm;right:3mm;font-size:6px}.coo-qr{position:absolute;bottom:3mm;left:4mm;width:13mm;height:13mm;border:2px solid #111;background:repeating-linear-gradient(45deg,#111 0 2px,#fff 2px 4px)}@media print{.coo-sheet{margin:0}@page{size:A4;margin:0}}</style>
-  <div class="doc-sheet coo-sheet">${logo?`<img class="coo-logo" src="${logo}" style="top:${logoPos.top}%;left:${logoPos.left}%;width:${logoPos.width}%" alt="">`:''}${stamp?`<img class="coo-stamp" src="${stamp}" style="top:${stampPos.top}%;left:${stampPos.left}%;width:${stampPos.width}%" alt="">`:''}<div class="coo-grid"><div>${field('1. EXPORTER (NAME, ADDRESS, COUNTRY)','المصدر',r.exporter||c.nameAr)}${field('2. CONSIGNEE (NAME, ADDRESS, COUNTRY)','المستورد',r.consignee)}</div><div><div class="coo-country"><b dir="rtl">${esc(r.countryOrigin||'')}</b><br><b dir="ltr">${esc(c.nameEn||'')}</b></div><div class="coo-meta"><div>Certificate No. <b>${esc(v.certNo)}</b></div><div>Date <b>${esc(date)}</b></div></div><div class="coo-original">ORIGINAL</div></div></div><div class="coo-info"><div>${field("3. Means of Transport: Vessel's Name/Flight No.",'وسيلة النقل',transport)}${field('4. Estimated Date of Departure','التاريخ المتوقع للمغادرة',r.departureDate||r.billDate)}${field('5. Port of Discharge','ميناء / مكان التفريغ',r.portDischarge)}</div><div>${field('6. Country of Final Destination','بلد الوجهة الأخيرة',r.countryFinal||r.portDischarge)}${field('7. Invoice No. and Date','رقم وتاريخ الفاتورة',[v.invoiceNoTop,v.invoiceDateTop].filter(Boolean).join(' / '))}${field('8. Country of Origin of Goods','بلد منشأ البضاعة',r.countryOrigin)}</div></div><div class="coo-goods"><div><h4>9. Marks & Numbers<br>العلامات والأرقام</h4>${esc(r.marksNumbers)}</div><div><h4>10. No. and Kind of Packages, Description of Goods<br>عدد ونوع التعبئة، وصف البضاعة</h4>${goods||esc(r.itemDesc)}<div class="coo-end">---- End of Description ----</div></div><div><h4>11. Quantity & Unit<br>الكمية والوحدة</h4>${esc(quantity)}</div></div><div class="coo-cert"><h3>12. CERTIFICATION BY THE COMPETENT AUTHORITY <span dir="rtl">تصديق جهة الإصدار</span></h3><div>We hereby certify that the goods described in this certificate have been produced in the country shown above according to the available documents and records.</div><div class="ar" dir="rtl">نشهد بأن البضاعة الموضحة في هذه الشهادة من منشأ البلد المذكور أعلاه وفقاً للمستندات والسجلات المتاحة.</div><div class="coo-sign">Authorized Signatory<br><span dir="rtl">المخول بالتوقيع</span></div><div class="coo-qr"></div><div class="coo-verify">Verify ID: ${esc(v.certNo)}<br>${esc(r.verifyUrl||'')}</div></div></div>`;
+  <div class="doc-sheet coo-sheet"><div class="coo-grid"><div>${field('1. EXPORTER (NAME, ADDRESS, COUNTRY)','المصدر',r.exporter)}${field('2. CONSIGNEE (NAME, ADDRESS, COUNTRY)','المستورد',r.consignee)}</div><div><div class="coo-country"><b dir="rtl">${esc(r.countryOrigin||'')}</b></div><div class="coo-meta"><div>Certificate No. <b>${esc(v.certNo)}</b></div><div>Date <b>${esc(date)}</b></div></div><div class="coo-original">ORIGINAL</div></div></div><div class="coo-info"><div>${field("3. Means of Transport: Vessel's Name/Flight No.",'وسيلة النقل',transport)}${field('4. Estimated Date of Departure','التاريخ المتوقع للمغادرة',r.departureDate||r.billDate)}${field('5. Port of Discharge','ميناء / مكان التفريغ',r.portDischarge)}</div><div>${field('6. Country of Final Destination','بلد الوجهة الأخيرة',r.countryFinal||r.portDischarge)}${field('7. Invoice No. and Date','رقم وتاريخ الفاتورة',[v.invoiceNoTop,v.invoiceDateTop].filter(Boolean).join(' / '))}${field('8. Country of Origin of Goods','بلد منشأ البضاعة',r.countryOrigin)}</div></div><div class="coo-goods"><div><h4>9. Marks & Numbers<br>العلامات والأرقام</h4>${esc(r.marksNumbers)}</div><div><h4>10. No. and Kind of Packages, Description of Goods<br>عدد ونوع التعبئة، وصف البضاعة</h4>${goods||esc(r.itemDesc)}<div class="coo-end">---- End of Description ----</div></div><div><h4>11. Quantity & Unit<br>الكمية والوحدة</h4>${esc(quantity)}</div></div><div class="coo-cert"><h3>12. CERTIFICATION BY THE COMPETENT AUTHORITY <span dir="rtl">تصديق جهة الإصدار</span></h3><div>We hereby certify that the goods described in this certificate have been produced in the country shown above according to the available documents and records.</div><div class="ar" dir="rtl">نشهد بأن البضاعة الموضحة في هذه الشهادة من منشأ البلد المذكور أعلاه وفقاً للمستندات والسجلات المتاحة.</div><div class="coo-sign">Authorized Signatory<br><span dir="rtl">المخول بالتوقيع</span></div><div class="coo-qr"></div><div class="coo-verify">Verify ID: ${esc(v.certNo)}<br>${esc(r.verifyUrl||'')}</div></div></div>`;
 }
 
 function certSheetCoded(r, lang){
@@ -14766,7 +14764,8 @@ document.getElementById('tplCloseBtn').addEventListener('click', tplCloseEditor)
   const el = document.getElementById(id);
   if(el) el.addEventListener('click', ()=>{ tplCurrentDoc=doc; tplSelectedKey=null; tplRenderCanvas(); });
 });
-document.getElementById('tplCompanyPicker').addEventListener('change', function(){
+const tplCompanyPicker = document.getElementById('tplCompanyPicker');
+if(tplCompanyPicker) tplCompanyPicker.addEventListener('change', function(){
   tplSwitchEditorCompany(this.value);
 });
 document.getElementById('tplSaveBtn').addEventListener('click', async ()=>{
