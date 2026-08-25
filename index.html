@@ -1524,14 +1524,14 @@ body.role-viewer #bankAddBtn{display:none !important;}
 #backTop:hover{background:var(--brand-dark);transform:translateY(-4px);box-shadow:0 10px 26px rgba(200,16,46,.5);}
 
 /* template position editor */
-.tpl-editor-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:none;align-items:center;justify-content:center;z-index:100;padding:16px;}
-.tpl-editor-overlay.open{display:flex;}
+.tpl-editor-overlay{position:fixed;inset:0;background:#0d1b2a;display:none;z-index:100;padding:0;}
+.tpl-editor-overlay.open{display:block;}
 .tpl-editor-card{
-  background:var(--white);width:100%;max-width:1200px;height:92vh;
-  display:flex;flex-direction:column;border-radius:4px;overflow:hidden;
-  border:1px solid var(--border);box-shadow:0 10px 40px rgba(0,0,0,.3);
+  background:var(--white);width:100%;max-width:none;height:100dvh;
+  display:flex;flex-direction:column;border-radius:0;overflow:hidden;
+  border:0;box-shadow:none;
 }
-.tpl-editor-header{display:flex;justify-content:space-between;align-items:center;padding:11px 18px;border-bottom:1px solid var(--border);background:#FCFCFC;flex-wrap:wrap;gap:10px;}
+.tpl-editor-header{display:flex;justify-content:space-between;align-items:center;padding:11px 22px;border-bottom:1px solid var(--border);background:#FCFCFC;flex-wrap:wrap;gap:10px;}
 .tpl-tabs{display:flex;gap:4px;}
 .tpl-tab{font-family:inherit;font-weight:500;font-size:13px;padding:6px 14px;border:1px solid var(--border);background:var(--white);cursor:pointer;border-radius:4px;transition:all .12s;color:var(--ink);}
 .tpl-tab:hover{background:var(--row-hover);}
@@ -1560,11 +1560,11 @@ body.role-viewer #bankAddBtn{display:none !important;}
 }
 .tpl-drag-box.has-preview.selected .tpl-prev-txt{color:#0a3f42;}
 .tpl-editor-body{flex:1;display:flex;overflow:hidden;}
-.tpl-editor-canvas-wrap{flex:1;overflow:auto;background:#EDEDED;padding:20px;display:flex;justify-content:center;}
-.tpl-canvas{position:relative;width:700px;flex-shrink:0;height:fit-content;box-shadow:0 2px 10px rgba(0,0,0,.15);}
-.tpl-canvas img{width:100%;display:block;user-select:none;pointer-events:none;}
-.tpl-pdf-preview{width:700px;height:990px;display:block;border:0;background:#fff;pointer-events:none;}
-.tpl-code-preview--pdf{width:700px;background:#fff;}
+.tpl-editor-canvas-wrap{flex:1;overflow:auto;background:#18212c;padding:32px;display:flex;justify-content:center;align-items:flex-start;}
+.tpl-canvas{position:relative;width:794px;height:1123px;flex:0 0 794px;background:#fff;box-shadow:0 14px 36px rgba(0,0,0,.38);}
+.tpl-canvas img{width:100%;height:100%;display:block;object-fit:fill;user-select:none;pointer-events:none;}
+.tpl-pdf-preview,.tpl-pdf-background{width:794px;height:1123px;display:block;border:0;background:#fff;pointer-events:none;object-fit:fill;}
+.tpl-code-preview--pdf{width:794px;height:1123px;background:#fff;}
 .tpl-drag-box{
   position:absolute;border:1px dashed var(--o-primary);background:rgba(113,75,103,0.10);
   cursor:move;font-family:inherit;font-size:10px;color:var(--o-primary);
@@ -4564,14 +4564,15 @@ SWIFT: NBEGEGCX"></textarea>
         <button class="tpl-tab" data-doc="bolSeaCodedFree" id="tabBolSeaCodedFree">بوليصة بحرية — تخطيط حر</button>
       </div>
       <span id="tplEditorTitle" class="tpl-editing"></span>
+      <span class="tpl-editing">استوديو المستندات · A4 ثابت</span>
       <div class="tpl-editor-actions">
         <label class="tpl-chk"><input type="checkbox" id="tplPrevChk" checked> معاينة النصوص</label>
         <label class="tpl-chk"><input type="checkbox" id="tplRealChk"> بيانات شحنة حقيقية</label>
         <label class="btn btn-ghost btn-small" style="cursor:pointer;margin:0;">
-          استبدال النموذج
+          استبدال ملف النموذج
           <input type="file" id="tplImgFile" accept=".pdf,image/*" style="display:none;">
         </label>
-        <button class="btn btn-ghost btn-small" id="tplImgReset">النموذج الأصلي</button>
+        <button class="btn btn-ghost btn-small" id="tplImgReset">استرجاع الملف الأصلي</button>
         <button class="btn btn-ghost btn-small" id="tplResetBtn">استرجاع الافتراضي</button>
         <button class="btn btn-ghost btn-small" id="tplPreviewBtn" data-ic="eye">معاينة النموذج</button>
         <button class="btn btn-primary btn-small" id="tplSaveBtn">حفظ الأماكن</button>
@@ -7427,7 +7428,10 @@ function renderBolTplAdmin(){
   el.innerHTML = certPdfCard + codedCard + codedSeaCard + uploadedCards;
   hydrateIcons(el);
 
-  document.getElementById('bcEditBtn').addEventListener('click', openBolCodedModal);
+  document.getElementById('bcEditBtn').addEventListener('click', ()=>{
+    tplCurrentDoc = 'bolCodedFree'; tplSelectedKey = null; tplOpenEditor();
+    document.getElementById('tplEditorTitle').textContent = 'استوديو: بوليصة برية مبنية بالكود';
+  });
   document.getElementById('bcFieldsBtn').addEventListener('click', ()=>{
     tplCurrentDoc = 'bolCodedFree'; tplSelectedKey = null; tplOpenEditor();
   });
@@ -7436,7 +7440,10 @@ function renderBolTplAdmin(){
     await saveCompany();
     renderBolTplAdmin(); fillBolPicker();
   });
-  document.getElementById('bsEditBtn').addEventListener('click', openBolSeaCodedModal);
+  document.getElementById('bsEditBtn').addEventListener('click', ()=>{
+    tplCurrentDoc = 'bolSeaCodedFree'; tplSelectedKey = null; tplOpenEditor();
+    document.getElementById('tplEditorTitle').textContent = 'استوديو: بوليصة بحرية مبنية بالكود';
+  });
   document.getElementById('bsFieldsBtn').addEventListener('click', ()=>{
     tplCurrentDoc = 'bolSeaCodedFree'; tplSelectedKey = null; tplOpenEditor();
   });
@@ -7449,6 +7456,7 @@ function renderBolTplAdmin(){
     tplCurrentDoc = 'certWordCoded';
     tplSelectedKey = null;
     tplOpenEditor();
+    document.getElementById('tplEditorTitle').textContent = 'استوديو: منشأ دبي التجريبي ليس للتداول';
   };
   document.getElementById('certPdfFieldsBtn').addEventListener('click', openCertPdfEditor);
   document.getElementById('certPdfEditBtn').addEventListener('click', openCertPdfEditor);
@@ -7466,7 +7474,7 @@ function renderBolTplAdmin(){
     const id = card.dataset.id;
     if(id === 'coded' || id === 'coded-sea' || id === 'cert-pdf') return;
     const t = bolTplById(id);
-    card.querySelector('.bt-edit').addEventListener('click', ()=> openBolTplModal(id));
+    card.querySelector('.bt-edit').addEventListener('click', ()=> openBolTplFields(id));
     const fieldsBtn = card.querySelector('.bt-fields');
     if(fieldsBtn) fieldsBtn.addEventListener('click', ()=> openBolTplFields(id));
     const assetsBtn = card.querySelector('.bt-assets');
@@ -12194,6 +12202,7 @@ certWordTemplate.positions = certWordTemplate.positions || {};
 certWordTemplate.images = certWordTemplate.images || {};
 function saveCertWordTemplate(){ localStorage.setItem('certWordPdfTemplate', JSON.stringify(certWordTemplate)); }
 function certWordFieldPos(def){ return Object.assign({}, def, certWordTemplate.positions[def.key]||{}); }
+function certPdfBackground(){ return certWordTemplate.background || ''; }
 
 // ===== تخطيط حر لحقول البوليصة المبنية بالكود (برية/بحرية) — بديل عن الشبكة الثابتة =====
 // المواضع الافتراضية مقيسة فعلياً من التخطيط الثابت الحالي (getBoundingClientRect على صفحة A4 حقيقية)
@@ -13024,6 +13033,7 @@ function certSheetWordBlank(){
 
 function certSheetWordPdf(r){
   const vals = certValues(r);
+  const background = certPdfBackground();
   const layers = CERT_WORD_FIELDS.map(def=>{
     const p = certWordFieldPos(def);
     if(def.type === 'image'){
@@ -13035,10 +13045,10 @@ function certSheetWordPdf(r){
   }).join('');
   return `<style>
     .cert-pdf-sheet{position:relative;width:210mm;height:297mm;margin:0 auto;background:#fff;overflow:hidden}
-    .cert-pdf-sheet embed{display:block;width:100%;height:100%;border:0}
+    .cert-pdf-sheet embed,.cert-pdf-sheet>img{display:block;width:100%;height:100%;border:0;object-fit:fill}
     .cert-pdf-field,.cert-pdf-image{position:absolute;z-index:2;line-height:1.25;white-space:pre-wrap;object-fit:contain}
     @media print{@page{size:A4;margin:0}.cert-pdf-sheet{margin:0}}
-  </style><div class="cert-pdf-sheet"><embed src="redit-certificate.pdf#view=FitH&toolbar=0&navpanes=0" type="application/pdf">${layers}</div>`;
+  </style><div class="cert-pdf-sheet">${background ? `<img src="${background}" alt="">` : '<embed src="redit-certificate.pdf#view=FitH&toolbar=0&navpanes=0" type="application/pdf">'}${layers}</div>`;
 }
 
 function certSheetWord(r, lang){
@@ -14622,7 +14632,10 @@ function tplRenderCanvas(){
     const codePreview = preview || document.createElement('div');
     codePreview.className = 'tpl-code-preview tpl-code-preview--pdf';
     // Keep the approved source PDF intact instead of recreating its table layout in HTML.
-    codePreview.innerHTML = '<embed class="tpl-pdf-preview" src="redit-certificate.pdf#view=FitH&toolbar=0&navpanes=0" type="application/pdf">';
+    const background = certPdfBackground();
+    codePreview.innerHTML = background
+      ? `<img class="tpl-pdf-background" src="${background}" alt="خلفية شهادة المنشأ">`
+      : '<embed class="tpl-pdf-preview" src="redit-certificate.pdf#view=FitH&toolbar=0&navpanes=0" type="application/pdf">';
     if(!preview) canvas.appendChild(codePreview);
     const vals = certValues(tplPreviewRecord());
     CERT_WORD_FIELDS.forEach(def=>{
@@ -14978,6 +14991,24 @@ document.getElementById('tplSaveBtn').addEventListener('click', async ()=>{
 document.getElementById('tplImgFile').addEventListener('change', async function(){
   const f = this.files && this.files[0];
   if(!f) return;
+  if(tplCurrentDoc === 'certWordCoded'){
+    if(!confirm('استبدال خلفية شهادة المنشأ بهذا الملف؟\n\nسيُثبت الملف على مقاس A4، وستبقى الحقول والصور في أماكنها الحالية.')){ this.value=''; return; }
+    try{
+      certWordTemplate.background = await fileToScaledDataURL(f, 2200, {format:'jpeg', quality:0.92});
+      saveCertWordTemplate();
+      tplRenderCanvas();
+      toast('تم استبدال خلفية شهادة المنشأ وتثبيتها على A4 ✓');
+    }catch(e){
+      alert('تعذّر تجهيز الملف. ارفع PDF أو صورة واضحة من صفحة واحدة.\n\nالسبب: ' + (e.message||e));
+    }
+    this.value='';
+    return;
+  }
+  if(tplCurrentDoc === 'bolCodedFree' || tplCurrentDoc === 'bolSeaCodedFree'){
+    alert('هذا نموذج مبني بالكود ولا يملك خلفية ملف مستقلة. عدّل الحقول من الاستوديو أو أنشئ نموذجاً بصورة/‏PDF من زر «نموذج بوليصة جديد».');
+    this.value='';
+    return;
+  }
   const label = TPL_LABELS[tplCurrentDoc] || 'النموذج';
   if(!confirm(`استبدال نموذج "${label}" بالصورة دي؟\n\nأماكن الحقول هتفضل زي ما هي — تقدر تظبطها بعد الاستبدال.`)){ this.value=''; return; }
   try{
@@ -15004,6 +15035,19 @@ document.getElementById('tplImgFile').addEventListener('change', async function(
   this.value='';
 });
 document.getElementById('tplImgReset').addEventListener('click', async ()=>{
+  if(tplCurrentDoc === 'certWordCoded'){
+    if(!certWordTemplate.background){ toast('الخلفية الأصلية مستخدمة بالفعل.'); return; }
+    if(!confirm('استرجاع ملف شهادة المنشأ الأصلي؟ ستبقى الحقول والصور في أماكنها.')) return;
+    delete certWordTemplate.background;
+    saveCertWordTemplate();
+    tplRenderCanvas();
+    toast('تم استرجاع ملف شهادة المنشأ الأصلي ✓');
+    return;
+  }
+  if(tplCurrentDoc === 'bolCodedFree' || tplCurrentDoc === 'bolSeaCodedFree'){
+    toast('هذا النموذج مبني بالكود ولا يملك ملف خلفية لاسترجاعه.');
+    return;
+  }
   const label = TPL_LABELS[tplCurrentDoc] || 'النموذج';
   const has = company[TPL_IMG_KEY[tplCurrentDoc]];
   if(!has){ alert('النموذج ده أصلي بالفعل.'); return; }
