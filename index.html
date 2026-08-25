@@ -14083,7 +14083,8 @@ table.bol4-foot td{border:1px solid #999;padding:4px;}
 
 function buildStandaloneDocHtml(bodyHtml, title){
   return '<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8">'
-    + '<title>' + (title||'مستند الشحنة') + '</title><style>' + PRINT_STYLES + '</style></head>'
+    // المعاينة تُفتح من Blob؛ base يضمن تحميل خلفية PDF والصور النسبية من الموقع الحقيقي.
+    + '<base href="' + location.origin + '/"><title>' + (title||'مستند الشحنة') + '</title><style>' + PRINT_STYLES + '</style></head>'
     + '<body><div class="doc-page">' + bodyHtml + '</div></body></html>';
 }
 function openPrintWindow(bodyHtml){
