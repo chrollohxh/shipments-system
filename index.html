@@ -3146,10 +3146,10 @@ body.role-staff #navWallet,body.role-staff #navAdmin{display:flex !important;}
     <!-- النماذج والمستندات -->
     <div class="admin-pane" id="apaneTemplates">
       <div class="dash-card" style="margin-bottom:18px;">
-        <h3>نماذج بوالص الشحن <span class="cnt" id="bolTplCount"></span></h3>
+        <h3>نماذج المستندات والشحن <span class="cnt" id="bolTplCount"></span></h3>
         <div>
           <p style="font-size:14px;margin-top:0;">
-            أضف نماذج بوالص متعددة (بري أو بحري) واختر النموذج المناسب عند إنشاء كل شحنة.
+            أدر نماذج البوالص وشهادة المنشأ: عدّل الحقول والصور، حرّكها، وأوقف النموذج أو احذف تعديلاته.
           </p>
           <button class="btn btn-primary btn-small" id="addBolTplBtn" data-ic="plus">نموذج بوليصة جديد</button>
           <div id="bolTplList" class="bt-list"></div>
@@ -4559,7 +4559,6 @@ SWIFT: NBEGEGCX"></textarea>
         <button class="tpl-tab active" data-doc="cert" id="tabCert">شهادة المنشأ (بري)</button>
         <button class="tpl-tab" data-doc="bol" id="tabBol">بوليصة الشحن (بري)</button>
         <button class="tpl-tab" data-doc="certSea" id="tabCertSea">شهادة المنشأ (بحري)</button>
-        <button class="tpl-tab" data-doc="certWordCoded" id="tabCertWordCoded">شهادة منشأ مبنية بالكود</button>
         <button class="tpl-tab" data-doc="bolSea" id="tabBolSea">بوليصة الشحن (بحري)</button>
         <button class="tpl-tab" data-doc="bolCodedFree" id="tabBolCodedFree">بوليصة برية — تخطيط حر</button>
         <button class="tpl-tab" data-doc="bolSeaCodedFree" id="tabBolSeaCodedFree">بوليصة بحرية — تخطيط حر</button>
@@ -7331,10 +7330,11 @@ function fillCertPicker(selected, shipType){
   let opts = '<option value="">— صورة مرفوعة —</option>';
   if(company.certCoded){
     opts += '<option value="coded">شهادة منشأ مبنية بالكود — HTML</option>';
-    opts += '<option value="coded-word">شهادة منشأ مبنية بالكود — نموذج Word</option>';
+    if(certWordTemplate.active !== false) opts += '<option value="coded-word">شهادة منشأ - PDF قابل للتحرير</option>';
   }
   sel.innerHTML = opts;
-  if((selected === 'coded' || selected === 'coded-word') && company.certCoded) sel.value = selected;
+  if(selected === 'coded' && company.certCoded) sel.value = selected;
+  if(selected === 'coded-word' && company.certCoded && certWordTemplate.active !== false) sel.value = selected;
 }
 
 // ---- لوحة الإدارة ----
@@ -7342,7 +7342,7 @@ function renderBolTplAdmin(){
   const el = document.getElementById('bolTplList');
   if(!el) return;
   const cnt = document.getElementById('bolTplCount');
-  if(cnt) cnt.textContent = `(${bolTemplates.length + 1})`;
+  if(cnt) cnt.textContent = `(${bolTemplates.length + 2})`;
 
   // كارتا النماذج المبنية بالكود — دايماً أول عنصرين في نفس القائمة
   const codedCard = `
@@ -7377,6 +7377,23 @@ function renderBolTplAdmin(){
       </div>
     </div>`;
 
+  const certPdfCard = `
+    <div class="bt-card ${certWordTemplate.active===false?'off':''}" data-id="cert-pdf">
+      <div class="bt-thumb">${icon('file',20)}</div>
+      <div class="bt-info">
+        <div class="bt-name">شهادة المنشأ - PDF قابل للتحرير
+          ${certWordTemplate.active===false ? '<span class="cc-off">موقوف</span>' : ''}
+        </div>
+        <div class="bt-sub">مستند مستقل · خلفية PDF أصلية · ${Object.keys(certWordTemplate.positions||{}).length} طبقة نص أو صورة</div>
+      </div>
+      <div class="cc-acts">
+        <button class="btn btn-ghost btn-small" id="certPdfFieldsBtn">إدارة الحقول</button>
+        <button class="btn btn-ghost btn-small" id="certPdfEditBtn">تعديل</button>
+        <button class="btn btn-ghost btn-small" id="certPdfToggleBtn">${certWordTemplate.active===false?'تفعيل':'إيقاف'}</button>
+        <button class="btn btn-danger btn-small" id="certPdfClearBtn">حذف التعديلات</button>
+      </div>
+    </div>`;
+
   const uploadedCards = bolTemplates.map(t=>{
     const isCoded = t.kind === 'coded';
     const sub = isCoded
@@ -7404,7 +7421,7 @@ function renderBolTplAdmin(){
     </div>`;
   }).join('');
 
-  el.innerHTML = codedCard + codedSeaCard + uploadedCards;
+  el.innerHTML = certPdfCard + codedCard + codedSeaCard + uploadedCards;
   hydrateIcons(el);
 
   document.getElementById('bcEditBtn').addEventListener('click', openBolCodedModal);
@@ -7424,6 +7441,22 @@ function renderBolTplAdmin(){
     company.bolSeaCoded = !company.bolSeaCoded;
     await saveCompany();
     renderBolTplAdmin(); fillBolPicker();
+  });
+  const openCertPdfEditor = ()=>{
+    tplCurrentDoc = 'certWordCoded';
+    tplSelectedKey = null;
+    tplOpenEditor();
+  };
+  document.getElementById('certPdfFieldsBtn').addEventListener('click', openCertPdfEditor);
+  document.getElementById('certPdfEditBtn').addEventListener('click', openCertPdfEditor);
+  document.getElementById('certPdfToggleBtn').addEventListener('click', ()=>{
+    certWordTemplate.active = certWordTemplate.active === false;
+    saveCertWordTemplate(); renderBolTplAdmin();
+  });
+  document.getElementById('certPdfClearBtn').addEventListener('click', ()=>{
+    if(!confirm('حذف كل أماكن الحقول والصور المضافة من شهادة المنشأ؟ سيبقى ملف PDF الأصلي.')) return;
+    certWordTemplate = {positions:{},images:{},active:certWordTemplate.active};
+    saveCertWordTemplate(); renderBolTplAdmin(); toast('تم حذف تعديلات شهادة المنشأ.');
   });
 
   el.querySelectorAll('.bt-card[data-id]').forEach(card=>{
