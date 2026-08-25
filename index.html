@@ -1532,7 +1532,7 @@ body.role-viewer #bankAddBtn{display:none !important;}
   border:0;box-shadow:none;
 }
 .tpl-editor-header{display:flex;justify-content:space-between;align-items:center;padding:11px 22px;border-bottom:1px solid var(--border);background:#FCFCFC;flex-wrap:wrap;gap:10px;}
-.tpl-tabs{display:flex;gap:4px;}
+.tpl-tabs{display:none;}
 .tpl-tab{font-family:inherit;font-weight:500;font-size:13px;padding:6px 14px;border:1px solid var(--border);background:var(--white);cursor:pointer;border-radius:4px;transition:all .12s;color:var(--ink);}
 .tpl-tab:hover{background:var(--row-hover);}
 .tpl-tab.active{background:var(--o-primary);color:#fff;border-color:var(--o-primary);}
@@ -1576,6 +1576,10 @@ body.role-viewer #bankAddBtn{display:none !important;}
 .tpl-drag-box .rs{position:absolute;bottom:-4px;left:-4px;width:9px;height:9px;background:var(--o-accent);cursor:nwse-resize;border-radius:2px;}
 .tpl-editor-side{width:270px;flex-shrink:0;border-right:1px solid var(--border);padding:16px;overflow-y:auto;background:#FCFCFC;}
 .tpl-side-empty{font-size:13px;color:var(--muted);text-align:center;margin-top:40px;}
+.tpl-layer-list{border-top:1px solid var(--border);margin-top:16px;padding-top:14px;}
+.tpl-layer-row{display:flex;align-items:center;gap:6px;padding:7px 0;border-bottom:1px solid #edf1f5;}
+.tpl-layer-name{flex:1;border:0;background:transparent;text-align:right;font:inherit;font-size:12px;color:var(--ink);cursor:pointer;padding:3px 0;}
+.tpl-layer-name:disabled{color:var(--muted);text-decoration:line-through;cursor:default;}
 .tpl-side-field label{font-size:11.5px;font-weight:700;color:var(--muted);display:block;margin:10px 0 3px;}
 .tpl-side-field input{width:100%;padding:5px 8px;border:1px solid var(--border);border-radius:4px;font-size:13px;font-family:'IBM Plex Mono',monospace;background:var(--white);}
 .tpl-side-field input:focus{outline:none;border-color:var(--o-primary);}
@@ -12203,6 +12207,24 @@ certWordTemplate.images = certWordTemplate.images || {};
 function saveCertWordTemplate(){ localStorage.setItem('certWordPdfTemplate', JSON.stringify(certWordTemplate)); }
 function certWordFieldPos(def){ return Object.assign({}, def, certWordTemplate.positions[def.key]||{}); }
 function certPdfBackground(){ return certWordTemplate.background || ''; }
+function certWordLayerList(){
+  return `<div class="tpl-layer-list"><div class="tpl-side-title">الحقول والطبقات</div><div class="tpl-side-sub">أخفِ ما لا تحتاجه، ويمكن تفعيله لاحقاً.</div>${CERT_WORD_FIELDS.map(def=>{
+    const hidden = !!certWordFieldPos(def).hidden;
+    return `<div class="tpl-layer-row"><button type="button" class="tpl-layer-name" data-select-field="${def.key}" ${hidden?'disabled':''}>${escapeHtml(def.label)}</button><button type="button" class="btn btn-ghost btn-small tpl-layer-toggle" data-toggle-field="${def.key}">${hidden?'تفعيل':'إخفاء'}</button></div>`;
+  }).join('')}</div>`;
+}
+function wireCertWordLayerList(scope){
+  scope.querySelectorAll('[data-toggle-field]').forEach(btn=>btn.addEventListener('click', ()=>{
+    const def = CERT_WORD_FIELDS.find(f=>f.key===btn.dataset.toggleField);
+    if(!def) return;
+    const pos = certWordFieldPos(def);
+    certWordTemplate.positions[def.key] = Object.assign({}, pos, {hidden: !pos.hidden});
+    saveCertWordTemplate();
+    tplSelectedKey = null;
+    tplRenderCanvas();
+  }));
+  scope.querySelectorAll('[data-select-field]').forEach(btn=>btn.addEventListener('click', ()=>tplSelectField(btn.dataset.selectField)));
+}
 
 // ===== تخطيط حر لحقول البوليصة المبنية بالكود (برية/بحرية) — بديل عن الشبكة الثابتة =====
 // المواضع الافتراضية مقيسة فعلياً من التخطيط الثابت الحالي (getBoundingClientRect على صفحة A4 حقيقية)
@@ -13036,6 +13058,7 @@ function certSheetWordPdf(r){
   const background = certPdfBackground();
   const layers = CERT_WORD_FIELDS.map(def=>{
     const p = certWordFieldPos(def);
+    if(p.hidden) return '';
     if(def.type === 'image'){
       const src = certWordTemplate.images[def.key];
       return src ? `<img class="cert-pdf-image" src="${src}" style="top:${p.top}%;left:${p.left}%;width:${p.width}%">` : '';
@@ -14641,6 +14664,7 @@ function tplRenderCanvas(){
     const vals = certValues(tplPreviewRecord());
     CERT_WORD_FIELDS.forEach(def=>{
       const pos = certWordFieldPos(def);
+      if(pos.hidden) return;
       const box = document.createElement('div');
       box.className = 'tpl-drag-box'; box.dataset.key = def.key;
       box.style.top = pos.top+'%'; box.style.left = pos.left+'%'; box.style.width = pos.width+'%';
@@ -14652,7 +14676,7 @@ function tplRenderCanvas(){
         const txt = (vals[def.key]||'').toString().trim();
         if(tplShowPreview && txt){
           box.classList.add('has-preview');
-          box.innerHTML = `<span class="tpl-prev-txt" style="font-size:${((pos.size||10)*(700/794)).toFixed(1)}px;font-family:'${pos.font||'Arial'}',Arial,Tahoma,sans-serif;font-weight:${pos.weight||700};text-align:${pos.align||(pos.ltr?'left':'right')};direction:${pos.ltr?'ltr':'rtl'}">${escapeHtml(txt)}</span>`;
+          box.innerHTML = `<span class="tpl-prev-txt" style="font-size:${(pos.size||10).toFixed(1)}px;font-family:'${pos.font||'Arial'}',Arial,Tahoma,sans-serif;font-weight:${pos.weight||700};text-align:${pos.align||(pos.ltr?'left':'right')};direction:${pos.ltr?'ltr':'rtl'}">${escapeHtml(txt)}</span>`;
         }else box.textContent = def.label;
       }
       if(def.key === tplSelectedKey) box.classList.add('selected');
@@ -14660,7 +14684,9 @@ function tplRenderCanvas(){
       box.addEventListener('click', e=>{ e.stopPropagation(); tplSelectField(def.key); });
       canvas.appendChild(box);
     });
-    document.getElementById('tplSide').innerHTML = '<div class="tpl-side-empty"><b>محرر طبقات شهادة المنشأ</b><br>اسحب أي حقل أو صورة فوق ملف PDF الأصلي. تحفظ الأماكن مستقلة عن الشركات.</div>';
+    const certSide = document.getElementById('tplSide');
+    certSide.innerHTML = '<div class="tpl-side-empty"><b>محرر طبقات شهادة المنشأ</b><br>اسحب أي حقل أو صورة فوق ملف PDF الأصلي. تحفظ الأماكن مستقلة عن الشركات.</div>' + certWordLayerList();
+    wireCertWordLayerList(certSide);
     document.querySelectorAll('.tpl-tab').forEach(el=>el.classList.toggle('active', el.dataset.doc===tplCurrentDoc));
     if(tplSelectedKey) tplSelectField(tplSelectedKey);
     return;
@@ -14747,7 +14773,8 @@ function tplSelectField(key){
       <div class="tpl-side-field"><label>من أعلى (Top %)</label><input type="number" step="0.1" id="tplInTop" value="${pos.top}"></div>
       <div class="tpl-side-field"><label>من اليسار (Left %)</label><input type="number" step="0.1" id="tplInLeft" value="${pos.left}"></div>
       <div class="tpl-side-field"><label>العرض (Width %)</label><input type="number" step="0.1" id="tplInWidth" value="${pos.width}"></div>
-      <button type="button" class="btn btn-danger btn-small" id="certWordImageRemove">حذف الصورة</button>`;
+      <button type="button" class="btn btn-danger btn-small" id="certWordImageRemove">حذف الصورة</button>${certWordLayerList()}`;
+    wireCertWordLayerList(side);
     const applyImagePos = ()=>tplSetPosition(key, {
       top:parseFloat(document.getElementById('tplInTop').value),
       left:parseFloat(document.getElementById('tplInLeft').value),
@@ -14807,8 +14834,9 @@ function tplSelectField(key){
         <button type="button" class="tpl-align-btn ${currentAlign==='center'?'active':''}" data-align="center">وسط</button>
         <button type="button" class="tpl-align-btn ${currentAlign==='left'?'active':''}" data-align="left">يسار</button>
       </div>
-    </div>
+    </div>${tplCurrentDoc === 'certWordCoded' ? certWordLayerList() : ''}
   `;
+  if(tplCurrentDoc === 'certWordCoded') wireCertWordLayerList(side);
   const apply = ()=>{
     const top = parseFloat(document.getElementById('tplInTop').value);
     const left = parseFloat(document.getElementById('tplInLeft').value);
@@ -14856,7 +14884,7 @@ function tplSetPosition(key, patch){
       box.style.top = p.top+'%'; box.style.left = p.left+'%'; box.style.width = p.width+'%';
       const sp = box.querySelector('.tpl-prev-txt');
       if(sp){
-        sp.style.fontSize = ((p.size||10)*(700/794)).toFixed(1)+'px';
+        sp.style.fontSize = (p.size||10).toFixed(1)+'px';
         sp.style.fontFamily = `'${p.font||'Arial'}',Arial,Tahoma,sans-serif`;
         sp.style.fontWeight = p.weight||700;
         sp.style.textAlign = p.align || (p.ltr?'left':'right');
