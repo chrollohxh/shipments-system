@@ -7331,10 +7331,12 @@ function fillCertPicker(selected, shipType){
   if(company.certCoded){
     opts += '<option value="coded">شهادة منشأ مبنية بالكود — HTML</option>';
     if(certWordTemplate.active !== false) opts += '<option value="coded-word">شهادة منشأ - PDF قابل للتحرير</option>';
+    opts += '<option value="dubai-word-online">منشأ دبي التجريبي ليس للتداول</option>';
   }
   sel.innerHTML = opts;
   if(selected === 'coded' && company.certCoded) sel.value = selected;
   if(selected === 'coded-word' && company.certCoded && certWordTemplate.active !== false) sel.value = selected;
+  if(selected === 'dubai-word-online' && company.certCoded) sel.value = selected;
 }
 
 // ---- لوحة الإدارة ----
