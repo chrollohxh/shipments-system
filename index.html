@@ -7331,12 +7331,12 @@ function fillCertPicker(selected, shipType){
   if(company.certCoded){
     opts += '<option value="coded">شهادة منشأ مبنية بالكود — HTML</option>';
     if(certWordTemplate.active !== false) opts += '<option value="coded-word">شهادة منشأ - PDF قابل للتحرير</option>';
-    opts += '<option value="dubai-word-online">منشأ دبي التجريبي ليس للتداول</option>';
   }
+  if(st === 'sea') opts += '<option value="dubai-word-online">منشأ دبي التجريبي ليس للتداول</option>';
   sel.innerHTML = opts;
   if(selected === 'coded' && company.certCoded) sel.value = selected;
   if(selected === 'coded-word' && company.certCoded && certWordTemplate.active !== false) sel.value = selected;
-  if(selected === 'dubai-word-online' && company.certCoded) sel.value = selected;
+  if(selected === 'dubai-word-online' && st === 'sea') sel.value = selected;
 }
 
 // ---- لوحة الإدارة ----
@@ -7344,7 +7344,8 @@ function renderBolTplAdmin(){
   const el = document.getElementById('bolTplList');
   if(!el) return;
   const cnt = document.getElementById('bolTplCount');
-  if(cnt) cnt.textContent = `(${bolTemplates.length + 2})`;
+  // تشمل القائمة: شهادة PDF المستقلة، بوليصتي الكود، وقالب Word البحري التجريبي.
+  if(cnt) cnt.textContent = `(${bolTemplates.length + 4})`;
 
   // كارتا النماذج المبنية بالكود — دايماً أول عنصرين في نفس القائمة
   const codedCard = `
@@ -7396,6 +7397,18 @@ function renderBolTplAdmin(){
       </div>
     </div>`;
 
+  const dubaiWordCard = `
+    <div class="bt-card" data-id="dubai-word-online">
+      <div class="bt-thumb">${icon('doc',20)}</div>
+      <div class="bt-info">
+        <div class="bt-name">منشأ دبي التجريبي ليس للتداول</div>
+        <div class="bt-sub">بحري فقط · Word Online · قالب مستقل</div>
+      </div>
+      <div class="cc-acts">
+        <button class="btn btn-ghost btn-small" id="dubaiWordEditBtn">تعديل في Word Online</button>
+      </div>
+    </div>`;
+
   const uploadedCards = bolTemplates.map(t=>{
     const isCoded = t.kind === 'coded';
     const sub = isCoded
@@ -7423,7 +7436,7 @@ function renderBolTplAdmin(){
     </div>`;
   }).join('');
 
-  el.innerHTML = certPdfCard + codedCard + codedSeaCard + uploadedCards;
+  el.innerHTML = certPdfCard + codedCard + codedSeaCard + dubaiWordCard + uploadedCards;
   hydrateIcons(el);
 
   document.getElementById('bcEditBtn').addEventListener('click', openBolCodedModal);
@@ -7460,10 +7473,13 @@ function renderBolTplAdmin(){
     certWordTemplate = {positions:{},images:{},active:certWordTemplate.active};
     saveCertWordTemplate(); renderBolTplAdmin(); toast('تم حذف تعديلات شهادة المنشأ.');
   });
+  document.getElementById('dubaiWordEditBtn').addEventListener('click', ()=>{
+    window.open('/api/microsoft?action=open-test', '_blank', 'noopener');
+  });
 
   el.querySelectorAll('.bt-card[data-id]').forEach(card=>{
     const id = card.dataset.id;
-    if(id === 'coded' || id === 'coded-sea') return;
+    if(id === 'coded' || id === 'coded-sea' || id === 'cert-pdf' || id === 'dubai-word-online') return;
     const t = bolTplById(id);
     card.querySelector('.bt-edit').addEventListener('click', ()=> openBolTplModal(id));
     const fieldsBtn = card.querySelector('.bt-fields');
@@ -7687,23 +7703,10 @@ function renderCertTplAdmin(){
         <button class="btn btn-ghost btn-small" id="cfEditBtn">تعديل</button>
         <button class="btn btn-ghost btn-small" id="cfToggleBtn">${company.certCoded?'إيقاف':'تفعيل'}</button>
       </div>
-    </div>
-    <div class="bt-card" data-id="dubai-word-online">
-      <div class="bt-thumb">${icon('doc',20)}</div>
-      <div class="bt-info">
-        <div class="bt-name">منشأ دبي التجريبي ليس للتداول</div>
-        <div class="bt-sub">بحري · Word Online · قالب مستقل</div>
-      </div>
-      <div class="cc-acts">
-        <button class="btn btn-ghost btn-small" id="dubaiWordEditBtn">تعديل في Word Online</button>
-      </div>
     </div>`;
   hydrateIcons(el);
 
   document.getElementById('cfEditBtn').addEventListener('click', openCertCodedModal);
-  document.getElementById('dubaiWordEditBtn').addEventListener('click', ()=>{
-    window.open('/api/microsoft?action=open-test', '_blank', 'noopener');
-  });
   document.getElementById('cfToggleBtn').addEventListener('click', async ()=>{
     company.certCoded = !company.certCoded;
     await saveCompany();
@@ -11364,6 +11367,7 @@ async function saveShipment(status, opts){
     bolSeaCoded: bolPick === 'coded-sea',
     certCoded: certPick === 'coded' || certPick === 'coded-word',
     certWordCoded: certPick === 'coded-word',
+    certDubaiWordOnline: certPick === 'dubai-word-online',
     taskRef: document.getElementById('f_taskRef').value.trim(),
     itemDesc: document.getElementById('f_itemDesc').value,
     qty: document.getElementById('f_qty').value,
@@ -11836,7 +11840,7 @@ function fillFormForEdit(r){
   document.getElementById('editId').value = r.id;
   fillFormCompanies(r.companyId);
   fillBolPicker(r.bolCoded ? 'coded' : (r.bolSeaCoded ? 'coded-sea' : r.bolTemplateId), r.shipType);
-  fillCertPicker(r.certCoded ? (r.certWordCoded ? 'coded-word' : 'coded') : '', r.shipType);
+  fillCertPicker(r.certDubaiWordOnline ? 'dubai-word-online' : (r.certCoded ? (r.certWordCoded ? 'coded-word' : 'coded') : ''), r.shipType);
   setTimeout(autoOpenAdv, 0);
   document.getElementById('f_shipType').value = r.shipType || 'land';
   document.getElementById('f_taskRef').value = r.taskRef || '';
