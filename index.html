@@ -7678,19 +7678,32 @@ function renderCertTplAdmin(){
     <div class="bt-card ${company.certCoded?'':'off'}" data-id="coded">
       <div class="bt-thumb">${icon('doc',20)}</div>
       <div class="bt-info">
-        <div class="bt-name">منشأ دبي التجريبي ليس للتداول
+        <div class="bt-name">شهادة منشأ مبنية بالكود
           ${company.certCoded ? '' : '<span class="cc-off">موقوف</span>'}
         </div>
-        <div class="bt-sub">بحري · نموذج قابل للتعديل${company.certCompanyName ? ' · '+escapeHtml(company.certCompanyName) : ''}</div>
+        <div class="bt-sub">بري · HTML/CSS${company.certCompanyName ? ' · '+escapeHtml(company.certCompanyName) : ''}</div>
       </div>
       <div class="cc-acts">
         <button class="btn btn-ghost btn-small" id="cfEditBtn">تعديل</button>
         <button class="btn btn-ghost btn-small" id="cfToggleBtn">${company.certCoded?'إيقاف':'تفعيل'}</button>
       </div>
+    </div>
+    <div class="bt-card" data-id="dubai-word-online">
+      <div class="bt-thumb">${icon('doc',20)}</div>
+      <div class="bt-info">
+        <div class="bt-name">منشأ دبي التجريبي ليس للتداول</div>
+        <div class="bt-sub">بحري · Word Online · قالب مستقل</div>
+      </div>
+      <div class="cc-acts">
+        <button class="btn btn-ghost btn-small" id="dubaiWordEditBtn">تعديل في Word Online</button>
+      </div>
     </div>`;
   hydrateIcons(el);
 
   document.getElementById('cfEditBtn').addEventListener('click', openCertCodedModal);
+  document.getElementById('dubaiWordEditBtn').addEventListener('click', ()=>{
+    window.open('/api/microsoft?action=open-test', '_blank', 'noopener');
+  });
   document.getElementById('cfToggleBtn').addEventListener('click', async ()=>{
     company.certCoded = !company.certCoded;
     await saveCompany();
