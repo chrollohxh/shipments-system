@@ -1563,6 +1563,8 @@ body.role-viewer #bankAddBtn{display:none !important;}
 .tpl-editor-canvas-wrap{flex:1;overflow:auto;background:#EDEDED;padding:20px;display:flex;justify-content:center;}
 .tpl-canvas{position:relative;width:700px;flex-shrink:0;height:fit-content;box-shadow:0 2px 10px rgba(0,0,0,.15);}
 .tpl-canvas img{width:100%;display:block;user-select:none;pointer-events:none;}
+.tpl-pdf-preview{width:700px;height:990px;display:block;border:0;background:#fff;}
+.tpl-code-preview--pdf{width:700px;background:#fff;}
 .tpl-drag-box{
   position:absolute;border:1px dashed var(--o-primary);background:rgba(113,75,103,0.10);
   cursor:move;font-family:inherit;font-size:10px;color:var(--o-primary);
@@ -14528,35 +14530,11 @@ function tplRenderCanvas(){
     document.getElementById('tplCanvasImg').style.display = 'none';
     canvas.querySelectorAll('.tpl-drag-box').forEach(el=>el.remove());
     const codePreview = preview || document.createElement('div');
-    codePreview.className = 'tpl-code-preview';
-    codePreview.innerHTML = certSheetWord(tplPreviewRecord(), 'ar');
+    codePreview.className = 'tpl-code-preview tpl-code-preview--pdf';
+    // Keep the approved source PDF intact instead of recreating its table layout in HTML.
+    codePreview.innerHTML = '<embed class="tpl-pdf-preview" src="redit-certificate.pdf#view=FitH&toolbar=0&navpanes=0" type="application/pdf">';
     if(!preview) canvas.appendChild(codePreview);
-    document.getElementById('tplSide').innerHTML = `<div class="tpl-side-empty"><b>محرر شهادة المنشأ</b><br>فعّل التحرير ثم اضغط على أي عنوان أو عبارة داخل الورقة لتعديلها مباشرة. لا يرتبط هذا القالب بالشركات.</div>
-      <div class="tpl-side-actions">
-        <button class="btn btn-primary btn-small" id="certWordEditBtn">تفعيل تحرير النصوص</button>
-        <button class="btn btn-ghost btn-small" id="certWordSaveBtn">حفظ تعديلات القالب</button>
-        <button class="btn btn-danger btn-small" id="certWordResetBtn">استرجاع القالب الأصلي</button>
-      </div>`;
-    const sheet = codePreview.querySelector('.coo-blank');
-    document.getElementById('certWordEditBtn').addEventListener('click', ()=>{
-      sheet.contentEditable = 'true';
-      sheet.spellcheck = false;
-      sheet.style.outline = '2px dashed #1d73f6';
-      sheet.focus();
-      toast('وضع التحرير مفعّل: عدّل النصوص مباشرة داخل الورقة.');
-    });
-    document.getElementById('certWordSaveBtn').addEventListener('click', ()=>{
-      localStorage.setItem('certWordCodedMarkup', sheet.innerHTML);
-      sheet.removeAttribute('contenteditable');
-      sheet.style.outline = '';
-      toast('تم حفظ تعديلات قالب الشهادة ✓');
-    });
-    document.getElementById('certWordResetBtn').addEventListener('click', ()=>{
-      if(!confirm('استرجاع قالب شهادة المنشأ الأصلي؟ سيتم حذف التعديلات المحفوظة لهذا القالب فقط.')) return;
-      localStorage.removeItem('certWordCodedMarkup');
-      tplRenderCanvas();
-      toast('تم استرجاع القالب الأصلي.');
-    });
+    document.getElementById('tplSide').innerHTML = '<div class="tpl-side-empty"><b>قالب شهادة المنشأ الأصلي</b><br>تظهر الآن صفحة PDF الأصلية كما هي، لذلك لا تتغير الجداول أو الخطوط أو المسافات. هذا القالب مستقل تماماً عن الشركات.</div>';
     document.querySelectorAll('.tpl-tab').forEach(el=>el.classList.toggle('active', el.dataset.doc===tplCurrentDoc));
     return;
   }
@@ -14796,7 +14774,7 @@ document.getElementById('openTplEditorBtn').addEventListener('click', tplOpenEdi
 document.getElementById('tplCloseBtn').addEventListener('click', tplCloseEditor);
 document.getElementById('tplPreviewBtn').addEventListener('click', ()=>{
   if(tplCurrentDoc === 'certWordCoded'){
-    openPrintWindow(certSheetWordBlank());
+    window.open('redit-certificate.pdf', '_blank', 'noopener');
     return;
   }
   const record = tplPreviewRecord();
