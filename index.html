@@ -13048,7 +13048,7 @@ function certSheetWordPdf(r){
     .cert-pdf-sheet embed,.cert-pdf-sheet>img{display:block;width:100%;height:100%;border:0;object-fit:fill}
     .cert-pdf-field,.cert-pdf-image{position:absolute;z-index:2;line-height:1.25;white-space:pre-wrap;object-fit:contain}
     @media print{@page{size:A4;margin:0}.cert-pdf-sheet{margin:0}}
-  </style><div class="cert-pdf-sheet">${background ? `<img src="${background}" alt="">` : '<embed src="redit-certificate.pdf#view=FitH&toolbar=0&navpanes=0" type="application/pdf">'}${layers}</div>`;
+  </style><div class="cert-pdf-sheet">${background ? `<img src="${background}" alt="">` : '<embed src="dubai-certificate-template.pdf#view=FitH&toolbar=0&navpanes=0" type="application/pdf">'}${layers}</div>`;
 }
 
 function certSheetWord(r, lang){
@@ -14636,7 +14636,7 @@ function tplRenderCanvas(){
     const background = certPdfBackground();
     codePreview.innerHTML = background
       ? `<img class="tpl-pdf-background" src="${background}" alt="خلفية شهادة المنشأ">`
-      : '<embed class="tpl-pdf-preview" src="redit-certificate.pdf#view=FitH&toolbar=0&navpanes=0" type="application/pdf">';
+      : '<embed class="tpl-pdf-preview" src="dubai-certificate-template.pdf#view=FitH&toolbar=0&navpanes=0" type="application/pdf">';
     if(!preview) canvas.appendChild(codePreview);
     const vals = certValues(tplPreviewRecord());
     CERT_WORD_FIELDS.forEach(def=>{
