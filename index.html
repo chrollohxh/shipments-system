@@ -2255,7 +2255,7 @@ body.role-staff #navWallet,body.role-staff #navAdmin{display:flex !important;}
         <select id="f_bolTemplate"></select>
       </div>
       <div class="field span2" id="f_certTemplateWrap">
-        <label>نموذج شهادة المنشأ (شحن بري فقط)</label>
+        <label>نموذج شهادة المنشأ (شحن بحري فقط)</label>
         <select id="f_certTemplate"></select>
       </div>
       <div class="field span2">
@@ -7326,7 +7326,7 @@ function fillCertPicker(selected, shipType){
   const wrap = document.getElementById('f_certTemplateWrap');
   if(!sel) return;
   const st = shipType || document.getElementById('f_shipType')?.value || 'land';
-  if(wrap) wrap.style.display = (st === 'sea') ? 'none' : '';
+  if(wrap) wrap.style.display = (st === 'sea') ? '' : 'none';
   let opts = '<option value="">— صورة مرفوعة —</option>';
   if(company.certCoded){
     opts += '<option value="coded">شهادة منشأ مبنية بالكود — HTML</option>';
@@ -7678,10 +7678,10 @@ function renderCertTplAdmin(){
     <div class="bt-card ${company.certCoded?'':'off'}" data-id="coded">
       <div class="bt-thumb">${icon('doc',20)}</div>
       <div class="bt-info">
-        <div class="bt-name">شهادة منشأ مبنية بالكود
+        <div class="bt-name">منشأ دبي التجريبي ليس للتداول
           ${company.certCoded ? '' : '<span class="cc-off">موقوف</span>'}
         </div>
-        <div class="bt-sub">بري · HTML/CSS${company.certCompanyName ? ' · '+escapeHtml(company.certCompanyName) : ''}</div>
+        <div class="bt-sub">بحري · نموذج قابل للتعديل${company.certCompanyName ? ' · '+escapeHtml(company.certCompanyName) : ''}</div>
       </div>
       <div class="cc-acts">
         <button class="btn btn-ghost btn-small" id="cfEditBtn">تعديل</button>
