@@ -1571,6 +1571,8 @@ body.role-viewer #bankAddBtn{display:none !important;}
   padding:2px 4px;overflow:hidden;white-space:nowrap;user-select:none;touch-action:none;border-radius:2px;
 }
 .tpl-drag-box.selected{border-color:var(--o-accent);background:rgba(1,126,132,0.14);color:var(--o-accent);z-index:5;}
+.tpl-pdf-image-box{min-height:36px;background:rgba(255,255,255,.72);text-align:center;white-space:normal;display:flex;align-items:center;justify-content:center;}
+.tpl-pdf-image-box img{display:block;width:100%;height:auto;max-height:140px;object-fit:contain;pointer-events:none;}
 .tpl-drag-box .rs{position:absolute;bottom:-4px;left:-4px;width:9px;height:9px;background:var(--o-accent);cursor:nwse-resize;border-radius:2px;}
 .tpl-editor-side{width:270px;flex-shrink:0;border-right:1px solid var(--border);padding:16px;overflow-y:auto;background:#FCFCFC;}
 .tpl-side-empty{font-size:13px;color:var(--muted);text-align:center;margin-top:40px;}
@@ -12131,6 +12133,30 @@ TEMPLATE_FIELDS.certSea = [
 
 TEMPLATE_FIELDS.bolSea  = TEMPLATE_FIELDS.bol.map(d=>Object.assign({}, d));
 
+// طبقات شهادة المنشأ المستقلة: تحفظ في المتصفح ولا ترتبط بأي شركة.
+const CERT_WORD_FIELDS = [
+  {key:'exporter',label:'المصدر',top:5,left:6,width:36,size:10,ltr:true},
+  {key:'consignee',label:'المستورد',top:16,left:6,width:36,size:10,ltr:true},
+  {key:'certNo',label:'رقم الشهادة',top:23,left:52,width:18,size:9,ltr:true},
+  {key:'certDateLeft',label:'تاريخ الشهادة',top:23,left:8,width:18,size:9,ltr:true},
+  {key:'transportMeans',label:'وسيلة النقل',top:29,left:53,width:39,size:9,ltr:true},
+  {key:'finalDestination',label:'بلد الوجهة النهائية',top:29,left:8,width:38,size:9,ltr:true},
+  {key:'invoiceNoTop',label:'رقم الفاتورة',top:35,left:53,width:19,size:9,ltr:true},
+  {key:'invoiceDateTop',label:'تاريخ الفاتورة',top:35,left:8,width:19,size:9,ltr:true},
+  {key:'originCountry',label:'بلد المنشأ',top:41,left:53,width:38,size:9,ltr:true},
+  {key:'marks',label:'العلامات والأرقام',top:48,left:8,width:15,size:9,ltr:true},
+  {key:'goodsLine1',label:'وصف البضاعة',top:48,left:27,width:48,size:9,ltr:true},
+  {key:'totalQty',label:'الكمية والوحدة',top:48,left:79,width:14,size:9,ltr:true},
+  {key:'logoImage',label:'الشعار / صورة',top:2,left:77,width:15,size:10,type:'image'},
+  {key:'stampImage',label:'الختم / التوقيع',top:84,left:12,width:18,size:10,type:'image'}
+];
+TEMPLATE_FIELDS.certWordCoded = CERT_WORD_FIELDS;
+let certWordTemplate = (()=>{ try{return JSON.parse(localStorage.getItem('certWordPdfTemplate')||'{}')}catch(e){return {}} })();
+certWordTemplate.positions = certWordTemplate.positions || {};
+certWordTemplate.images = certWordTemplate.images || {};
+function saveCertWordTemplate(){ localStorage.setItem('certWordPdfTemplate', JSON.stringify(certWordTemplate)); }
+function certWordFieldPos(def){ return Object.assign({}, def, certWordTemplate.positions[def.key]||{}); }
+
 // ===== تخطيط حر لحقول البوليصة المبنية بالكود (برية/بحرية) — بديل عن الشبكة الثابتة =====
 // المواضع الافتراضية مقيسة فعلياً من التخطيط الثابت الحالي (getBoundingClientRect على صفحة A4 حقيقية)
 // حتى يكون الشكل عند أول تفعيل مطابقاً لما هو معروض اليوم تماماً. isBlock=true تعني أن الحقل
@@ -12205,6 +12231,7 @@ function certSeaValues(r){
 
 function certValues(r){
   return {
+    exporter: r.exporter || '',
     certNo: r.certNo,
     invoiceDateTop: fmtDate(r.invoiceDate),
     invoiceNoTop: r.invoiceNo,
@@ -12232,6 +12259,10 @@ function certValues(r){
     packages: r.numberOfPackages,
     netWeight: r.netWeight,
     totalQty: r.totalQty,
+    transportMeans: r.transportMeans || r.vesselName || '',
+    finalDestination: r.finalDestination || r.countryDestination || '',
+    originCountry: r.countryOrigin || '',
+    marks: r.numberOfPackages || '',
     certDateLeft: fmtDate(r.certDate),
     certDateRight: fmtDate(r.certDate),
   };
@@ -12318,6 +12349,7 @@ function bolSeaValues(r){
 
 let templatePositions = {cert:{}, bol:{}, certSea:{}, bolSea:{}, bolCodedFree:{}, bolSeaCodedFree:{}};
 function fieldPos(docType, def){
+  if(docType === 'certWordCoded') return certWordFieldPos(def);
   // أثناء تحرير نموذج بوليصة معيّن: مواضعه هو
   if(activeBolTplId && (docType === 'bol' || docType === 'bolSea')){
     const t = bolTplById(activeBolTplId);
@@ -12952,8 +12984,27 @@ function certSheetWordBlank(){
   <div class="doc-sheet coo-blank">${saved || `<style>.coo-blank{font-size:10px}.coo-blank .en{font-size:10px;letter-spacing:.1px}.coo-blank .ar{font-size:9px}.coo-blank .goods h4{font-size:10px;line-height:1.25}.coo-blank .end{font-size:9px}.coo-blank .cert h3{font-size:10px}.coo-blank .cert p{font-size:9px}.coo-blank .sig{font-size:9px}.coo-blank .verify{font-size:8px}</style><div class="row top"><div class="parties"><div class="cell"><div class="en">1. EXPORTER (NAME, ADDRESS, COUNTRY)</div><div class="ar">المصدر</div></div><div class="cell"><div class="en">2. CONSIGNEE (NAME, ADDRESS, COUNTRY)</div><div class="ar">المستورد</div></div></div><div><div class="cell country"><div class="ar">دولة الإمارات العربية المتحدة</div></div><div class="meta"><div>Certificate No.</div><div>Date</div></div><div class="original">ORIGINAL</div></div></div><div class="row info"><div class="stack"><div class="cell"><div class="en">3. Means of Transport: Vessel's Name/Flight No.</div><div class="ar">وسيلة النقل</div></div><div class="cell"><div class="en">4. Estimated Date of Departure</div><div class="ar">التاريخ المتوقع للمغادرة</div></div><div class="cell"><div class="en">5. Port of Discharge</div><div class="ar">ميناء / مكان التفريغ</div></div></div><div class="stack"><div class="cell"><div class="en">6. Country of Final Destination</div><div class="ar">بلد الوجهة الأخيرة</div></div><div class="cell"><div class="en">7. Invoice No. and Date</div><div class="ar">رقم وتاريخ الفاتورة</div></div><div class="cell"><div class="en">8. Country of Origin of Goods</div><div class="ar">بلد منشأ البضاعة</div></div></div></div><div class="goods"><div><h4>9. Marks &amp; Numbers</h4><span class="ar">العلامات والأرقام</span></div><div><h4>10. No. and Kind of Packages, Description of Goods</h4><span class="ar">عدد ونوع التعبئة، وصف البضاعة</span><div class="end">---- End of Description ----</div></div><div><h4>11. Quantity &amp; Unit</h4><span class="ar">الكمية والوحدة</span></div></div><div class="cert"><h3>12. CERTIFICATION BY THE COMPETENT AUTHORITY <span dir="rtl">تصديق جهة الإصدار</span></h3><p>We hereby certify that the goods described in this certificate have been produced in the country shown above according to the available documents and records.</p><p class="arabic">نشهد بأن البضاعة الموضحة في هذه الشهادة من منشأ البلد المذكور أعلاه وفقاً للمستندات والسجلات المتاحة.</p><div class="sig">Authorized Signatory<br><span dir="rtl">المخول بالتوقيع</span></div><div class="qr"></div><div class="verify">For online verification of this certificate,<br>Verify ID: __________</div></div>`}</div>`;
 }
 
+function certSheetWordPdf(r){
+  const vals = certValues(r);
+  const layers = CERT_WORD_FIELDS.map(def=>{
+    const p = certWordFieldPos(def);
+    if(def.type === 'image'){
+      const src = certWordTemplate.images[def.key];
+      return src ? `<img class="cert-pdf-image" src="${src}" style="top:${p.top}%;left:${p.left}%;width:${p.width}%">` : '';
+    }
+    const text = vals[def.key];
+    return text ? `<div class="cert-pdf-field" style="top:${p.top}%;left:${p.left}%;width:${p.width}%;font-size:${p.size||10}px;font-family:${escapeHtml(p.font||'Arial')};font-weight:${p.weight||700};text-align:${p.align||(p.ltr?'left':'right')};direction:${p.ltr?'ltr':'rtl'}">${escapeHtml(text)}</div>` : '';
+  }).join('');
+  return `<style>
+    .cert-pdf-sheet{position:relative;width:210mm;height:297mm;margin:0 auto;background:#fff;overflow:hidden}
+    .cert-pdf-sheet embed{display:block;width:100%;height:100%;border:0}
+    .cert-pdf-field,.cert-pdf-image{position:absolute;z-index:2;line-height:1.25;white-space:pre-wrap;object-fit:contain}
+    @media print{@page{size:A4;margin:0}.cert-pdf-sheet{margin:0}}
+  </style><div class="cert-pdf-sheet"><embed src="redit-certificate.pdf#view=FitH&toolbar=0&navpanes=0" type="application/pdf">${layers}</div>`;
+}
+
 function certSheetWord(r, lang){
-  return certSheetWordBlank();
+  return certSheetWordPdf(r);
   // This certificate is a standalone document, not a company-branded template.
   const c = {};
   const v = certValues(r);
@@ -14516,6 +14567,7 @@ let tplShowPreview = true;
 
 function tplValuesFor(doc){
   const r = tplPreviewRecord();
+  if(doc==='certWordCoded') return certValues(r);
   if(doc==='certSea') return certSeaValues(r);
   if(doc==='cert')    return certValues(r);
   if(doc==='bolSeaCodedFree') return bolSeaValues(r);
@@ -14534,8 +14586,31 @@ function tplRenderCanvas(){
     // Keep the approved source PDF intact instead of recreating its table layout in HTML.
     codePreview.innerHTML = '<embed class="tpl-pdf-preview" src="redit-certificate.pdf#view=FitH&toolbar=0&navpanes=0" type="application/pdf">';
     if(!preview) canvas.appendChild(codePreview);
-    document.getElementById('tplSide').innerHTML = '<div class="tpl-side-empty"><b>قالب شهادة المنشأ الأصلي</b><br>تظهر الآن صفحة PDF الأصلية كما هي، لذلك لا تتغير الجداول أو الخطوط أو المسافات. هذا القالب مستقل تماماً عن الشركات.</div>';
+    const vals = certValues(tplPreviewRecord());
+    CERT_WORD_FIELDS.forEach(def=>{
+      const pos = certWordFieldPos(def);
+      const box = document.createElement('div');
+      box.className = 'tpl-drag-box'; box.dataset.key = def.key;
+      box.style.top = pos.top+'%'; box.style.left = pos.left+'%'; box.style.width = pos.width+'%';
+      if(def.type === 'image'){
+        const src = certWordTemplate.images[def.key];
+        box.classList.add('tpl-pdf-image-box');
+        box.innerHTML = src ? `<img src="${src}" alt="${escapeHtml(def.label)}">` : `<span>${escapeHtml(def.label)}<br>اضغط للإضافة</span>`;
+      }else{
+        const txt = (vals[def.key]||'').toString().trim();
+        if(tplShowPreview && txt){
+          box.classList.add('has-preview');
+          box.innerHTML = `<span class="tpl-prev-txt" style="font-size:${((pos.size||10)*(700/794)).toFixed(1)}px;font-family:'${pos.font||'Arial'}',Arial,Tahoma,sans-serif;font-weight:${pos.weight||700};text-align:${pos.align||(pos.ltr?'left':'right')};direction:${pos.ltr?'ltr':'rtl'}">${escapeHtml(txt)}</span>`;
+        }else box.textContent = def.label;
+      }
+      if(def.key === tplSelectedKey) box.classList.add('selected');
+      box.addEventListener('pointerdown', tplStartDrag);
+      box.addEventListener('click', e=>{ e.stopPropagation(); tplSelectField(def.key); });
+      canvas.appendChild(box);
+    });
+    document.getElementById('tplSide').innerHTML = '<div class="tpl-side-empty"><b>محرر طبقات شهادة المنشأ</b><br>اسحب أي حقل أو صورة فوق ملف PDF الأصلي. تحفظ الأماكن مستقلة عن الشركات.</div>';
     document.querySelectorAll('.tpl-tab').forEach(el=>el.classList.toggle('active', el.dataset.doc===tplCurrentDoc));
+    if(tplSelectedKey) tplSelectField(tplSelectedKey);
     return;
   }
   if(preview) preview.remove();
@@ -14598,6 +14673,31 @@ function tplSelectField(key){
   const currentFont = pos.font || 'Arial';
   const currentWeight = pos.weight || 700;
   const side = document.getElementById('tplSide');
+  if(tplCurrentDoc === 'certWordCoded' && def.type === 'image'){
+    side.innerHTML = `
+      <div class="tpl-side-title">${escapeHtml(def.label)}</div>
+      <div class="tpl-side-sub">صورة مستقلة فوق القالب الأصلي</div>
+      <div class="tpl-side-field"><label>رفع صورة</label><input type="file" id="certWordImageFile" accept="image/*"></div>
+      <div class="tpl-side-field"><label>من أعلى (Top %)</label><input type="number" step="0.1" id="tplInTop" value="${pos.top}"></div>
+      <div class="tpl-side-field"><label>من اليسار (Left %)</label><input type="number" step="0.1" id="tplInLeft" value="${pos.left}"></div>
+      <div class="tpl-side-field"><label>العرض (Width %)</label><input type="number" step="0.1" id="tplInWidth" value="${pos.width}"></div>
+      <button type="button" class="btn btn-danger btn-small" id="certWordImageRemove">حذف الصورة</button>`;
+    const applyImagePos = ()=>tplSetPosition(key, {
+      top:parseFloat(document.getElementById('tplInTop').value),
+      left:parseFloat(document.getElementById('tplInLeft').value),
+      width:parseFloat(document.getElementById('tplInWidth').value)
+    });
+    ['tplInTop','tplInLeft','tplInWidth'].forEach(id=>document.getElementById(id).addEventListener('input',applyImagePos));
+    document.getElementById('certWordImageFile').addEventListener('change', async function(){
+      const file = this.files && this.files[0]; if(!file) return;
+      certWordTemplate.images[key] = await fileToScaledDataURL(file, 900, {format:'png',quality:0.92});
+      saveCertWordTemplate(); tplRenderCanvas(); tplSelectField(key); toast('تمت إضافة الصورة ✓');
+    });
+    document.getElementById('certWordImageRemove').addEventListener('click', ()=>{
+      delete certWordTemplate.images[key]; saveCertWordTemplate(); tplRenderCanvas(); tplSelectField(key);
+    });
+    return;
+  }
   side.innerHTML = `
     <div class="tpl-side-title">${escapeHtml(def.label)}</div>
     <div class="tpl-side-sub">${key}</div>
@@ -14679,6 +14779,25 @@ function tplSelectField(key){
 }
 
 function tplSetPosition(key, patch){
+  if(tplCurrentDoc === 'certWordCoded'){
+    const def = TEMPLATE_FIELDS.certWordCoded.find(d=>d.key===key);
+    const current = certWordFieldPos(def);
+    certWordTemplate.positions[key] = Object.assign({}, current, patch);
+    saveCertWordTemplate();
+    const box = document.querySelector(`.tpl-drag-box[data-key="${key}"]`);
+    if(box){
+      const p = certWordTemplate.positions[key];
+      box.style.top = p.top+'%'; box.style.left = p.left+'%'; box.style.width = p.width+'%';
+      const sp = box.querySelector('.tpl-prev-txt');
+      if(sp){
+        sp.style.fontSize = ((p.size||10)*(700/794)).toFixed(1)+'px';
+        sp.style.fontFamily = `'${p.font||'Arial'}',Arial,Tahoma,sans-serif`;
+        sp.style.fontWeight = p.weight||700;
+        sp.style.textAlign = p.align || (p.ltr?'left':'right');
+      }
+    }
+    return;
+  }
   // نموذج بوليصة محدد: نحفظ في مواضعه هو
   if(activeBolTplId && (tplCurrentDoc === 'bol' || tplCurrentDoc === 'bolSea')){
     const t = bolTplById(activeBolTplId);
@@ -14774,7 +14893,7 @@ document.getElementById('openTplEditorBtn').addEventListener('click', tplOpenEdi
 document.getElementById('tplCloseBtn').addEventListener('click', tplCloseEditor);
 document.getElementById('tplPreviewBtn').addEventListener('click', ()=>{
   if(tplCurrentDoc === 'certWordCoded'){
-    window.open('redit-certificate.pdf', '_blank', 'noopener');
+    openPrintWindow(certSheetWordPdf(tplPreviewRecord()));
     return;
   }
   const record = tplPreviewRecord();
@@ -14791,6 +14910,11 @@ if(tplCompanyPicker) tplCompanyPicker.addEventListener('change', function(){
   tplSwitchEditorCompany(this.value);
 });
 document.getElementById('tplSaveBtn').addEventListener('click', async ()=>{
+  if(tplCurrentDoc === 'certWordCoded'){
+    saveCertWordTemplate();
+    toast('تم حفظ طبقات شهادة المنشأ ✓');
+    return;
+  }
   if(activeBolTplId){ await saveBolTplPositions(); return; }
   await saveCompany(tplEditCompanyId);
   toast('تم حفظ أماكن الحقول ✓');
@@ -14849,6 +14973,12 @@ document.getElementById('tplRealChk').addEventListener('change', function(){
 });
 
 document.getElementById('tplResetBtn').addEventListener('click', ()=>{
+  if(tplCurrentDoc === 'certWordCoded'){
+    if(!confirm('استرجاع أماكن حقول وصور شهادة المنشأ الافتراضية؟')) return;
+    certWordTemplate = {positions:{},images:{}};
+    saveCertWordTemplate(); tplSelectedKey = null; tplRenderCanvas();
+    return;
+  }
   if(activeBolTplId){
     const t = bolTplById(activeBolTplId);
     if(!confirm(`استرجاع الأماكن الافتراضية لنموذج "${t? t.name : ''}"؟`)) return;
