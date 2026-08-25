@@ -6,8 +6,8 @@
 <title>منصة جاهز</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" onload="this.onload=null;this.rel='stylesheet'">
-<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap"></noscript>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;700;800&family=Tajawal:wght@400;500;700;900&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;700;800&family=Tajawal:wght@400;500;700;900&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap"></noscript>
 <link rel="preload" as="style" href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" onload="this.onload=null;this.rel='stylesheet'">
 <noscript><link rel="stylesheet" href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css"></noscript>
 <style>
@@ -1247,7 +1247,11 @@ body.role-staff .rep-controls,body.role-staff #repTables{display:none;}
 .templates-panel-head{display:flex;align-items:center;justify-content:space-between;padding:18px 21px 12px;gap:14px;}.templates-panel-head h3{margin:0;font-size:17px;}.templates-panel-head p{margin:4px 0 0;color:var(--muted);font-size:12px;}
 .templates-panel .bt-list{margin:0;padding:0 14px 14px;gap:8px;}.templates-panel .bt-card{min-height:76px;padding:11px 14px;border-radius:13px;border-color:#e9eef8;background:linear-gradient(90deg,#fff,#f9fbff);}.templates-panel .bt-card:hover{transform:translateY(-1px);border-color:#9ec0ff;box-shadow:0 8px 18px rgba(27,96,221,.09);}.templates-panel .bt-thumb{width:48px;height:52px;border-radius:11px;background:#edf4ff;color:#1768ed;}.templates-panel .bt-name{font-size:14px;}.templates-panel .bt-sub{font-size:11.5px;}.templates-panel .cc-acts .btn{border-radius:9px;}
 .templates-shortcuts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;padding:0 14px 16px;}.templates-shortcut{border:1px dashed #c8d8f4;border-radius:12px;background:#f9fbff;padding:14px;text-align:right;cursor:pointer;font:inherit;color:var(--ink);}.templates-shortcut b{display:block;font-size:13px;}.templates-shortcut span{display:block;margin-top:4px;font-size:11px;color:var(--muted);}
-@media(max-width:800px){.templates-stats{grid-template-columns:repeat(2,1fr);}.templates-hero-top{align-items:flex-start;flex-direction:column;}.templates-shortcuts{grid-template-columns:1fr;}.templates-panel .bt-card{align-items:flex-start;flex-wrap:wrap;}.templates-panel .cc-acts{width:100%;flex-wrap:wrap;}.templates-panel .cc-acts .btn{flex:1;}.templates-hero{border-radius:16px;padding:20px;}}
+.templates-hero h2,.templates-panel-head h3,.templates-section-title{font-family:'Cairo','Tajawal',sans-serif;}
+.template-quick-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;padding:0 14px 16px;}.template-quick-card{min-height:190px;padding:15px;border:1px solid #e6ecf3;border-radius:15px;background:#fff;text-align:right;display:flex;flex-direction:column;transition:transform .18s var(--ease),box-shadow .18s var(--ease),border-color .18s var(--ease);}.template-quick-card:hover{transform:translateY(-3px);border-color:#bcd3ff;box-shadow:0 8px 20px rgba(15,23,42,.08);}.template-quick-art{width:52px;height:52px;display:grid;place-items:center;border-radius:15px;margin-bottom:13px;color:#2563eb;background:#eaf1ff;}.template-quick-card:nth-child(2) .template-quick-art{color:#7c3aed;background:#f1ebff;}.template-quick-card:nth-child(3) .template-quick-art{color:#0891b2;background:#e5f8fc;}.template-quick-card:nth-child(4) .template-quick-art{color:#059669;background:#e6f8f1;}.template-quick-card:nth-child(5) .template-quick-art{color:#d97706;background:#fff4df;}.template-quick-card:nth-child(6) .template-quick-art{color:#e11d48;background:#fff0f3;}.template-quick-card h4{margin:0;color:#172033;font-size:14px;}.template-quick-card p{margin:5px 0 13px;color:#64748b;font-size:11.5px;line-height:1.55;}.template-quick-card .btn{margin-top:auto;align-self:flex-start;border-radius:9px;}
+.templates-recent-list{padding:0 14px 14px;display:grid;gap:8px;}.template-recent-row{display:grid;grid-template-columns:42px minmax(0,1.5fr) minmax(95px,.55fr) minmax(90px,.45fr) auto;align-items:center;gap:12px;padding:11px 13px;border:1px solid #e8edf6;border-radius:12px;background:#fff;}.template-recent-icon{width:42px;height:42px;display:grid;place-items:center;border-radius:12px;background:#edf4ff;color:#2563eb;}.template-recent-name{font-weight:800;font-size:13px;color:#172033;}.template-recent-ref,.template-recent-date{font-size:11.5px;color:#64748b;}.template-status{display:inline-flex;width:max-content;align-items:center;border-radius:999px;padding:5px 9px;font-size:11px;font-weight:800;background:#e7f8ef;color:#138a54;}.template-empty{padding:24px;text-align:center;color:#64748b;font-size:13px;border:1px dashed #d6e1f2;border-radius:12px;}
+@media(max-width:1000px){.template-quick-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.template-recent-row{grid-template-columns:42px 1fr auto;}.template-recent-ref,.template-recent-date{display:none;}}
+@media(max-width:800px){.templates-stats{grid-template-columns:repeat(2,1fr);}.templates-hero-top{align-items:flex-start;flex-direction:column;}.templates-shortcuts{grid-template-columns:1fr;}.templates-panel .bt-card{align-items:flex-start;flex-wrap:wrap;}.templates-panel .cc-acts{width:100%;flex-wrap:wrap;}.templates-panel .cc-acts .btn{flex:1;}.templates-hero{border-radius:16px;padding:20px;}.template-quick-grid{grid-template-columns:1fr;}.template-recent-row{grid-template-columns:42px 1fr;}.template-recent-row .btn{grid-column:1/-1;width:100%;}.template-status{display:none;}}
 
 /* ===== حسابات العملاء ===== */
 .ledger-row.lg-row{grid-template-columns:44px 1fr 80px 150px 150px 80px;}
@@ -3170,14 +3174,26 @@ body.role-staff #navWallet,body.role-staff #navAdmin{display:flex !important;}
       <div class="templates-hub">
         <section class="templates-hero">
           <div class="templates-hero-top">
-            <div><h2>مركز النماذج والمستندات</h2><p>أنشئ القوالب، عدّل الحقول والصور، وجهّز مستندات الشحن للطباعة.</p></div>
+            <div><h2>مرحباً بك في مركز المستندات</h2><p>إدارة ذكية وسريعة لجميع مستنداتك وشحناتك.</p></div>
             <button class="btn btn-primary templates-add-btn" id="addBolTplBtn" data-ic="plus">إنشاء نموذج جديد</button>
           </div>
           <div class="templates-stats">
-            <div class="template-stat"><div><span>كل المستندات</span><strong id="tplStatTotal">0</strong></div><span class="ico" data-ic="file"></span></div>
+            <div class="template-stat"><div><span>كل المستندات</span><strong id="tplStatTotal">0</strong></div><span class="ico" data-ic="doc"></span></div>
             <div class="template-stat"><div><span>نماذج البوالص</span><strong id="tplStatBol">0</strong></div><span class="ico" data-ic="truck"></span></div>
             <div class="template-stat"><div><span>شهادات المنشأ</span><strong id="tplStatCert">0</strong></div><span class="ico" data-ic="award"></span></div>
             <div class="template-stat"><div><span>النماذج المفعّلة</span><strong id="tplStatActive">0</strong></div><span class="ico" data-ic="check"></span></div>
+          </div>
+        </section>
+
+        <section class="templates-panel">
+          <header class="templates-panel-head"><div><h3>إنشاء مستند جديد</h3><p>اختر نوع المستند للبدء بسرعة.</p></div></header>
+          <div class="template-quick-grid">
+            <article class="template-quick-card"><div class="template-quick-art" data-ic="award"></div><h4>شهادة منشأ</h4><p>شهادة رسمية مع حقول وصور قابلة للتحريك.</p><button class="btn btn-ghost btn-small template-quick-open" data-open="certWordCoded">إنشاء جديد</button></article>
+            <article class="template-quick-card"><div class="template-quick-art" data-ic="doc"></div><h4>فاتورة تجارية</h4><p>ابدأ نموذجاً جديداً من مركز القوالب.</p><button class="btn btn-ghost btn-small template-quick-new">إنشاء جديد</button></article>
+            <article class="template-quick-card"><div class="template-quick-art" data-ic="box"></div><h4>قائمة تعبئة</h4><p>نموذج واضح لتفاصيل الطرود والبضائع.</p><button class="btn btn-ghost btn-small template-quick-new">إنشاء جديد</button></article>
+            <article class="template-quick-card"><div class="template-quick-art" data-ic="truck"></div><h4>بوليصة شحن</h4><p>نموذج بري أو بحري مع بيانات الشحنة.</p><button class="btn btn-ghost btn-small template-quick-open" data-open="bol">إنشاء جديد</button></article>
+            <article class="template-quick-card"><div class="template-quick-art" data-ic="invoice"></div><h4>شهادة تحليل</h4><p>أضف النموذج كقالب مستقل عند توفره.</p><button class="btn btn-ghost btn-small template-quick-new">إنشاء جديد</button></article>
+            <article class="template-quick-card"><div class="template-quick-art" data-ic="shield"></div><h4>شهادة صحية</h4><p>أنشئ قالباً واربط حقوله لاحقاً عند الحاجة.</p><button class="btn btn-ghost btn-small template-quick-new">إنشاء جديد</button></article>
           </div>
         </section>
 
@@ -3199,12 +3215,8 @@ body.role-staff #navWallet,body.role-staff #navAdmin{display:flex !important;}
         </section>
 
         <section class="templates-panel">
-          <header class="templates-panel-head"><div><h3>اختصارات الاستوديو</h3><p>افتح أي نموذج مباشرة للتحكم في أماكن الحقول.</p></div></header>
-          <div class="templates-shortcuts">
-            <button class="templates-shortcut" data-open="cert" type="button"><b>شهادة المنشأ — بري</b><span>ضبط أماكن الحقول</span></button>
-            <button class="templates-shortcut" data-open="bol" type="button"><b>بوليصة الشحن — بري</b><span>ضبط أماكن الحقول</span></button>
-            <button class="templates-shortcut" data-open="certSea" type="button"><b>شهادة المنشأ — بحري</b><span>PDF أصلي وحقول متحركة</span></button>
-          </div>
+          <header class="templates-panel-head"><div><h3>آخر النماذج</h3><p>الوصول السريع إلى أحدث القوالب التي تمت إضافتها أو تعديلها.</p></div></header>
+          <div id="recentDocsList" class="templates-recent-list"></div>
           <div class="detail-actions" style="margin:0 14px 16px;"><button class="btn btn-primary" id="openTplEditorBtn" data-ic="gear">فتح الاستوديو</button></div>
         </section>
       </div>
@@ -5831,6 +5843,7 @@ document.querySelectorAll('.admin-tab').forEach(t=>{
     if(t.dataset.atab==='templates'){
       renderBolTplAdmin();
       renderCertTplAdmin();
+      renderRecentTemplates();
       hydrateIcons(document.getElementById('apaneTemplates'));
     }
   });
@@ -5866,6 +5879,16 @@ document.querySelectorAll('.templates-shortcut').forEach(btn=>{
     tplSelectedKey = null;
     tplOpenEditor();
   });
+});
+document.querySelectorAll('.template-quick-open').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    tplCurrentDoc = btn.dataset.open || 'bol';
+    tplSelectedKey = null;
+    tplOpenEditor();
+  });
+});
+document.querySelectorAll('.template-quick-new').forEach(btn=>{
+  btn.addEventListener('click', ()=> openBolTplModal(null));
 });
 
 // ===== إدارة المستخدمين =====
@@ -7492,6 +7515,7 @@ function renderBolTplAdmin(){
   if(statActive) statActive.textContent = active;
   hydrateIcons(el);
   applyTemplatesFilter();
+  renderRecentTemplates();
 
   document.getElementById('bcEditBtn').addEventListener('click', ()=>{
     tplCurrentDoc = 'bolCodedFree'; tplSelectedKey = null; tplOpenEditor();
@@ -7770,6 +7794,47 @@ function renderCertTplAdmin(){
     company.certCoded = !company.certCoded;
     await saveCompany();
     renderCertTplAdmin(); fillCertPicker();
+  });
+}
+
+// آخر القوالب في واجهة المستندات: نعرض بيانات القوالب الموجودة فعلياً فقط.
+function renderRecentTemplates(){
+  const el = document.getElementById('recentDocsList');
+  if(!el) return;
+  const formatDate = value => {
+    if(!value) return 'قالب أساسي';
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? 'قالب أساسي' : date.toLocaleDateString('ar-EG');
+  };
+  const items = [
+    {name:'منشأ دبي التجريبي ليس للتداول', ref:'PDF ثابت', date:'PDF أصلي', icon:'award', doc:'certWordCoded'},
+    {name:company.bolCodedLabel || 'بوليصة برية مبنية بالكود', ref:'بري', date:'قالب أساسي', icon:'truck', doc:'bolCodedFree'},
+    {name:company.bolSeaCodedLabel || 'بوليصة بحرية مبنية بالكود', ref:'بحري', date:'قالب أساسي', icon:'ship', doc:'bolSeaCodedFree'},
+    ...bolTemplates.slice(0,3).map(t=>({
+      name:t.name, ref:SHIP_AR[t.ship_type] || 'نموذج', date:formatDate(t.updated_at || t.created_at),
+      icon:'doc', templateId:t.id
+    }))
+  ];
+  if(!items.length){
+    el.innerHTML = '<div class="template-empty">لا توجد نماذج مضافة بعد. ابدأ بإنشاء نموذج جديد.</div>';
+    return;
+  }
+  el.innerHTML = items.map(item=>`
+    <div class="template-recent-row">
+      <span class="template-recent-icon">${icon(item.icon,20)}</span>
+      <div><div class="template-recent-name">${escapeHtml(item.name)}</div><div class="template-recent-ref">${escapeHtml(item.ref)}</div></div>
+      <span class="template-recent-date">${escapeHtml(item.date)}</span>
+      <span class="template-status">مكتمل</span>
+      <button class="btn btn-ghost btn-small recent-template-open" ${item.templateId ? `data-template-id="${item.templateId}"` : `data-open="${item.doc}"`}>فتح</button>
+    </div>`).join('');
+  el.querySelectorAll('.recent-template-open').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const templateId = btn.dataset.templateId;
+      if(templateId){ openBolTplFields(templateId); return; }
+      tplCurrentDoc = btn.dataset.open || 'bol';
+      tplSelectedKey = null;
+      tplOpenEditor();
+    });
   });
 }
 
