@@ -14613,6 +14613,19 @@ function tplRenderCanvas(){
     if(tplSelectedKey) tplSelectField(tplSelectedKey);
     return;
   }
+  const usesCodedFallback = (tplCurrentDoc === 'bol' && !company?.bolImg) ||
+    (tplCurrentDoc === 'bolSea' && !company?.bolImgSea && !company?.bolImg);
+  if(usesCodedFallback){
+    document.getElementById('tplCanvasImg').style.display = 'none';
+    canvas.querySelectorAll('.tpl-drag-box').forEach(el=>el.remove());
+    const codePreview = preview || document.createElement('div');
+    codePreview.className = 'tpl-code-preview';
+    codePreview.innerHTML = tplCurrentDoc === 'bol' ? bolSheetCoded(tplPreviewRecord(), 'ar') : bolSeaSheetCoded(tplPreviewRecord(), 'ar');
+    if(!preview) canvas.appendChild(codePreview);
+    document.getElementById('tplSide').innerHTML = '<div class="tpl-side-empty"><b>عرض النموذج المبني بالكود</b><br>لا توجد خلفية صورة مرفوعة لهذه البوليصة، لذلك تظهر هنا النسخة الفعلية التي تطبعها المعاينة. أضف صورة نموذج فقط إذا أردت تحرير مواضع الحقول فوق خلفية ثابتة.</div>';
+    document.querySelectorAll('.tpl-tab').forEach(el=>el.classList.toggle('active', el.dataset.doc===tplCurrentDoc));
+    return;
+  }
   if(preview) preview.remove();
   document.getElementById('tplCanvasImg').style.display = '';
   document.getElementById('tplCanvasImg').src = tplGetImg(tplCurrentDoc);
