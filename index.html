@@ -1231,6 +1231,24 @@ body.role-staff .rep-controls,body.role-staff #repTables{display:none;}
 .bt-name{font-weight:800;font-size:14.5px;color:var(--ink);display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
 .bt-sub{font-size:12.5px;color:var(--muted);margin-top:2px;}
 
+/* مركز النماذج والمستندات */
+.templates-hub{max-width:1220px;margin:0 auto;padding:6px 0 28px;}
+.templates-hero{position:relative;overflow:hidden;padding:25px 28px;border-radius:22px;color:#fff;background:linear-gradient(118deg,#184eea 0%,#3b75ff 52%,#7d9fff 100%);box-shadow:0 16px 34px rgba(33,91,240,.24);}
+.templates-hero::after{content:'';position:absolute;width:330px;height:330px;left:-120px;bottom:-210px;border-radius:50%;background:rgba(255,255,255,.16);filter:blur(1px);}
+.templates-hero-top{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:18px;}
+.templates-hero h2{margin:0;font-size:25px;color:#fff;}.templates-hero p{margin:6px 0 0;color:rgba(255,255,255,.8);font-size:13px;}
+.templates-add-btn{background:#fff!important;color:#1753ed!important;border-color:#fff!important;box-shadow:0 8px 18px rgba(4,31,125,.18);}
+.templates-stats{position:relative;z-index:1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:22px;}
+.template-stat{min-height:76px;padding:13px 15px;border:1px solid rgba(255,255,255,.28);border-radius:14px;background:rgba(255,255,255,.17);backdrop-filter:blur(7px);display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.template-stat span{display:block;font-size:11px;color:rgba(255,255,255,.82);}.template-stat strong{display:block;margin-top:5px;font-size:22px;color:#fff;}.template-stat .ico{color:#fff;opacity:.9;}
+.templates-filterbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:13px 16px;margin:16px 0;border:1px solid #e6ebf8;border-radius:16px;background:#fff;box-shadow:0 8px 18px rgba(29,61,130,.06);}
+.templates-filter{border:0;background:#f3f6ff;color:#54647f;padding:8px 13px;border-radius:999px;font:inherit;font-size:12px;cursor:pointer;}.templates-filter.active{background:#1768ed;color:#fff;box-shadow:0 5px 12px rgba(23,104,237,.22);}
+.templates-panel{margin-top:15px;border:1px solid #e4eaf5;border-radius:18px;background:#fff;box-shadow:0 10px 24px rgba(25,55,110,.05);overflow:hidden;}
+.templates-panel-head{display:flex;align-items:center;justify-content:space-between;padding:18px 21px 12px;gap:14px;}.templates-panel-head h3{margin:0;font-size:17px;}.templates-panel-head p{margin:4px 0 0;color:var(--muted);font-size:12px;}
+.templates-panel .bt-list{margin:0;padding:0 14px 14px;gap:8px;}.templates-panel .bt-card{min-height:76px;padding:11px 14px;border-radius:13px;border-color:#e9eef8;background:linear-gradient(90deg,#fff,#f9fbff);}.templates-panel .bt-card:hover{transform:translateY(-1px);border-color:#9ec0ff;box-shadow:0 8px 18px rgba(27,96,221,.09);}.templates-panel .bt-thumb{width:48px;height:52px;border-radius:11px;background:#edf4ff;color:#1768ed;}.templates-panel .bt-name{font-size:14px;}.templates-panel .bt-sub{font-size:11.5px;}.templates-panel .cc-acts .btn{border-radius:9px;}
+.templates-shortcuts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;padding:0 14px 16px;}.templates-shortcut{border:1px dashed #c8d8f4;border-radius:12px;background:#f9fbff;padding:14px;text-align:right;cursor:pointer;font:inherit;color:var(--ink);}.templates-shortcut b{display:block;font-size:13px;}.templates-shortcut span{display:block;margin-top:4px;font-size:11px;color:var(--muted);}
+@media(max-width:800px){.templates-stats{grid-template-columns:repeat(2,1fr);}.templates-hero-top{align-items:flex-start;flex-direction:column;}.templates-shortcuts{grid-template-columns:1fr;}.templates-panel .bt-card{align-items:flex-start;flex-wrap:wrap;}.templates-panel .cc-acts{width:100%;flex-wrap:wrap;}.templates-panel .cc-acts .btn{flex:1;}.templates-hero{border-radius:16px;padding:20px;}}
+
 /* ===== حسابات العملاء ===== */
 .ledger-row.lg-row{grid-template-columns:44px 1fr 80px 150px 150px 80px;}
 .lg-actions{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;}
@@ -3149,52 +3167,46 @@ body.role-staff #navWallet,body.role-staff #navAdmin{display:flex !important;}
 
     <!-- النماذج والمستندات -->
     <div class="admin-pane" id="apaneTemplates">
-      <div class="dash-card" style="margin-bottom:18px;">
-        <h3>نماذج المستندات والشحن <span class="cnt" id="bolTplCount"></span></h3>
-        <div>
-          <p style="font-size:14px;margin-top:0;">
-            أدر نماذج البوالص وشهادة المنشأ: عدّل الحقول والصور، حرّكها، وأوقف النموذج أو احذف تعديلاته.
-          </p>
-          <button class="btn btn-primary btn-small" id="addBolTplBtn" data-ic="plus">نموذج بوليصة جديد</button>
+      <div class="templates-hub">
+        <section class="templates-hero">
+          <div class="templates-hero-top">
+            <div><h2>مركز النماذج والمستندات</h2><p>أنشئ القوالب، عدّل الحقول والصور، وجهّز مستندات الشحن للطباعة.</p></div>
+            <button class="btn btn-primary templates-add-btn" id="addBolTplBtn" data-ic="plus">إنشاء نموذج جديد</button>
+          </div>
+          <div class="templates-stats">
+            <div class="template-stat"><div><span>كل المستندات</span><strong id="tplStatTotal">0</strong></div><span class="ico" data-ic="file"></span></div>
+            <div class="template-stat"><div><span>نماذج البوالص</span><strong id="tplStatBol">0</strong></div><span class="ico" data-ic="truck"></span></div>
+            <div class="template-stat"><div><span>شهادات المنشأ</span><strong id="tplStatCert">0</strong></div><span class="ico" data-ic="award"></span></div>
+            <div class="template-stat"><div><span>النماذج المفعّلة</span><strong id="tplStatActive">0</strong></div><span class="ico" data-ic="check"></span></div>
+          </div>
+        </section>
+
+        <nav class="templates-filterbar" aria-label="تصنيف النماذج">
+          <button class="templates-filter active" type="button">كل المستندات</button>
+          <button class="templates-filter" type="button">شهادات المنشأ</button>
+          <button class="templates-filter" type="button">بوالص الشحن</button>
+          <button class="templates-filter" type="button">نماذج بحرية</button>
+        </nav>
+
+        <section class="templates-panel">
+          <header class="templates-panel-head"><div><h3>نماذج المستندات والشحن <span class="cnt" id="bolTplCount"></span></h3><p>اضغط «تعديل» لفتح استوديو مستقل خاص بالنموذج.</p></div></header>
           <div id="bolTplList" class="bt-list"></div>
-        </div>
-      </div>
+        </section>
 
-      <div class="dash-card" style="margin-bottom:18px;">
-        <h3>شهادة المنشأ — بري</h3>
-        <div>
-          <p style="font-size:14px;margin-top:0;">
-            استخدم النموذج المبني بالكود بدل الصورة المرفوعة، واختر النوع المناسب عند إنشاء كل شحنة برية.
-          </p>
+        <section class="templates-panel">
+          <header class="templates-panel-head"><div><h3>شهادات المنشأ</h3><p>نماذج مستقلة عن الشركات، مع تحكم كامل بالحقول والطبقات.</p></div></header>
           <div id="certTplList" class="bt-list"></div>
-        </div>
-      </div>
+        </section>
 
-      <div class="dash-card">
-        <h3>النماذج والمستندات</h3>
-        <div>
-          <p style="font-size:14px;margin-top:0;">
-            ضبط أماكن الحقول على شهادة المنشأ وبوليصة الشحن — للشحن البري والبحري.
-            المعاينة بتوريك النصوص الحقيقية وإنت بتسحب.
-          </p>
-          <div class="tpl-cards">
-            <button class="tpl-card" data-open="cert">
-              <b>شهادة المنشأ — بري</b><span>ضبط أماكن الحقول</span>
-            </button>
-            <button class="tpl-card" data-open="bol">
-              <b>بوليصة الشحن — بري</b><span>ضبط أماكن الحقول</span>
-            </button>
-            <button class="tpl-card sea" data-open="certSea">
-              <b>شهادة المنشأ — بحري</b><span>PDF أصلي · 6 حقول</span>
-            </button>
-            <button class="tpl-card sea" data-open="bolSea">
-              <b>بوليصة الشحن — بحري</b><span>ضبط أماكن الحقول</span>
-            </button>
+        <section class="templates-panel">
+          <header class="templates-panel-head"><div><h3>اختصارات الاستوديو</h3><p>افتح أي نموذج مباشرة للتحكم في أماكن الحقول.</p></div></header>
+          <div class="templates-shortcuts">
+            <button class="templates-shortcut" data-open="cert" type="button"><b>شهادة المنشأ — بري</b><span>ضبط أماكن الحقول</span></button>
+            <button class="templates-shortcut" data-open="bol" type="button"><b>بوليصة الشحن — بري</b><span>ضبط أماكن الحقول</span></button>
+            <button class="templates-shortcut" data-open="certSea" type="button"><b>شهادة المنشأ — بحري</b><span>PDF أصلي وحقول متحركة</span></button>
           </div>
-          <div class="detail-actions" style="margin-inline:0;">
-            <button class="btn btn-primary" id="openTplEditorBtn" data-ic="gear">فتح محرر النماذج</button>
-          </div>
-        </div>
+          <div class="detail-actions" style="margin:0 14px 16px;"><button class="btn btn-primary" id="openTplEditorBtn" data-ic="gear">فتح الاستوديو</button></div>
+        </section>
       </div>
     </div>
 
@@ -5816,7 +5828,43 @@ document.querySelectorAll('.admin-tab').forEach(t=>{
       if(!companiesLoaded) loadCompanies();
     }
     if(t.dataset.atab==='clients') renderClientsAdmin();
-    if(t.dataset.atab==='templates'){ renderBolTplAdmin(); renderCertTplAdmin(); }
+    if(t.dataset.atab==='templates'){
+      renderBolTplAdmin();
+      renderCertTplAdmin();
+      hydrateIcons(document.getElementById('apaneTemplates'));
+    }
+  });
+});
+
+// فلاتر مركز النماذج: تخفي البطاقات فقط ولا تغيّر أي بيانات أو إعدادات للقالب.
+let templatesFilter = 'all';
+function applyTemplatesFilter(){
+  const bolPanel = document.getElementById('bolTplList')?.closest('.templates-panel');
+  const certPanel = document.getElementById('certTplList')?.closest('.templates-panel');
+  document.querySelectorAll('#bolTplList .bt-card, #certTplList .bt-card').forEach(card=>{
+    const groups = (card.dataset.group || '').split(' ');
+    const visible = templatesFilter === 'all' || groups.includes(templatesFilter);
+    card.hidden = !visible;
+  });
+  if(bolPanel) bolPanel.hidden = templatesFilter === 'cert';
+  if(certPanel) certPanel.hidden = templatesFilter === 'bol' || templatesFilter === 'sea';
+}
+document.querySelectorAll('.templates-filter').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const labels = {
+      'كل المستندات':'all', 'شهادات المنشأ':'cert',
+      'بوالص الشحن':'bol', 'نماذج بحرية':'sea'
+    };
+    templatesFilter = labels[btn.textContent.trim()] || 'all';
+    document.querySelectorAll('.templates-filter').forEach(x=>x.classList.toggle('active', x===btn));
+    applyTemplatesFilter();
+  });
+});
+document.querySelectorAll('.templates-shortcut').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    tplCurrentDoc = btn.dataset.open || 'bol';
+    tplSelectedKey = null;
+    tplOpenEditor();
   });
 });
 
@@ -7354,7 +7402,7 @@ function renderBolTplAdmin(){
 
   // كارتا النماذج المبنية بالكود — دايماً أول عنصرين في نفس القائمة
   const codedCard = `
-    <div class="bt-card ${company.bolCoded?'':'off'}" data-id="coded">
+    <div class="bt-card ${company.bolCoded?'':'off'}" data-id="coded" data-group="bol land">
       <div class="bt-thumb">${icon('doc',20)}</div>
       <div class="bt-info">
         <div class="bt-name">${escapeHtml(company.bolCodedLabel || 'بوليصة برية مبنية بالكود')}
@@ -7370,7 +7418,7 @@ function renderBolTplAdmin(){
     </div>`;
 
   const codedSeaCard = `
-    <div class="bt-card ${company.bolSeaCoded?'':'off'}" data-id="coded-sea">
+    <div class="bt-card ${company.bolSeaCoded?'':'off'}" data-id="coded-sea" data-group="bol sea">
       <div class="bt-thumb">${icon('doc',20)}</div>
       <div class="bt-info">
         <div class="bt-name">${escapeHtml(company.bolSeaCodedLabel || 'بوليصة بحرية مبنية بالكود')}
@@ -7386,7 +7434,7 @@ function renderBolTplAdmin(){
     </div>`;
 
   const certPdfCard = `
-    <div class="bt-card ${certWordTemplate.active===false?'off':''}" data-id="cert-pdf">
+    <div class="bt-card ${certWordTemplate.active===false?'off':''}" data-id="cert-pdf" data-group="cert sea">
       <div class="bt-thumb">${icon('file',20)}</div>
       <div class="bt-info">
         <div class="bt-name">منشأ دبي التجريبي ليس للتداول
@@ -7411,7 +7459,7 @@ function renderBolTplAdmin(){
       ? `<button class="btn btn-ghost btn-small bt-assets">الشعار والختم</button>`
       : `<button class="btn btn-ghost btn-small bt-fields">أماكن الحقول</button>`;
     return `
-    <div class="bt-card ${t.active?'':'off'}" data-id="${t.id}">
+    <div class="bt-card ${t.active?'':'off'}" data-id="${t.id}" data-group="bol ${t.ship_type==='sea'?'sea':'land'}">
       <div class="bt-thumb">${t.image ? `<img src="${t.image}" alt="">` : icon('doc',20)}</div>
       <div class="bt-info">
         <div class="bt-name">${escapeHtml(t.name)}
@@ -7430,7 +7478,20 @@ function renderBolTplAdmin(){
   }).join('');
 
   el.innerHTML = certPdfCard + codedCard + codedSeaCard + uploadedCards;
+  const total = bolTemplates.length + 4;
+  const active = bolTemplates.filter(t=>t.active).length +
+    (company.bolCoded ? 1 : 0) + (company.bolSeaCoded ? 1 : 0) +
+    (company.certCoded ? 1 : 0) + (certWordTemplate.active === false ? 0 : 1);
+  const statTotal = document.getElementById('tplStatTotal');
+  const statBol = document.getElementById('tplStatBol');
+  const statCert = document.getElementById('tplStatCert');
+  const statActive = document.getElementById('tplStatActive');
+  if(statTotal) statTotal.textContent = total;
+  if(statBol) statBol.textContent = bolTemplates.length + 2;
+  if(statCert) statCert.textContent = 2;
+  if(statActive) statActive.textContent = active;
   hydrateIcons(el);
+  applyTemplatesFilter();
 
   document.getElementById('bcEditBtn').addEventListener('click', ()=>{
     tplCurrentDoc = 'bolCodedFree'; tplSelectedKey = null; tplOpenEditor();
@@ -7688,7 +7749,7 @@ function renderCertTplAdmin(){
   const el = document.getElementById('certTplList');
   if(!el) return;
   el.innerHTML = `
-    <div class="bt-card ${company.certCoded?'':'off'}" data-id="coded">
+    <div class="bt-card ${company.certCoded?'':'off'}" data-id="coded" data-group="cert land">
       <div class="bt-thumb">${icon('doc',20)}</div>
       <div class="bt-info">
         <div class="bt-name">شهادة منشأ مبنية بالكود
@@ -7702,6 +7763,7 @@ function renderCertTplAdmin(){
       </div>
     </div>`;
   hydrateIcons(el);
+  applyTemplatesFilter();
 
   document.getElementById('cfEditBtn').addEventListener('click', openCertCodedModal);
   document.getElementById('cfToggleBtn').addEventListener('click', async ()=>{
