@@ -1563,7 +1563,7 @@ body.role-viewer #bankAddBtn{display:none !important;}
 .tpl-editor-canvas-wrap{flex:1;overflow:auto;background:#EDEDED;padding:20px;display:flex;justify-content:center;}
 .tpl-canvas{position:relative;width:700px;flex-shrink:0;height:fit-content;box-shadow:0 2px 10px rgba(0,0,0,.15);}
 .tpl-canvas img{width:100%;display:block;user-select:none;pointer-events:none;}
-.tpl-pdf-preview{width:700px;height:990px;display:block;border:0;background:#fff;}
+.tpl-pdf-preview{width:700px;height:990px;display:block;border:0;background:#fff;pointer-events:none;}
 .tpl-code-preview--pdf{width:700px;background:#fff;}
 .tpl-drag-box{
   position:absolute;border:1px dashed var(--o-primary);background:rgba(113,75,103,0.10);
@@ -7332,11 +7332,11 @@ function fillCertPicker(selected, shipType){
     opts += '<option value="coded">شهادة منشأ مبنية بالكود — HTML</option>';
     if(certWordTemplate.active !== false) opts += '<option value="coded-word">شهادة منشأ - PDF قابل للتحرير</option>';
   }
-  if(st === 'sea') opts += '<option value="dubai-word-online">منشأ دبي التجريبي ليس للتداول</option>';
+  if(st === 'sea') opts += '<option value="dubai-pdf">منشأ دبي التجريبي ليس للتداول — PDF ثابت</option>';
   sel.innerHTML = opts;
   if(selected === 'coded' && company.certCoded) sel.value = selected;
   if(selected === 'coded-word' && company.certCoded && certWordTemplate.active !== false) sel.value = selected;
-  if(selected === 'dubai-word-online' && st === 'sea') sel.value = selected;
+  if(selected === 'dubai-pdf' && st === 'sea') sel.value = selected;
 }
 
 // ---- لوحة الإدارة ----
@@ -7344,8 +7344,8 @@ function renderBolTplAdmin(){
   const el = document.getElementById('bolTplList');
   if(!el) return;
   const cnt = document.getElementById('bolTplCount');
-  // تشمل القائمة: شهادة PDF المستقلة، بوليصتي الكود، وقالب Word البحري التجريبي.
-  if(cnt) cnt.textContent = `(${bolTemplates.length + 4})`;
+  // تشمل القائمة: شهادة PDF المستقلة وبوليصتي الكود، بجانب النماذج المرفوعة.
+  if(cnt) cnt.textContent = `(${bolTemplates.length + 3})`;
 
   // كارتا النماذج المبنية بالكود — دايماً أول عنصرين في نفس القائمة
   const codedCard = `
@@ -7384,28 +7384,16 @@ function renderBolTplAdmin(){
     <div class="bt-card ${certWordTemplate.active===false?'off':''}" data-id="cert-pdf">
       <div class="bt-thumb">${icon('file',20)}</div>
       <div class="bt-info">
-        <div class="bt-name">شهادة المنشأ - PDF قابل للتحرير
+        <div class="bt-name">منشأ دبي التجريبي ليس للتداول
           ${certWordTemplate.active===false ? '<span class="cc-off">موقوف</span>' : ''}
         </div>
-        <div class="bt-sub">مستند مستقل · خلفية PDF أصلية · ${Object.keys(certWordTemplate.positions||{}).length} طبقة نص أو صورة</div>
+        <div class="bt-sub">بحري فقط · PDF أصلي ثابت · ${Object.keys(certWordTemplate.positions||{}).length} طبقة نص أو صورة</div>
       </div>
       <div class="cc-acts">
         <button class="btn btn-ghost btn-small" id="certPdfFieldsBtn">إدارة الحقول</button>
         <button class="btn btn-ghost btn-small" id="certPdfEditBtn">تعديل</button>
         <button class="btn btn-ghost btn-small" id="certPdfToggleBtn">${certWordTemplate.active===false?'تفعيل':'إيقاف'}</button>
         <button class="btn btn-danger btn-small" id="certPdfClearBtn">حذف التعديلات</button>
-      </div>
-    </div>`;
-
-  const dubaiWordCard = `
-    <div class="bt-card" data-id="dubai-word-online">
-      <div class="bt-thumb">${icon('doc',20)}</div>
-      <div class="bt-info">
-        <div class="bt-name">منشأ دبي التجريبي ليس للتداول</div>
-        <div class="bt-sub">بحري فقط · Word Online · قالب مستقل</div>
-      </div>
-      <div class="cc-acts">
-        <button class="btn btn-ghost btn-small" id="dubaiWordEditBtn">تعديل في Word Online</button>
       </div>
     </div>`;
 
@@ -7436,7 +7424,7 @@ function renderBolTplAdmin(){
     </div>`;
   }).join('');
 
-  el.innerHTML = certPdfCard + codedCard + codedSeaCard + dubaiWordCard + uploadedCards;
+  el.innerHTML = certPdfCard + codedCard + codedSeaCard + uploadedCards;
   hydrateIcons(el);
 
   document.getElementById('bcEditBtn').addEventListener('click', openBolCodedModal);
@@ -7473,13 +7461,10 @@ function renderBolTplAdmin(){
     certWordTemplate = {positions:{},images:{},active:certWordTemplate.active};
     saveCertWordTemplate(); renderBolTplAdmin(); toast('تم حذف تعديلات شهادة المنشأ.');
   });
-  document.getElementById('dubaiWordEditBtn').addEventListener('click', ()=>{
-    window.open('/api/microsoft?action=open-test', '_blank', 'noopener');
-  });
 
   el.querySelectorAll('.bt-card[data-id]').forEach(card=>{
     const id = card.dataset.id;
-    if(id === 'coded' || id === 'coded-sea' || id === 'cert-pdf' || id === 'dubai-word-online') return;
+    if(id === 'coded' || id === 'coded-sea' || id === 'cert-pdf') return;
     const t = bolTplById(id);
     card.querySelector('.bt-edit').addEventListener('click', ()=> openBolTplModal(id));
     const fieldsBtn = card.querySelector('.bt-fields');
@@ -11367,7 +11352,7 @@ async function saveShipment(status, opts){
     bolSeaCoded: bolPick === 'coded-sea',
     certCoded: certPick === 'coded' || certPick === 'coded-word',
     certWordCoded: certPick === 'coded-word',
-    certDubaiWordOnline: certPick === 'dubai-word-online',
+    certDubaiPdf: certPick === 'dubai-pdf',
     taskRef: document.getElementById('f_taskRef').value.trim(),
     itemDesc: document.getElementById('f_itemDesc').value,
     qty: document.getElementById('f_qty').value,
@@ -11637,7 +11622,8 @@ function wireDocActionButtons(r){
   document.getElementById('btnProforma').addEventListener('click', ()=> chooseDocLang(r, lang=> printSingle(r,'proforma',lang)));
   document.getElementById('btnInvoice').addEventListener('click', ()=> chooseDocLang(r, lang=> printSingle(r,'invoice',lang)));
   document.getElementById('btnCert').addEventListener('click', ()=>{
-    if(isSea(r)) openSeaCertPdf(r);        // بحري: يُكتب على PDF الأصلي
+    if(isSea(r) && (r.certDubaiPdf || r.certDubaiWordOnline)) printSingle(r,'cert');
+    else if(isSea(r)) openSeaCertPdf(r);   // بحري افتراضي: يُكتب على PDF الأصلي
     else if(r.certCoded) chooseDocLang(r, lang=> printSingle(r,'cert',lang)); // مبنية بالكود: تدعم اختيار اللغة
     else printSingle(r,'cert');            // نموذج صورة قديم: عربي دائماً
   });
@@ -11840,7 +11826,7 @@ function fillFormForEdit(r){
   document.getElementById('editId').value = r.id;
   fillFormCompanies(r.companyId);
   fillBolPicker(r.bolCoded ? 'coded' : (r.bolSeaCoded ? 'coded-sea' : r.bolTemplateId), r.shipType);
-  fillCertPicker(r.certDubaiWordOnline ? 'dubai-word-online' : (r.certCoded ? (r.certWordCoded ? 'coded-word' : 'coded') : ''), r.shipType);
+  fillCertPicker((r.certDubaiPdf || r.certDubaiWordOnline) ? 'dubai-pdf' : (r.certCoded ? (r.certWordCoded ? 'coded-word' : 'coded') : ''), r.shipType);
   setTimeout(autoOpenAdv, 0);
   document.getElementById('f_shipType').value = r.shipType || 'land';
   document.getElementById('f_taskRef').value = r.taskRef || '';
@@ -13642,7 +13628,7 @@ function buildSheetInner(r, kind, lang){
   lang = (lang==='en') ? 'en' : 'ar';
   if(kind==='proforma' || kind==='invoice' || kind==='packing') return invoiceSheet(r, kind, lang);
   if(kind==='cert'){
-    if(!isSea(r) && r.certWordCoded) return certSheetWord(r, lang);
+    if((isSea(r) && (r.certDubaiPdf || r.certDubaiWordOnline)) || (!isSea(r) && r.certWordCoded)) return certSheetWord(r, lang);
     return (!isSea(r) && r.certCoded) ? certSheetCoded(r, lang) : certSheet(r);
   }
   if(kind==='bol'){
@@ -14956,6 +14942,10 @@ function tplEndDrag(e){
 }
 
 document.getElementById('openTplEditorBtn').addEventListener('click', tplOpenEditor);
+// عارض PDF المدمج يلتقط Ctrl + عجلة الماوس ويغيّر مقياس الصفحة، لذلك نقفل هذا السلوك داخل محرر الطبقات.
+document.querySelector('.tpl-editor-canvas-wrap').addEventListener('wheel', e=>{
+  if(tplCurrentDoc === 'certWordCoded' && e.ctrlKey) e.preventDefault();
+}, {passive:false});
 document.getElementById('tplCloseBtn').addEventListener('click', tplCloseEditor);
 document.getElementById('tplPreviewBtn').addEventListener('click', ()=>{
   if(tplCurrentDoc === 'certWordCoded'){
