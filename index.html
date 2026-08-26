@@ -1593,6 +1593,9 @@ body.role-viewer #bankAddBtn{display:none !important;}
   padding:2px 4px;overflow:hidden;white-space:nowrap;user-select:none;touch-action:none;border-radius:2px;
 }
 .tpl-drag-box.selected{border-color:var(--o-accent);background:rgba(1,126,132,0.14);color:var(--o-accent);z-index:5;}
+.tpl-code-handle{background:transparent;border-color:rgba(37,99,235,.32);color:transparent;min-height:18px;}
+.tpl-code-handle:hover,.tpl-code-handle.selected{background:rgba(37,99,235,.10);color:#1d4ed8;}
+.tpl-code-handle::after{content:attr(data-label);font-size:9px;line-height:1;color:inherit;}
 .tpl-pdf-image-box{min-height:36px;background:rgba(255,255,255,.72);text-align:center;white-space:normal;display:flex;align-items:center;justify-content:center;}
 .tpl-pdf-image-box img{display:block;width:100%;height:auto;max-height:140px;object-fit:contain;pointer-events:none;}
 .tpl-drag-box .rs{position:absolute;bottom:-4px;left:-4px;width:9px;height:9px;background:var(--o-accent);cursor:nwse-resize;border-radius:2px;}
@@ -4596,6 +4599,8 @@ SWIFT: NBEGEGCX"></textarea>
       <div class="tpl-editor-actions">
         <label class="tpl-chk"><input type="checkbox" id="tplPrevChk" checked> معاينة النصوص</label>
         <label class="tpl-chk"><input type="checkbox" id="tplRealChk"> بيانات شحنة حقيقية</label>
+        <button class="btn btn-ghost btn-small" id="tplCodedDesignBtn" style="display:none;">تصميم البوليصة</button>
+        <button class="btn btn-ghost btn-small" id="tplCodedBrandBtn" style="display:none;">الشعار والختم والعلامة</button>
         <label class="btn btn-ghost btn-small" style="cursor:pointer;margin:0;">
           استبدال ملف النموذج
           <input type="file" id="tplImgFile" accept=".pdf,image/*" style="display:none;">
@@ -14777,6 +14782,9 @@ function tplValuesFor(doc){
 function tplRenderCanvas(){
   const canvas = document.getElementById('tplCanvas');
   const preview = canvas.querySelector('.tpl-code-preview');
+  const isCodedBill = tplCurrentDoc === 'bolCodedFree' || tplCurrentDoc === 'bolSeaCodedFree';
+  document.getElementById('tplCodedDesignBtn').style.display = isCodedBill ? '' : 'none';
+  document.getElementById('tplCodedBrandBtn').style.display = isCodedBill ? '' : 'none';
   if(tplCurrentDoc === 'certWordCoded'){
     document.getElementById('tplCanvasImg').style.display = 'none';
     canvas.querySelectorAll('.tpl-drag-box').forEach(el=>el.remove());
@@ -14818,7 +14826,8 @@ function tplRenderCanvas(){
     if(tplSelectedKey) tplSelectField(tplSelectedKey);
     return;
   }
-  const usesCodedFallback = (tplCurrentDoc === 'bol' && !company?.bolImg) ||
+  const usesCodedFallback = isCodedBill ||
+    (tplCurrentDoc === 'bol' && !company?.bolImg) ||
     (tplCurrentDoc === 'bolSea' && !company?.bolImgSea && !company?.bolImg);
   if(usesCodedFallback){
     document.getElementById('tplCanvasImg').style.display = 'none';
@@ -14826,9 +14835,32 @@ function tplRenderCanvas(){
     const codePreview = preview || document.createElement('div');
     codePreview.className = 'tpl-code-preview';
     // البوليصات المبنية تعتمد على أنماط الطباعة؛ حمّلها هنا أيضاً لتطابق المعاينة الخارجية.
-    codePreview.innerHTML = `<style>${PRINT_STYLES}</style>` + (tplCurrentDoc === 'bol' ? bolSheetCoded(tplPreviewRecord(), 'ar') : bolSeaSheetCoded(tplPreviewRecord(), 'ar'));
+    const isSeaBill = tplCurrentDoc === 'bolSea' || tplCurrentDoc === 'bolSeaCodedFree';
+    codePreview.innerHTML = `<style>${PRINT_STYLES}</style>` +
+      (isSeaBill ? bolSeaSheetCoded(tplPreviewRecord(), 'ar') : bolSheetCoded(tplPreviewRecord(), 'ar'));
     if(!preview) canvas.appendChild(codePreview);
-    document.getElementById('tplSide').innerHTML = '<div class="tpl-side-empty"><b>عرض النموذج المبني بالكود</b><br>لا توجد خلفية صورة مرفوعة لهذه البوليصة، لذلك تظهر هنا النسخة الفعلية التي تطبعها المعاينة. أضف صورة نموذج فقط إذا أردت تحرير مواضع الحقول فوق خلفية ثابتة.</div>';
+    if(isCodedBill){
+      // نُبقي معاينة HTML الفعلية ونضيف مقابض شفافة فوق الحقول حتى يمكن سحبها بلا تكرار للنصوص.
+      const defs = TEMPLATE_FIELDS[tplCurrentDoc] || [];
+      defs.forEach(def=>{
+        const pos = fieldPos(tplCurrentDoc, def);
+        const box = document.createElement('div');
+        box.className = 'tpl-drag-box tpl-code-handle';
+        box.dataset.key = def.key;
+        box.dataset.label = def.label;
+        box.style.top = pos.top+'%';
+        box.style.left = pos.left+'%';
+        box.style.width = pos.width+'%';
+        if(def.key === tplSelectedKey) box.classList.add('selected');
+        box.title = def.label;
+        box.addEventListener('pointerdown', tplStartDrag);
+        box.addEventListener('click', e=>{ e.stopPropagation(); tplSelectField(def.key); });
+        canvas.appendChild(box);
+      });
+      if(tplSelectedKey) tplSelectField(tplSelectedKey); else tplRenderSideEmpty();
+    }else{
+      document.getElementById('tplSide').innerHTML = '<div class="tpl-side-empty"><b>معاينة حية للنموذج المبني بالكود</b><br>هذه هي نفس البوليصة التي تظهر في «معاينة النموذج» والطباعة. استخدم زر «تصميم البوليصة» لتعديل التخطيط، وزر «الشعار والختم والعلامة» لإدارة الصور والهوية.</div>';
+    }
     document.querySelectorAll('.tpl-tab').forEach(el=>el.classList.toggle('active', el.dataset.doc===tplCurrentDoc));
     return;
   }
@@ -15111,6 +15143,17 @@ function tplEndDrag(e){
 }
 
 document.getElementById('openTplEditorBtn').addEventListener('click', tplOpenEditor);
+document.getElementById('tplCodedDesignBtn').addEventListener('click', ()=>{
+  const doc = tplCurrentDoc;
+  tplCloseEditor();
+  if(doc === 'bolSeaCodedFree') openBolSeaCodedModal();
+  else openBolCodedModal();
+});
+document.getElementById('tplCodedBrandBtn').addEventListener('click', ()=>{
+  tplCloseEditor();
+  // الهوية تحتوي على الشعار والختم والعلامة المائية المستخدمة فعلياً في البوليصة.
+  openCompanyModal(company.id);
+});
 // عارض PDF المدمج يلتقط Ctrl + عجلة الماوس ويغيّر مقياس الصفحة، لذلك نقفل هذا السلوك داخل محرر الطبقات.
 document.querySelector('.tpl-editor-canvas-wrap').addEventListener('wheel', e=>{
   if(tplCurrentDoc === 'certWordCoded' && e.ctrlKey) e.preventDefault();
