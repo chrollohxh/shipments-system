@@ -1600,6 +1600,25 @@ body.role-viewer #bankAddBtn{display:none !important;}
 .tpl-pdf-image-box img{display:block;width:100%;height:auto;max-height:140px;object-fit:contain;pointer-events:none;}
 .tpl-drag-box .rs{position:absolute;bottom:-4px;left:-4px;width:9px;height:9px;background:var(--o-accent);cursor:nwse-resize;border-radius:2px;}
 .tpl-editor-side{width:270px;flex-shrink:0;border-right:1px solid var(--border);padding:16px;overflow-y:auto;background:#FCFCFC;}
+.tpl-editor-overlay{background:#0e1b2a;}
+.tpl-editor-header{min-height:66px;padding:9px 18px;background:#fff;box-shadow:0 1px 0 rgba(15,23,42,.08);z-index:2;}
+.tpl-route-title{display:flex;align-items:center;gap:10px;min-width:220px;}
+.tpl-route-title strong{font-size:14px;color:#102a43;}
+.tpl-save-status{font-size:11px;color:#64748b;background:#f1f5f9;border-radius:999px;padding:5px 9px;white-space:nowrap;}
+.tpl-save-status.dirty{color:#b45309;background:#fff7ed;}.tpl-save-status.saved{color:#047857;background:#ecfdf5;}
+.tpl-tool-group{display:flex;align-items:center;gap:5px;border-inline-start:1px solid #e2e8f0;padding-inline-start:8px;}
+.tpl-tool-btn{border:1px solid #dbe5f0;background:#fff;color:#164a8a;border-radius:7px;padding:6px 9px;font:inherit;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;}
+.tpl-tool-btn:hover{background:#eef5ff;border-color:#78aef9;}.tpl-tool-btn.primary{background:#1677ef;color:#fff;border-color:#1677ef;}.tpl-tool-btn.danger{color:#b42318;}
+.tpl-zoom-value{font-size:12px;font-weight:700;color:#334155;min-width:38px;text-align:center;}
+.tpl-editor-canvas-wrap{padding:42px 52px;align-items:flex-start;}
+.tpl-canvas{zoom:var(--tpl-zoom,1);}
+.tpl-editor-side{width:310px;padding:14px;background:#f8fafc;}
+.tpl-side-section{border:1px solid #e2e8f0;background:#fff;border-radius:10px;margin-bottom:10px;overflow:hidden;}
+.tpl-side-section summary{cursor:pointer;list-style:none;padding:11px 12px;font-weight:800;font-size:12px;color:#163b68;display:flex;justify-content:space-between;}
+.tpl-side-section summary::after{content:'⌄';}.tpl-side-section[open] summary{border-bottom:1px solid #edf2f7;}.tpl-side-section .side-content{padding:10px 12px;}
+.tpl-library-item{display:flex;align-items:center;justify-content:space-between;gap:7px;padding:8px 0;border-bottom:1px solid #edf2f7;font-size:12px;}.tpl-library-item:last-child{border-bottom:0;}.tpl-library-item.active{color:#1677ef;font-weight:800;}
+.tpl-library-open{border:0;background:#eef5ff;color:#1677ef;border-radius:6px;padding:4px 7px;cursor:pointer;font:inherit;font-size:11px;}
+@media(max-width:900px){.tpl-editor-header{align-content:flex-start;max-height:150px;overflow:auto}.tpl-editor-actions{gap:5px}.tpl-tool-group{border:0;padding:0}.tpl-editor-side{width:255px}.tpl-editor-canvas-wrap{padding:24px}.tpl-canvas{zoom:.72;}}
 .tpl-side-empty{font-size:13px;color:var(--muted);text-align:center;margin-top:40px;}
 .tpl-layer-list{border-top:1px solid var(--border);margin-top:16px;padding-top:14px;}
 .tpl-layer-row{display:flex;align-items:center;gap:6px;padding:7px 0;border-bottom:1px solid #edf1f5;}
@@ -3220,7 +3239,7 @@ body.role-staff #navWallet,body.role-staff #navAdmin{display:flex !important;}
         <section class="templates-panel">
           <header class="templates-panel-head"><div><h3>آخر النماذج</h3><p>الوصول السريع إلى أحدث القوالب التي تمت إضافتها أو تعديلها.</p></div></header>
           <div id="recentDocsList" class="templates-recent-list"></div>
-          <div class="detail-actions" style="margin:0 14px 16px;"><button class="btn btn-primary" id="openTplEditorBtn" data-ic="gear">فتح الاستوديو</button></div>
+          <div class="detail-actions" style="margin:0 14px 16px;"><button class="btn btn-primary" id="openTplEditorBtn" data-ic="gear">فتح الاستوديو</button><button class="btn btn-ghost" id="openTplEditorNewTabBtn">فتح في تبويب جديد</button></div>
         </section>
       </div>
     </div>
@@ -4603,9 +4622,15 @@ SWIFT: NBEGEGCX"></textarea>
         <button class="tpl-tab" data-doc="bolCodedFree" id="tabBolCodedFree">بوليصة برية — تخطيط حر</button>
         <button class="tpl-tab" data-doc="bolSeaCodedFree" id="tabBolSeaCodedFree">بوليصة بحرية — تخطيط حر</button>
       </div>
-      <span id="tplEditorTitle" class="tpl-editing"></span>
-      <span class="tpl-editing">استوديو المستندات · A4 ثابت</span>
+      <div class="tpl-route-title">
+        <button class="tpl-tool-btn" id="tplBackBtn">رجوع</button>
+        <div><strong id="tplEditorTitle">استوديو المستندات</strong><div class="tpl-save-status saved" id="tplSaveStatus">تم الحفظ</div></div>
+      </div>
       <div class="tpl-editor-actions">
+        <div class="tpl-tool-group">
+          <button class="tpl-tool-btn" id="tplZoomOutBtn">−</button><span class="tpl-zoom-value" id="tplZoomValue">100%</span><button class="tpl-tool-btn" id="tplZoomInBtn">+</button>
+          <button class="tpl-tool-btn" id="tplZoomFitBtn">ملاءمة</button><button class="tpl-tool-btn" id="tplZoom100Btn">100%</button><button class="tpl-tool-btn" id="tplFullscreenBtn">ملء الشاشة</button>
+        </div>
         <label class="tpl-chk"><input type="checkbox" id="tplPrevChk" checked> معاينة النصوص</label>
         <label class="tpl-chk"><input type="checkbox" id="tplRealChk"> بيانات شحنة حقيقية</label>
         <button class="btn btn-ghost btn-small" id="tplCodedDesignBtn" style="display:none;">تصميم البوليصة</button>
@@ -4617,7 +4642,9 @@ SWIFT: NBEGEGCX"></textarea>
         <button class="btn btn-ghost btn-small" id="tplImgReset">استرجاع الملف الأصلي</button>
         <button class="btn btn-ghost btn-small" id="tplResetBtn">استرجاع الافتراضي</button>
         <button class="btn btn-ghost btn-small" id="tplPreviewBtn" data-ic="eye">معاينة النموذج</button>
-        <button class="btn btn-primary btn-small" id="tplSaveBtn">حفظ الأماكن</button>
+        <button class="tpl-tool-btn" id="tplPrintBtn">طباعة / PDF</button>
+        <button class="tpl-tool-btn" id="tplOpenNewTabBtn">تبويب جديد</button>
+        <button class="tpl-tool-btn primary" id="tplSaveBtn">حفظ</button>
         <button class="close-x" id="tplCloseBtn">×</button>
       </div>
     </div>
@@ -6762,12 +6789,17 @@ function updateHash(v, id){
 }
 function parseHash(){
   const p = new URLSearchParams(location.hash.slice(1));
-  return { v: p.get('v'), id: p.get('id') };
+  return { v: p.get('v'), id: p.get('id'), doc: p.get('doc') };
 }
 function restoreFromHash(){
-  const {v, id} = parseHash();
+  const {v, id, doc} = parseHash();
   const fallback = isStaffRole() ? 'tasks' : 'dashboard';
   if(!v){ switchView(fallback); return; }
+  if(v === 'document-editor'){
+    tplCurrentDoc = doc || 'certWordCoded';
+    tplOpenEditor(undefined, {route:false});
+    return;
+  }
   if(v === 'shipForm' && id){
     const r = records.find(x=>x.id===id);
     if(r){ fillFormForEdit(r); return; }
@@ -6777,6 +6809,7 @@ function restoreFromHash(){
   switchView(v);
   if(v === 'records' && id && records.find(x=>x.id===id)) openDetail(id);
 }
+window.addEventListener('hashchange', restoreFromHash);
 
 function switchView(v){
   closeAllOverlays();
@@ -14796,6 +14829,55 @@ function tplGetImg(doc){
 function isSea(r){ return (r && r.shipType) === 'sea'; }
 
 let tplEditCompanyId = null;
+let tplZoom = 1;
+let tplDirty = false;
+let tplAutoSaveTimer = null;
+let tplReturnHash = '#v=admin';
+const TPL_ROUTE_LABELS = {cert:'شهادة المنشأ البري', certSea:'شهادة المنشأ البحري', bol:'بوليصة الشحن البري', bolSea:'بوليصة الشحن البحري', bolCodedFree:'بوليصة برية مبنية بالكود', bolSeaCodedFree:'بوليصة بحرية مبنية بالكود', certWordCoded:'منشأ دبي التجريبي ليس للتداول'};
+function tplStatus(text, state){
+  const el = document.getElementById('tplSaveStatus');
+  if(!el) return;
+  el.textContent = text; el.className = 'tpl-save-status ' + (state || '');
+}
+function tplUpdateTitle(){
+  const el = document.getElementById('tplEditorTitle');
+  if(el) el.textContent = TPL_ROUTE_LABELS[tplCurrentDoc] || 'استوديو المستندات';
+}
+function tplSetZoom(value){
+  tplZoom = Math.max(.55, Math.min(1.5, Math.round(value * 100) / 100));
+  const canvas = document.getElementById('tplCanvas');
+  if(canvas) canvas.style.setProperty('--tpl-zoom', tplZoom);
+  const output = document.getElementById('tplZoomValue');
+  if(output) output.textContent = Math.round(tplZoom * 100) + '%';
+}
+function tplFitZoom(){
+  const wrap = document.querySelector('.tpl-editor-canvas-wrap');
+  if(!wrap) return;
+  tplSetZoom(Math.min(1, (wrap.clientWidth - 90) / 794, (wrap.clientHeight - 74) / 1123));
+}
+function tplMarkDirty(){
+  tplDirty = true; tplStatus('توجد تغييرات - حفظ تلقائي قريباً', 'dirty');
+  clearTimeout(tplAutoSaveTimer);
+  tplAutoSaveTimer = setTimeout(()=>tplSaveCurrent(true), 900);
+}
+async function tplSaveCurrent(silent){
+  if(!tplDirty && silent) return;
+  tplStatus('جارٍ الحفظ...', 'dirty');
+  try{
+    if(tplCurrentDoc === 'certWordCoded') saveCertWordTemplate();
+    else if(activeBolTplId) await saveBolTplPositions();
+    else await saveCompany(tplEditCompanyId);
+    tplDirty = false; tplStatus('تم الحفظ تلقائياً', 'saved');
+    if(!silent) toast('تم حفظ تعديلات المستند ✓');
+  }catch(e){
+    console.error('template save', e); tplStatus('تعذّر الحفظ - حاول مرة أخرى', 'dirty');
+    if(!silent) alert('تعذّر حفظ التعديلات: ' + (e.message || e));
+  }
+}
+function tplOpenInNewTab(){
+  const url = location.pathname + location.search + '#v=document-editor&doc=' + encodeURIComponent(tplCurrentDoc);
+  window.open(url, '_blank', 'noopener');
+}
 function fillTplCompanyPicker(){
   const sel = document.getElementById('tplCompanyPicker');
   if(!sel) return;
@@ -14803,13 +14885,21 @@ function fillTplCompanyPicker(){
   sel.value = tplEditCompanyId;
 }
 // companyId: افتح المحرر على شركة محدَّدة (من بطاقة الشركة) — لو فاضي، الشركة النشطة كالمعتاد
-function tplOpenEditor(companyId){
+function tplOpenEditor(companyId, options={}){
+  const route = options.route !== false;
+  if(route){
+    if(!location.hash.includes('v=document-editor')) tplReturnHash = location.hash || '#v=admin';
+    const target = '#v=document-editor&doc=' + encodeURIComponent(tplCurrentDoc);
+    if(location.hash !== target) history.pushState(null, '', target);
+  }
   tplEditCompanyId = companyId || activeCompanyId;
   company = companyDataFor(tplEditCompanyId ? {companyId: tplEditCompanyId} : null);
   syncTemplatePositions();
   fillTplCompanyPicker();
   document.getElementById('tplEditorOverlay').classList.add('open');
+  tplDirty = false; tplStatus('تم الحفظ', 'saved'); tplUpdateTitle();
   tplRenderCanvas();
+  requestAnimationFrame(tplFitZoom);
 }
 async function tplSwitchEditorCompany(newId){
   if(newId === tplEditCompanyId) return;
@@ -14819,7 +14909,9 @@ async function tplSwitchEditorCompany(newId){
   syncTemplatePositions();
   tplRenderCanvas();
 }
-async function tplCloseEditor(){
+async function tplCloseEditor(options={}){
+  if(tplDirty && options.confirmDiscard !== false && !confirm('لديك تعديلات لم تُحفظ بعد. هل تريد الخروج؟')) return false;
+  clearTimeout(tplAutoSaveTimer);
   if(activeBolTplId && btPosDirty) await saveBolTplPositions();
   activeBolTplId = null; btPosDirty = false;
   tplEditCompanyId = null;
@@ -14828,6 +14920,8 @@ async function tplCloseEditor(){
   const ttl = document.getElementById('tplEditorTitle');
   if(ttl) ttl.textContent = '';
   document.getElementById('tplEditorOverlay').classList.remove('open');
+  if(options.restoreRoute !== false && location.hash.includes('v=document-editor')) history.pushState(null, '', tplReturnHash || '#v=admin');
+  return true;
 }
 
 // بيانات المعاينة داخل محرر النماذج
@@ -15000,7 +15094,20 @@ function tplRenderCanvas(){
 }
 
 function tplRenderSideEmpty(){
-  document.getElementById('tplSide').innerHTML = '<div class="tpl-side-empty">اضغط على أي حقل واسحبه لمكانه، أو اختاره وعدّل الأرقام هنا بدقة</div>';
+  const docs = ['certWordCoded','cert','certSea','bolCodedFree','bolSeaCodedFree','bol','bolSea'];
+  document.getElementById('tplSide').innerHTML = `
+    <details class="tpl-side-section" open><summary>المستندات</summary><div class="side-content">${docs.map(doc=>`<div class="tpl-library-item ${doc===tplCurrentDoc?'active':''}"><span>${TPL_ROUTE_LABELS[doc]}</span><button class="tpl-library-open" data-studio-doc="${doc}">فتح</button></div>`).join('')}</div></details>
+    <details class="tpl-side-section" open><summary>الحقول والطبقات</summary><div class="side-content"><div class="tpl-side-empty" style="margin:8px 0">اضغط على أي حقل من الورقة لتعديل موقعه وحجمه وخطه.</div></div></details>
+    <details class="tpl-side-section"><summary>الصور والهوية</summary><div class="side-content"><button class="tpl-tool-btn" id="tplBrandOpenBtn">الشعار والختم والعلامة</button></div></details>
+    <details class="tpl-side-section"><summary>إعدادات المستند</summary><div class="side-content"><button class="tpl-tool-btn" id="tplReplaceSideBtn">استبدال ملف A4</button><div class="tpl-side-sub" style="margin-top:8px">يتم تثبيت الملف على مقاس A4 مع بقاء الحقول مستقلة فوقه.</div></div></details>`;
+  document.querySelectorAll('[data-studio-doc]').forEach(btn=>btn.addEventListener('click', ()=>{
+    tplCurrentDoc = btn.dataset.studioDoc; tplSelectedKey = null; tplUpdateTitle(); tplRenderCanvas(); requestAnimationFrame(tplFitZoom);
+    history.replaceState(null, '', '#v=document-editor&doc=' + encodeURIComponent(tplCurrentDoc));
+  }));
+  document.getElementById('tplBrandOpenBtn')?.addEventListener('click', ()=>{
+    tplCloseEditor({restoreRoute:false, confirmDiscard:false}); openCompanyModal(company.id);
+  });
+  document.getElementById('tplReplaceSideBtn')?.addEventListener('click', ()=>document.getElementById('tplImgFile').click());
 }
 
 function tplSelectField(key){
@@ -15137,6 +15244,7 @@ function tplSetPosition(key, patch){
         sp.style.textAlign = p.align || (p.ltr?'left':'right');
       }
     }
+    tplMarkDirty();
     return;
   }
   // نموذج بوليصة محدد: نحفظ في مواضعه هو
@@ -15164,6 +15272,7 @@ function tplSetPosition(key, patch){
         }
       }
       btPosDirty = true;
+      tplMarkDirty();
       return;
     }
   }
@@ -15188,6 +15297,7 @@ function tplSetPosition(key, patch){
       sp.style.direction = p.ltr ? 'ltr' : 'rtl';
     }
   }
+  tplMarkDirty();
 }
 
 let tplDrag = null;
@@ -15230,15 +15340,27 @@ function tplEndDrag(e){
   tplDrag = null;
 }
 
-document.getElementById('openTplEditorBtn').addEventListener('click', tplOpenEditor);
+document.getElementById('openTplEditorBtn').addEventListener('click', ()=>tplOpenEditor());
+document.getElementById('openTplEditorNewTabBtn').addEventListener('click', tplOpenInNewTab);
+document.getElementById('tplBackBtn').addEventListener('click', ()=>tplCloseEditor());
+document.getElementById('tplZoomInBtn').addEventListener('click', ()=>tplSetZoom(tplZoom + .1));
+document.getElementById('tplZoomOutBtn').addEventListener('click', ()=>tplSetZoom(tplZoom - .1));
+document.getElementById('tplZoom100Btn').addEventListener('click', ()=>tplSetZoom(1));
+document.getElementById('tplZoomFitBtn').addEventListener('click', tplFitZoom);
+document.getElementById('tplFullscreenBtn').addEventListener('click', ()=>{
+  const studio = document.getElementById('tplEditorOverlay');
+  if(document.fullscreenElement) document.exitFullscreen(); else studio.requestFullscreen?.();
+});
+document.getElementById('tplOpenNewTabBtn').addEventListener('click', tplOpenInNewTab);
+document.getElementById('tplPrintBtn').addEventListener('click', ()=>document.getElementById('tplPreviewBtn').click());
 document.getElementById('tplCodedDesignBtn').addEventListener('click', ()=>{
   const doc = tplCurrentDoc;
-  tplCloseEditor();
+  tplCloseEditor({restoreRoute:false, confirmDiscard:false});
   if(doc === 'bolSeaCodedFree') openBolSeaCodedModal();
   else openBolCodedModal();
 });
 document.getElementById('tplCodedBrandBtn').addEventListener('click', ()=>{
-  tplCloseEditor();
+  tplCloseEditor({restoreRoute:false, confirmDiscard:false});
   // الهوية تحتوي على الشعار والختم والعلامة المائية المستخدمة فعلياً في البوليصة.
   openCompanyModal(company.id);
 });
@@ -15246,7 +15368,7 @@ document.getElementById('tplCodedBrandBtn').addEventListener('click', ()=>{
 document.querySelector('.tpl-editor-canvas-wrap').addEventListener('wheel', e=>{
   if(tplCurrentDoc === 'certWordCoded' && e.ctrlKey) e.preventDefault();
 }, {passive:false});
-document.getElementById('tplCloseBtn').addEventListener('click', tplCloseEditor);
+document.getElementById('tplCloseBtn').addEventListener('click', ()=>tplCloseEditor());
 document.getElementById('tplPreviewBtn').addEventListener('click', ()=>{
   if(tplCurrentDoc === 'certWordCoded'){
     openPrintWindow(certSheetWordPdf(tplPreviewRecord()));
@@ -15259,21 +15381,16 @@ document.getElementById('tplPreviewBtn').addEventListener('click', ()=>{
 [['tabCert','cert'],['tabBol','bol'],['tabCertSea','certSea'],['tabCertWordCoded','certWordCoded'],['tabBolSea','bolSea'],
  ['tabBolCodedFree','bolCodedFree'],['tabBolSeaCodedFree','bolSeaCodedFree']].forEach(([id,doc])=>{
   const el = document.getElementById(id);
-  if(el) el.addEventListener('click', ()=>{ tplCurrentDoc=doc; tplSelectedKey=null; tplRenderCanvas(); });
+  if(el) el.addEventListener('click', ()=>{ tplCurrentDoc=doc; tplSelectedKey=null; tplUpdateTitle(); tplRenderCanvas(); history.replaceState(null, '', '#v=document-editor&doc=' + encodeURIComponent(doc)); });
 });
 const tplCompanyPicker = document.getElementById('tplCompanyPicker');
 if(tplCompanyPicker) tplCompanyPicker.addEventListener('change', function(){
   tplSwitchEditorCompany(this.value);
 });
-document.getElementById('tplSaveBtn').addEventListener('click', async ()=>{
-  if(tplCurrentDoc === 'certWordCoded'){
-    saveCertWordTemplate();
-    toast('تم حفظ طبقات شهادة المنشأ ✓');
-    return;
-  }
-  if(activeBolTplId){ await saveBolTplPositions(); return; }
-  await saveCompany(tplEditCompanyId);
-  toast('تم حفظ أماكن الحقول ✓');
+document.getElementById('tplSaveBtn').addEventListener('click', ()=>tplSaveCurrent(false));
+window.addEventListener('beforeunload', e=>{
+  if(!tplDirty) return;
+  e.preventDefault(); e.returnValue = '';
 });
 document.getElementById('tplImgFile').addEventListener('change', async function(){
   const f = this.files && this.files[0];
