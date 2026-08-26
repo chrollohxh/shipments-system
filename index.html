@@ -3380,28 +3380,37 @@ body.role-staff #navWallet,body.role-staff #navAdmin{display:flex !important;}
       </div>
 
       <div class="section-title">مكان الختم والتوقيع</div>
-      <div class="grid">
-        <div class="field span2">
-          <label style="font-weight:400;color:var(--ink);cursor:pointer;display:inline-block;margin-left:20px;">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">
+        اسحب الختم بالماوس على المعاينة عشان تحدد مكانه على الفاتورة.
+      </div>
+      <div class="stamp-editor">
+        <div class="stamp-stage" id="ceStampStage">
+          <iframe id="ceStampPreview" scrolling="no"></iframe>
+          <div class="stamp-handle" id="ceStampHandle">
+            <div class="sh-img" id="ceStampImg"></div>
+          </div>
+        </div>
+        <div class="stamp-ctrls">
+          <label style="font-weight:400;color:var(--ink);cursor:pointer;display:block;margin-bottom:10px;">
             <input type="checkbox" id="ce_showStamp" style="width:auto;vertical-align:middle;">
             إظهار الختم على الفاتورة
           </label>
-          <label style="font-weight:400;color:var(--ink);cursor:pointer;display:inline-block;">
+          <label style="font-weight:400;color:var(--ink);cursor:pointer;display:block;margin-bottom:14px;">
             <input type="checkbox" id="ce_showSigLine" style="width:auto;vertical-align:middle;">
             إظهار خط التوقيع
           </label>
-        </div>
-        <div class="field">
-          <label>حجم الختم: <b id="ce_stampWVal">20</b>%</label>
-          <input type="range" id="ce_stampW" min="8" max="45" step="1">
-        </div>
-        <div class="field">
-          <label>من أعلى: <b id="ce_stampTVal">66</b>%</label>
-          <input type="range" id="ce_stampT" min="0" max="92" step="0.5">
-        </div>
-        <div class="field">
-          <label>من اليسار: <b id="ce_stampLVal">10</b>%</label>
-          <input type="range" id="ce_stampL" min="0" max="92" step="0.5">
+          <div class="field">
+            <label>حجم الختم: <b id="ce_stampWVal">20</b>%</label>
+            <input type="range" id="ce_stampW" min="8" max="45" step="1">
+          </div>
+          <div class="field">
+            <label>من أعلى: <b id="ce_stampTVal">66</b>%</label>
+            <input type="range" id="ce_stampT" min="0" max="92" step="0.5">
+          </div>
+          <div class="field">
+            <label>من اليسار: <b id="ce_stampLVal">10</b>%</label>
+            <input type="range" id="ce_stampL" min="0" max="92" step="0.5">
+          </div>
         </div>
       </div>
 
@@ -9252,8 +9261,8 @@ function openCompanyModal(id){
   company.stampPos = Object.assign({}, DEFAULT_COMPANY.stampPos, company.stampPos||{});
   document.getElementById('ceTitle').textContent = c ? ('تعديل: ' + c.name_ar) : 'شركة جديدة';
   document.getElementById('ceTplEditBtn').style.display = id ? '' : 'none';
-  fillCeForm();
   companyEditOverlay.classList.add('open');
+  fillCeForm();
   setTimeout(()=>{ document.getElementById('ce_nameAr').focus(); if(typeof syncLogoHeadHandle==='function') syncLogoHeadHandle(); }, 80);
 }
 function fillCeForm(){
@@ -9288,6 +9297,8 @@ function fillCeForm(){
   document.getElementById('ce_footerW').value = company.footerWidth||100;
   document.getElementById('ce_footerWVal').textContent = company.footerWidth||100;
   renderCePreviews();
+  ceRefreshStampPreview();
+  ceRenderPreview();
 }
 function renderCePreviews(){
   renderImgPrev('ce_logoPrev', company.logo, 'logo');
@@ -9300,7 +9311,10 @@ function renderCePreviews(){
  ['ce_letterheadFile','letterheadImg',900], ['ce_footerImgFile','footerImg',900]].forEach(([inputId, key, maxDim])=>{
   document.getElementById(inputId).addEventListener('change', async function(){
     const f = this.files && this.files[0]; if(!f) return;
-    try{ company[key] = await fileToScaledDataURL(f, maxDim); renderCePreviews(); }
+    try{
+      company[key] = await fileToScaledDataURL(f, maxDim);
+      renderCePreviews(); ceRefreshStampPreview(); ceRenderPreview();
+    }
     catch(e){ alert('تعذّر قراءة الملف\n\nالسبب: ' + (e.message||e)); }
     this.value='';
   });
@@ -9308,7 +9322,7 @@ function renderCePreviews(){
 companyEditOverlay.addEventListener('click', e=>{
   if(e.target.classList && e.target.classList.contains('rm')){
     company[e.target.dataset.key] = '';
-    renderCePreviews();
+    renderCePreviews(); ceRefreshStampPreview(); ceRenderPreview();
   }
 });
 document.querySelectorAll('input[name="ce_brandMode"]').forEach(radio=>{
@@ -9334,16 +9348,19 @@ document.getElementById('ce_wmOpacity').addEventListener('input', function(){
   company.watermarkOpacity = parseInt(this.value,10);
   document.getElementById('ce_wmOpacityVal').textContent = this.value;
 });
-document.getElementById('ce_showStamp').addEventListener('change', function(){ company.showStampBox = this.checked; });
+document.getElementById('ce_showStamp').addEventListener('change', function(){ company.showStampBox = this.checked; syncCeStampHandle(); });
 document.getElementById('ce_showSigLine').addEventListener('change', function(){ company.showSigLine = this.checked; });
 document.getElementById('ce_stampW').addEventListener('input', function(){
   company.stampPos.width = parseFloat(this.value); document.getElementById('ce_stampWVal').textContent = this.value;
+  syncCeStampHandle();
 });
 document.getElementById('ce_stampT').addEventListener('input', function(){
   company.stampPos.top = parseFloat(this.value); document.getElementById('ce_stampTVal').textContent = this.value;
+  syncCeStampHandle();
 });
 document.getElementById('ce_stampL').addEventListener('input', function(){
   company.stampPos.left = parseFloat(this.value); document.getElementById('ce_stampLVal').textContent = this.value;
+  syncCeStampHandle();
 });
 function ceCloseRestoreActive(){
   if(compEditId !== activeCompanyId) applyActiveCompany();
@@ -9376,10 +9393,8 @@ function readCeForm(){
   company.defaultTerm = document.getElementById('ce_term').value.trim();
   return nameArIn || nameEnIn;
 }
-function ceRenderPreview(){
-  const box = document.getElementById('cePreview');
-  readCeForm();
-  const sample = {
+function ceSampleRecord(){
+  return {
     itemDesc:'خط انتاج ثلج بملحقاته', qty:'24', qtyUnit:'طن',
     unitPrice:'USD 1,583.33', totalAmount:'USD 38,000.00', totalQty:'24 طن',
     exporter: company.nameAr || 'اسم الشركة',
@@ -9392,8 +9407,13 @@ function ceRenderPreview(){
     paymentTerm: company.defaultTerm || 'DA (180) DAYS',
     bankDetails:'BANK NAME\nIBAN\nSWIFT'
   };
+}
+function ceRenderPreview(){
+  const box = document.getElementById('cePreview');
+  if(!companyEditOverlay.classList.contains('open')) return;
+  readCeForm();
   try{
-    const html = invoiceSheet(sample, 'proforma');
+    const html = invoiceSheet(ceSampleRecord(), 'proforma');
     box.innerHTML = `<div class="ce-scale"><style>${PRINT_STYLES}</style>${html}</div>`;
   }catch(e){
     box.innerHTML = '<span class="ce-hint">تعذّر بناء المعاينة: ' + escapeHtml(e.message||'') + '</span>';
@@ -9401,6 +9421,74 @@ function ceRenderPreview(){
   }
 }
 document.getElementById('cePreviewBtn').addEventListener('click', ceRenderPreview);
+let ceLiveTimer = null;
+companyEditOverlay.addEventListener('input', ()=>{
+  clearTimeout(ceLiveTimer);
+  ceLiveTimer = setTimeout(ceRenderPreview, 250);
+});
+companyEditOverlay.addEventListener('change', ()=>{
+  clearTimeout(ceLiveTimer);
+  ceLiveTimer = setTimeout(ceRenderPreview, 100);
+});
+
+// ===== سحب الختم على معاينة الفاتورة (نفس أسلوب bolSeaStampStage) =====
+function ceRefreshStampPreview(){
+  if(!companyEditOverlay.classList.contains('open')) return;
+  const saved = company.showStampBox;
+  company.showStampBox = false;
+  let html = '';
+  try{ html = invoiceSheet(ceSampleRecord(), 'proforma'); }catch(e){}
+  company.showStampBox = saved;
+  document.getElementById('ceStampPreview').srcdoc =
+    `<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8">
+     <style>${PRINT_STYLES}</style></head>
+     <body><div class="doc-page">${html}</div></body></html>`;
+  syncCeStampHandle();
+}
+function syncCeStampHandle(){
+  const sp = company.stampPos;
+  const handle = document.getElementById('ceStampHandle');
+  handle.classList.toggle('hidden', company.showStampBox === false);
+  handle.style.top = sp.top + '%';
+  handle.style.left = sp.left + '%';
+  handle.style.width = sp.width + '%';
+  const stampSrc = company.stamp;
+  const img = document.getElementById('ceStampImg');
+  img.style.backgroundImage = stampSrc ? `url(${stampSrc})` : 'none';
+  img.style.border = stampSrc ? 'none' : '1px dashed #bbb';
+  img.style.borderRadius = stampSrc ? '0' : '50%';
+}
+const ceStampStage = document.getElementById('ceStampStage');
+const ceStampHandle = document.getElementById('ceStampHandle');
+let ceStampDrag = null;
+ceStampHandle.addEventListener('pointerdown', e=>{
+  e.preventDefault();
+  ceStampHandle.setPointerCapture(e.pointerId);
+  const stage = ceStampStage.getBoundingClientRect();
+  const box = ceStampHandle.getBoundingClientRect();
+  ceStampDrag = {
+    dx: e.clientX - box.left, dy: e.clientY - box.top,
+    sw: stage.width, sh: stage.height,
+    sx: stage.left, sy: stage.top,
+    bw: box.width, bh: box.height
+  };
+});
+ceStampHandle.addEventListener('pointermove', e=>{
+  if(!ceStampDrag) return;
+  let left = (e.clientX - ceStampDrag.dx - ceStampDrag.sx) / ceStampDrag.sw * 100;
+  let top  = (e.clientY - ceStampDrag.dy - ceStampDrag.sy) / ceStampDrag.sh * 100;
+  const maxL = 100 - (ceStampDrag.bw / ceStampDrag.sw * 100);
+  const maxT = 100 - (ceStampDrag.bh / ceStampDrag.sh * 100);
+  company.stampPos.left = Math.round(Math.max(0, Math.min(maxL, left))*2)/2;
+  company.stampPos.top  = Math.round(Math.max(0, Math.min(maxT, top))*2)/2;
+  document.getElementById('ce_stampT').value = company.stampPos.top;
+  document.getElementById('ce_stampL').value = company.stampPos.left;
+  document.getElementById('ce_stampTVal').textContent = company.stampPos.top;
+  document.getElementById('ce_stampLVal').textContent = company.stampPos.left;
+  syncCeStampHandle();
+});
+ceStampHandle.addEventListener('pointerup', ()=>{ ceStampDrag = null; ceRenderPreview(); });
+ceStampHandle.addEventListener('pointercancel', ()=>{ ceStampDrag = null; });
 
 document.getElementById('ceSaveBtn').addEventListener('click', async ()=>{
   const nameAr = readCeForm();
