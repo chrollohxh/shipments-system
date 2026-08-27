@@ -14922,15 +14922,19 @@ function tplOpenEditor(companyId, options={}){
   }
   tplEditCompanyId = companyId || activeCompanyId;
   company = companyDataFor(tplEditCompanyId ? {companyId: tplEditCompanyId} : null);
-  // دخول استوديو البوالص الحرة يعني أن مواضع الحقول هي المصدر الفعلي للطباعة، لا الجدول الثابت.
-  if(tplCurrentDoc === 'bolCodedFree') company.bolCodedFreeLayout = true;
-  if(tplCurrentDoc === 'bolSeaCodedFree') company.bolSeaCodedFreeLayout = true;
+  // نحافظ على البوليصة المبنية بالكود بتخطيطها الأصلي؛ حقول الاستوديو طبقة ضبط فوقها فقط.
+  // الإصدار السابق فعّل التخطيط الحر تلقائياً، لذلك نوقفه هنا لاستعادة الشكل المعتمد.
+  const restoreFixedLayout = (tplCurrentDoc === 'bolCodedFree' && company.bolCodedFreeLayout) ||
+    (tplCurrentDoc === 'bolSeaCodedFree' && company.bolSeaCodedFreeLayout);
+  if(tplCurrentDoc === 'bolCodedFree') company.bolCodedFreeLayout = false;
+  if(tplCurrentDoc === 'bolSeaCodedFree') company.bolSeaCodedFreeLayout = false;
   syncTemplatePositions();
   fillTplCompanyPicker();
   document.getElementById('tplEditorOverlay').classList.add('open');
   tplDirty = false; tplStatus('تم الحفظ', 'saved'); tplUpdateTitle();
   tplRenderCanvas();
   requestAnimationFrame(tplFitZoom);
+  if(restoreFixedLayout) tplMarkDirty();
 }
 async function tplSwitchEditorCompany(newId){
   if(newId === tplEditCompanyId) return;
@@ -15395,6 +15399,26 @@ function tplEndDrag(e){
 window.addEventListener('pointermove', tplDoDrag);
 window.addEventListener('pointerup', tplEndDrag);
 window.addEventListener('pointercancel', tplEndDrag);
+// بعد اختيار حقل يمكن ضبطه بدقة من الكيبورد: سهم = 0.5%، Shift+سهم = 2%، Alt+سهم = 0.1%.
+window.addEventListener('keydown', e=>{
+  if(!document.getElementById('tplEditorOverlay').classList.contains('open') || !tplSelectedKey) return;
+  if(['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName)) return;
+  const arrows = {ArrowUp:['top',-1],ArrowDown:['top',1],ArrowLeft:['left',-1],ArrowRight:['left',1]};
+  const action = arrows[e.key];
+  if(!action) return;
+  const def = (TEMPLATE_FIELDS[tplCurrentDoc] || []).find(d=>d.key===tplSelectedKey);
+  if(!def) return;
+  e.preventDefault();
+  const pos = fieldPos(tplCurrentDoc, def);
+  const increment = e.altKey ? .1 : (e.shiftKey ? 2 : .5);
+  const patch = {};
+  patch[action[0]] = Math.max(0, Math.min(action[0] === 'left' ? 100 - (pos.width||0) : 98, Math.round((pos[action[0]] + action[1] * increment) * 10) / 10));
+  tplSetPosition(tplSelectedKey, patch);
+  const topIn = document.getElementById('tplInTop');
+  const leftIn = document.getElementById('tplInLeft');
+  if(topIn) topIn.value = patch.top ?? pos.top;
+  if(leftIn) leftIn.value = patch.left ?? pos.left;
+});
 
 document.getElementById('openTplEditorBtn').addEventListener('click', ()=>tplOpenEditor());
 document.getElementById('openTplEditorNewTabBtn').addEventListener('click', tplOpenInNewTab);
