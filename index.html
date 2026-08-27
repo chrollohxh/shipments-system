@@ -1550,6 +1550,8 @@ body.role-viewer #bankAddBtn{display:none !important;}
 /* template position editor */
 .tpl-editor-overlay{position:fixed;inset:0;background:#0d1b2a;display:none;z-index:100;padding:0;}
 .tpl-editor-overlay.open{display:block;}
+/* تفتح هذه النوافذ من داخل الاستوديو؛ يجب أن تبقى فوق طبقته لا خلفها. */
+#bolTplAssetsOverlay.open,#bolCodedOverlay.open,#bolSeaCodedOverlay.open{z-index:160;}
 .tpl-editor-card{
   background:var(--white);width:100%;max-width:none;height:100dvh;
   display:flex;flex-direction:column;border-radius:0;overflow:hidden;
