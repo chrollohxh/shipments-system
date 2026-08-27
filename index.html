@@ -1593,8 +1593,9 @@ body.role-viewer #bankAddBtn{display:none !important;}
   padding:2px 4px;overflow:hidden;white-space:nowrap;user-select:none;touch-action:none;border-radius:2px;
 }
 .tpl-drag-box.selected{border-color:var(--o-accent);background:rgba(1,126,132,0.14);color:var(--o-accent);z-index:5;}
-.tpl-code-handle{background:transparent;border-color:rgba(37,99,235,.32);color:transparent;min-height:18px;}
-.tpl-code-handle:hover,.tpl-code-handle.selected{background:rgba(37,99,235,.10);color:#1d4ed8;}
+.tpl-code-handle{background:transparent;border-color:rgba(37,99,235,.32);color:transparent;min-height:18px;z-index:20;touch-action:none;}
+.tpl-code-handle.has-preview{background:rgba(255,255,255,.78);border-color:rgba(37,99,235,.58);color:#0f3f77;}
+.tpl-code-handle:hover,.tpl-code-handle.selected{background:rgba(37,99,235,.12);color:#1d4ed8;}
 .tpl-code-handle::after{content:attr(data-label);font-size:9px;line-height:1;color:inherit;}
 .tpl-pdf-image-box{min-height:36px;background:rgba(255,255,255,.72);text-align:center;white-space:normal;display:flex;align-items:center;justify-content:center;}
 .tpl-pdf-image-box img{display:block;width:100%;height:auto;max-height:140px;object-fit:contain;pointer-events:none;}
@@ -4633,6 +4634,7 @@ SWIFT: NBEGEGCX"></textarea>
           <button class="tpl-tool-btn" id="tplZoomFitBtn">ملاءمة</button><button class="tpl-tool-btn" id="tplZoom100Btn">100%</button><button class="tpl-tool-btn" id="tplFullscreenBtn">ملء الشاشة</button>
         </div>
         <label class="tpl-chk"><input type="checkbox" id="tplPrevChk" checked> معاينة النصوص</label>
+        <label class="tpl-chk" title="اضغط Alt أثناء السحب للتحريك الحر"><input type="checkbox" id="tplSnapChk" checked> محاذاة ذكية</label>
         <label class="tpl-chk"><input type="checkbox" id="tplRealChk"> بيانات شحنة حقيقية</label>
         <button class="btn btn-ghost btn-small" id="tplCodedDesignBtn" style="display:none;">تصميم البوليصة</button>
         <button class="btn btn-ghost btn-small" id="tplCodedBrandBtn" style="display:none;">الشعار والختم والعلامة</button>
@@ -14920,6 +14922,9 @@ function tplOpenEditor(companyId, options={}){
   }
   tplEditCompanyId = companyId || activeCompanyId;
   company = companyDataFor(tplEditCompanyId ? {companyId: tplEditCompanyId} : null);
+  // دخول استوديو البوالص الحرة يعني أن مواضع الحقول هي المصدر الفعلي للطباعة، لا الجدول الثابت.
+  if(tplCurrentDoc === 'bolCodedFree') company.bolCodedFreeLayout = true;
+  if(tplCurrentDoc === 'bolSeaCodedFree') company.bolSeaCodedFreeLayout = true;
   syncTemplatePositions();
   fillTplCompanyPicker();
   document.getElementById('tplEditorOverlay').classList.add('open');
@@ -15061,6 +15066,11 @@ function tplRenderCanvas(){
         box.style.top = pos.top+'%';
         box.style.left = pos.left+'%';
         box.style.width = pos.width+'%';
+        const value = (tplValuesFor(tplCurrentDoc)[def.key] || '').toString().trim();
+        if(tplShowPreview && value){
+          box.classList.add('has-preview');
+          box.innerHTML = `<span class="tpl-prev-txt" style="font-size:${Math.max(8,(pos.size||10)*.8).toFixed(1)}px;direction:${pos.ltr?'ltr':'rtl'};text-align:${pos.align||(pos.ltr?'left':'right')}">${escapeHtml(value)}</span>`;
+        }
         if(def.key === tplSelectedKey) box.classList.add('selected');
         box.title = def.label;
         box.addEventListener('pointerdown', tplStartDrag);
@@ -15327,7 +15337,25 @@ function tplSetPosition(key, patch){
 }
 
 let tplDrag = null;
+let tplSnapEnabled = true;
+function tplSnapPosition(value, axis, key, width, event){
+  // شبكة نصف بالمئة تمنح حركة ناعمة، ثم نلتقط الحواف القريبة لمحاذاة الحقول مع بعضها.
+  if(event.altKey || !tplSnapEnabled) return Math.round(value * 10) / 10;
+  const step = .5;
+  let snapped = Math.round(value / step) * step;
+  const defs = TEMPLATE_FIELDS[tplCurrentDoc] || [];
+  defs.filter(d=>d.key !== key).forEach(def=>{
+    const p = fieldPos(tplCurrentDoc, def);
+    const candidates = axis === 'left'
+      ? [p.left, p.left + p.width, p.left - width, p.left + p.width - width]
+      : [p.top];
+    candidates.forEach(candidate=>{ if(Math.abs(value - candidate) < .65) snapped = candidate; });
+  });
+  return Math.round(Math.max(0, Math.min(axis === 'left' ? 100 - width : 98, snapped)) * 10) / 10;
+}
 function tplStartDrag(e){
+  if(e.button !== 0) return;
+  e.preventDefault(); e.stopPropagation();
   const box = e.currentTarget;
   const canvas = document.getElementById('tplCanvas');
   const canvasRect = canvas.getBoundingClientRect();
@@ -15338,33 +15366,35 @@ function tplStartDrag(e){
     startY: e.clientY,
     startTop: parseFloat(box.style.top),
     startLeft: parseFloat(box.style.left),
+    width: parseFloat(box.style.width) || 10,
     canvasW: canvasRect.width,
     canvasH: canvasRect.height,
   };
-  box.setPointerCapture(e.pointerId);
-  box.addEventListener('pointermove', tplDoDrag);
-  box.addEventListener('pointerup', tplEndDrag);
+  box.setPointerCapture?.(e.pointerId);
   tplSelectField(box.dataset.key);
 }
 function tplDoDrag(e){
   if(!tplDrag) return;
   const dx = e.clientX - tplDrag.startX;
   const dy = e.clientY - tplDrag.startY;
-  const newLeft = tplDrag.startLeft + (dx / tplDrag.canvasW * 100);
-  const newTop = tplDrag.startTop + (dy / tplDrag.canvasH * 100);
+  const rawLeft = tplDrag.startLeft + (dx / tplDrag.canvasW * 100);
+  const rawTop = tplDrag.startTop + (dy / tplDrag.canvasH * 100);
+  const newLeft = tplSnapPosition(rawLeft, 'left', tplDrag.key, tplDrag.width, e);
+  const newTop = tplSnapPosition(rawTop, 'top', tplDrag.key, tplDrag.width, e);
   tplDrag.box.style.left = newLeft+'%';
   tplDrag.box.style.top = newTop+'%';
-  tplSetPosition(tplDrag.key, {top: Math.round(newTop*10)/10, left: Math.round(newLeft*10)/10});
+  tplSetPosition(tplDrag.key, {top:newTop, left:newLeft});
   const topIn = document.getElementById('tplInTop');
   const leftIn = document.getElementById('tplInLeft');
-  if(topIn && tplSelectedKey===tplDrag.key){ topIn.value = Math.round(newTop*10)/10; leftIn.value = Math.round(newLeft*10)/10; }
+  if(topIn && tplSelectedKey===tplDrag.key){ topIn.value = newTop; leftIn.value = newLeft; }
 }
 function tplEndDrag(e){
   if(!tplDrag) return;
-  tplDrag.box.removeEventListener('pointermove', tplDoDrag);
-  tplDrag.box.removeEventListener('pointerup', tplEndDrag);
   tplDrag = null;
 }
+window.addEventListener('pointermove', tplDoDrag);
+window.addEventListener('pointerup', tplEndDrag);
+window.addEventListener('pointercancel', tplEndDrag);
 
 document.getElementById('openTplEditorBtn').addEventListener('click', ()=>tplOpenEditor());
 document.getElementById('openTplEditorNewTabBtn').addEventListener('click', tplOpenInNewTab);
@@ -15489,6 +15519,10 @@ document.getElementById('tplImgReset').addEventListener('click', async ()=>{
 document.getElementById('tplPrevChk').addEventListener('change', function(){
   tplShowPreview = this.checked;
   tplRenderCanvas();
+});
+document.getElementById('tplSnapChk').addEventListener('change', function(){
+  tplSnapEnabled = this.checked;
+  toast(this.checked ? 'المحاذاة الذكية مفعلة' : 'التحريك الحر مفعل');
 });
 document.getElementById('tplRealChk').addEventListener('change', function(){
   if(this.checked && !records.length){
