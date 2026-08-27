@@ -4593,7 +4593,6 @@ SWIFT: NBEGEGCX"></textarea>
         <label class="tpl-chk"><input type="checkbox" id="tplPrevChk" checked> معاينة النصوص</label>
         <label class="tpl-chk" title="اضغط Alt أثناء السحب للتحريك الحر"><input type="checkbox" id="tplSnapChk" checked> محاذاة ذكية</label>
         <label class="tpl-chk"><input type="checkbox" id="tplRealChk"> بيانات شحنة حقيقية</label>
-        <button class="btn btn-ghost btn-small" id="tplCodedDesignBtn" style="display:none;">تصميم البوليصة</button>
         <button class="btn btn-ghost btn-small" id="tplCodedBrandBtn" style="display:none;">الشعار والختم والعلامة</button>
         <label class="btn btn-ghost btn-small" style="cursor:pointer;margin:0;">
           استبدال ملف النموذج
@@ -7444,9 +7443,26 @@ function renderBolTplAdmin(){
   const cardHtml = row=>`<article class="bt-card ${row.active?'':'off'}" data-simple-template="${row.id}"><div class="bt-thumb">${icon(row.icon,21)}</div><div class="bt-info"><div class="bt-name">${escapeHtml(row.name)} <span class="template-state ${row.active?'':'off'}">${row.active?'مفعّل':'متوقف'}</span></div><div class="bt-sub">${escapeHtml(row.desc)}</div></div><div class="cc-acts"><button class="btn btn-ghost btn-small simple-fields">التحكم في الحقول</button><button class="btn btn-ghost btn-small simple-design">${row.group==='cert'?'تصميم الشهادة':'تصميم البوليصة'}</button><button class="btn btn-ghost btn-small btn-enable simple-enable">تفعيل</button><button class="btn btn-ghost btn-small btn-disable simple-disable">إيقاف</button></div></article>`;
   el.innerHTML = ['cert','land','sea'].map(group=>{ const [title,desc]=groupMeta[group]; const groupRows=rows.filter(row=>row.group===group); return `<section class="template-group"><h3>${title}</h3><p>${desc}</p><div class="template-group-list">${groupRows.map(cardHtml).join('')}</div></section>`; }).join('');
   hydrateIcons(el);
-  const openStudio = row=>{
+  // إدارة الحقول تبقي سلوكها السابق: تفتح أدوات مواضع الحقول فقط.
+  const openFieldManager = row=>{
     if(row.template && row.template.kind!=='coded'){ openBolTplFields(row.template.id); return; }
     tplCurrentDoc=row.doc || (row.group==='sea'?'bolSeaCodedFree':row.group==='land'?'bolCodedFree':'certWordCoded'); tplSelectedKey=null; tplOpenEditor();
+  };
+  // زر التصميم يدخل الاستوديو مباشرة على النموذج المختار ويجهز زر الهوية والختم له.
+  const openVisualDesigner = row=>{
+    activeBolTplId = null;
+    btPosDirty = false;
+    if(row.template && row.template.kind!=='coded'){
+      if(!row.template.image){ alert('ارفع ملف النموذج أولاً قبل فتح الاستوديو.'); return; }
+      activeBolTplId = row.template.id;
+      tplCurrentDoc = row.template.ship_type === 'sea' ? 'bolSea' : 'bol';
+    }else{
+      tplCurrentDoc = row.doc || (row.group==='sea'?'bolSeaCodedFree':row.group==='land'?'bolCodedFree':'certWordCoded');
+    }
+    tplSelectedKey = null;
+    tplOpenEditor();
+    const ttl = document.getElementById('tplEditorTitle');
+    if(ttl) ttl.textContent = (row.group==='cert' ? 'تصميم الشهادة: ' : 'تصميم البوليصة: ') + row.name;
   };
   const setActive = async (row, active)=>{
     if(row.local==='certWord'){ certWordTemplate.active=active; saveCertWordTemplate(); fillCertPicker(); }
@@ -7455,7 +7471,7 @@ function renderBolTplAdmin(){
     else if(row.local==='seaCoded'){ company.bolSeaCoded=active; await saveCompany(); fillBolPicker(); }
     else if(row.template){ const {error}=await sb.from('bol_templates').update({active}).eq('id',row.template.id); if(error) throw error; row.template.active=active; fillBolPicker(); }
   };
-  el.querySelectorAll('[data-simple-template]').forEach(card=>{ const row=rows.find(x=>x.id===card.dataset.simpleTemplate); card.querySelector('.simple-fields').addEventListener('click',()=>openStudio(row)); card.querySelector('.simple-design').addEventListener('click',()=>openStudio(row)); card.querySelector('.simple-enable').addEventListener('click',async()=>{try{await setActive(row,true);renderBolTplAdmin();toast('تم تفعيل النموذج ✓');}catch(e){dbError(e,'تعذّر التفعيل');}}); card.querySelector('.simple-disable').addEventListener('click',async()=>{try{await setActive(row,false);renderBolTplAdmin();toast('تم إيقاف النموذج دون حذف بياناته');}catch(e){dbError(e,'تعذّر الإيقاف');}}); });
+  el.querySelectorAll('[data-simple-template]').forEach(card=>{ const row=rows.find(x=>x.id===card.dataset.simpleTemplate); card.querySelector('.simple-fields').addEventListener('click',()=>openFieldManager(row)); card.querySelector('.simple-design').addEventListener('click',()=>openVisualDesigner(row)); card.querySelector('.simple-enable').addEventListener('click',async()=>{try{await setActive(row,true);renderBolTplAdmin();toast('تم تفعيل النموذج ✓');}catch(e){dbError(e,'تعذّر التفعيل');}}); card.querySelector('.simple-disable').addEventListener('click',async()=>{try{await setActive(row,false);renderBolTplAdmin();toast('تم إيقاف النموذج دون حذف بياناته');}catch(e){dbError(e,'تعذّر الإيقاف');}}); });
   return;
   const cnt = document.getElementById('bolTplCount');
   // تشمل القائمة: شهادة PDF المستقلة وبوليصتي الكود، بجانب النماذج المرفوعة.
@@ -14989,7 +15005,6 @@ function tplRenderCanvas(){
   const preview = canvas.querySelector('.tpl-code-preview');
   const isCodedBill = tplCurrentDoc === 'bolCodedFree' || tplCurrentDoc === 'bolSeaCodedFree';
   const isBillDocument = tplCurrentDoc === 'bol' || tplCurrentDoc === 'bolSea' || isCodedBill;
-  document.getElementById('tplCodedDesignBtn').style.display = isCodedBill ? '' : 'none';
   document.getElementById('tplCodedBrandBtn').style.display = isBillDocument ? '' : 'none';
   document.getElementById('tplCodedBrandBtn').textContent = isCodedBill ? 'تعديل البوليصة والختم' : 'صور وختم البوليصة';
   if(tplCurrentDoc === 'certWordCoded'){
@@ -15071,7 +15086,7 @@ function tplRenderCanvas(){
       });
       if(tplSelectedKey) tplSelectField(tplSelectedKey); else tplRenderSideEmpty();
     }else{
-      document.getElementById('tplSide').innerHTML = '<div class="tpl-side-empty"><b>معاينة حية للنموذج المبني بالكود</b><br>هذه هي نفس البوليصة التي تظهر في «معاينة النموذج» والطباعة. استخدم زر «تصميم البوليصة» لتعديل التخطيط، وزر «الشعار والختم والعلامة» لإدارة الصور والهوية.</div>';
+      document.getElementById('tplSide').innerHTML = '<div class="tpl-side-empty"><b>معاينة حية للنموذج المبني بالكود</b><br>هذه هي نفس البوليصة التي تظهر في «معاينة النموذج» والطباعة. استخدم مقابض الحقول لتعديل أماكنها، وزر «تعديل البوليصة والختم» لإدارة الصور والهوية.</div>';
     }
     document.querySelectorAll('.tpl-tab').forEach(el=>el.classList.toggle('active', el.dataset.doc===tplCurrentDoc));
     return;
@@ -15421,12 +15436,6 @@ document.getElementById('tplFullscreenBtn').addEventListener('click', ()=>{
 });
 document.getElementById('tplOpenNewTabBtn').addEventListener('click', tplOpenInNewTab);
 document.getElementById('tplPrintBtn').addEventListener('click', ()=>document.getElementById('tplPreviewBtn').click());
-document.getElementById('tplCodedDesignBtn').addEventListener('click', ()=>{
-  const doc = tplCurrentDoc;
-  tplCloseEditor({restoreRoute:false, confirmDiscard:false});
-  if(doc === 'bolSeaCodedFree') openBolSeaCodedModal();
-  else openBolCodedModal();
-});
 document.getElementById('tplCodedBrandBtn').addEventListener('click', ()=>{
   openCurrentDocumentAssets();
 });
