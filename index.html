@@ -3577,6 +3577,7 @@ body.role-staff #navWallet,body.role-staff #navAdmin{display:flex !important;}
       <div><h2>الشعار والختم — <span id="btaTplName"></span></h2>
         <div style="font-size:12px;color:var(--muted);margin-top:3px;">اسحب كل عنصر لتحديد مكانه وحجمه</div>
       </div>
+      <button class="btn btn-ghost btn-small" id="btaEditNameBtn" type="button">اسم / ملف البوليصة</button>
       <button class="close-x" id="btaCloseX" data-ic="close"></button>
     </div>
     <div style="padding:0 26px;">
@@ -7659,6 +7660,11 @@ function openBolTplAssets(id){
 }
 document.getElementById('btaCloseX').addEventListener('click', ()=> document.getElementById('bolTplAssetsOverlay').classList.remove('open'));
 document.getElementById('btaCancelBtn').addEventListener('click', ()=> document.getElementById('bolTplAssetsOverlay').classList.remove('open'));
+document.getElementById('btaEditNameBtn').addEventListener('click', ()=>{
+  if(!btaTplId) return;
+  document.getElementById('bolTplAssetsOverlay').classList.remove('open');
+  openBolTplModal(btaTplId);
+});
 document.getElementById('bolTplAssetsOverlay').addEventListener('click', e=>{
   if(e.target.id==='bolTplAssetsOverlay'){ document.getElementById('bolTplAssetsOverlay').classList.remove('open'); return; }
   if(e.target.classList && e.target.classList.contains('rm')){
@@ -7746,7 +7752,10 @@ function refreshBtaBadgePreview(){
     logo_img: '', badge_img: '',
     positions: Object.assign({}, base.positions, {logoPos: btaDraft.logoPos, badgePos: btaDraft.badgePos})
   });
-  const html = bolSheetAshry2({}, t);
+  // للقوالب المرفوعة نعرض الخلفية الأصلية نفسها، وللقوالب المبنية بالكود نعرض البوليصة الحية.
+  const html = base.kind === 'image' && base.image
+    ? `<div style="position:relative;width:100%;height:100%;background:#fff"><img src="${base.image}" style="width:100%;height:100%;object-fit:fill;display:block"></div>`
+    : bolSheetAshry2({}, t);
   document.getElementById('btaBadgePreview').srcdoc =
     `<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8">
      <style>${PRINT_STYLES}</style></head>
@@ -7812,6 +7821,7 @@ document.getElementById('btaSaveBtn').addEventListener('click', async ()=>{
     if(error) throw error;
     Object.assign(t, row);
     document.getElementById('bolTplAssetsOverlay').classList.remove('open');
+    if(document.getElementById('tplEditorOverlay').classList.contains('open')) tplRenderCanvas();
     toast('تم الحفظ ✓');
   }catch(e){ dbError(e, 'تعذّر حفظ الشعار والختم'); }
 });
@@ -14878,6 +14888,22 @@ function tplOpenInNewTab(){
   const url = location.pathname + location.search + '#v=document-editor&doc=' + encodeURIComponent(tplCurrentDoc);
   window.open(url, '_blank', 'noopener');
 }
+// كل نموذج يفتح محرره الخاص: لا نستخدم إعدادات الشركة العامة من داخل الاستوديو.
+function openCurrentDocumentAssets(){
+  if(tplCurrentDoc === 'bolCodedFree'){
+    openBolCodedModal();
+    return;
+  }
+  if(tplCurrentDoc === 'bolSeaCodedFree'){
+    openBolSeaCodedModal();
+    return;
+  }
+  if(activeBolTplId){
+    openBolTplAssets(activeBolTplId);
+    return;
+  }
+  alert('افتح البوليصة المطلوبة من بطاقة النموذج عبر «أماكن الحقول»، ثم ستظهر هنا أدوات صورها وختمها الخاصة بها.');
+}
 function fillTplCompanyPicker(){
   const sel = document.getElementById('tplCompanyPicker');
   if(!sel) return;
@@ -14965,8 +14991,10 @@ function tplRenderCanvas(){
   const canvas = document.getElementById('tplCanvas');
   const preview = canvas.querySelector('.tpl-code-preview');
   const isCodedBill = tplCurrentDoc === 'bolCodedFree' || tplCurrentDoc === 'bolSeaCodedFree';
+  const isBillDocument = tplCurrentDoc === 'bol' || tplCurrentDoc === 'bolSea' || isCodedBill;
   document.getElementById('tplCodedDesignBtn').style.display = isCodedBill ? '' : 'none';
-  document.getElementById('tplCodedBrandBtn').style.display = isCodedBill ? '' : 'none';
+  document.getElementById('tplCodedBrandBtn').style.display = isBillDocument ? '' : 'none';
+  document.getElementById('tplCodedBrandBtn').textContent = isCodedBill ? 'تعديل البوليصة والختم' : 'صور وختم البوليصة';
   if(tplCurrentDoc === 'certWordCoded'){
     document.getElementById('tplCanvasImg').style.display = 'none';
     canvas.querySelectorAll('.tpl-drag-box').forEach(el=>el.remove());
@@ -15104,9 +15132,7 @@ function tplRenderSideEmpty(){
     tplCurrentDoc = btn.dataset.studioDoc; tplSelectedKey = null; tplUpdateTitle(); tplRenderCanvas(); requestAnimationFrame(tplFitZoom);
     history.replaceState(null, '', '#v=document-editor&doc=' + encodeURIComponent(tplCurrentDoc));
   }));
-  document.getElementById('tplBrandOpenBtn')?.addEventListener('click', ()=>{
-    tplCloseEditor({restoreRoute:false, confirmDiscard:false}); openCompanyModal(company.id);
-  });
+  document.getElementById('tplBrandOpenBtn')?.addEventListener('click', openCurrentDocumentAssets);
   document.getElementById('tplReplaceSideBtn')?.addEventListener('click', ()=>document.getElementById('tplImgFile').click());
 }
 
@@ -15360,9 +15386,7 @@ document.getElementById('tplCodedDesignBtn').addEventListener('click', ()=>{
   else openBolCodedModal();
 });
 document.getElementById('tplCodedBrandBtn').addEventListener('click', ()=>{
-  tplCloseEditor({restoreRoute:false, confirmDiscard:false});
-  // الهوية تحتوي على الشعار والختم والعلامة المائية المستخدمة فعلياً في البوليصة.
-  openCompanyModal(company.id);
+  openCurrentDocumentAssets();
 });
 // عارض PDF المدمج يلتقط Ctrl + عجلة الماوس ويغيّر مقياس الصفحة، لذلك نقفل هذا السلوك داخل محرر الطبقات.
 document.querySelector('.tpl-editor-canvas-wrap').addEventListener('wheel', e=>{
