@@ -1233,6 +1233,7 @@ body.role-staff .rep-controls,body.role-staff #repTables{display:none;}
 
 /* مركز النماذج والمستندات */
 .templates-simple{max-width:980px;margin:0 auto;padding:18px 0 34px;}.templates-simple-head{padding:6px 0 16px;border-bottom:1px solid #e5ebf4;margin-bottom:14px;}.templates-simple-head h2{margin:0;color:#172b4d;font-size:22px;}.templates-simple-head p{margin:5px 0 0;color:var(--muted);font-size:13px;}.templates-simple-list{display:flex;flex-direction:column;gap:10px;}.templates-simple-list .bt-card{min-height:84px;border-color:#e3eaf5;background:#fff;box-shadow:0 4px 12px rgba(28,55,92,.035);}.templates-simple-list .bt-thumb{width:46px;height:46px;border-radius:12px;background:#edf4ff;color:#1768ed;}.template-state{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:800;border-radius:999px;padding:5px 9px;background:#ecfdf3;color:#05834a;}.template-state::before{content:'';width:7px;height:7px;border-radius:50%;background:currentColor;}.template-state.off{background:#f1f5f9;color:#64748b;}.templates-simple-list .cc-acts{display:flex;flex-wrap:wrap;gap:6px;}.templates-simple-list .cc-acts .btn{border-radius:8px;}.templates-simple-list .btn-disable{color:#a16207;border-color:#f4d38d;}.templates-simple-list .btn-enable{color:#047857;border-color:#8ee0bd;}@media(max-width:700px){.templates-simple{padding:12px 0 24px;}.templates-simple-list .bt-card{align-items:flex-start;flex-wrap:wrap;}.templates-simple-list .cc-acts{width:100%;}.templates-simple-list .cc-acts .btn{flex:1;font-size:11px;}}
+.template-group{margin-top:20px;}.template-group:first-child{margin-top:0;}.template-group h3{margin:0 0 9px;font-size:16px;color:#173b69;}.template-group p{margin:0 0 10px;font-size:12px;color:var(--muted);}.template-group-list{display:flex;flex-direction:column;gap:8px;}
 .templates-hub{max-width:1220px;margin:0 auto;padding:6px 0 28px;}
 .templates-hero{position:relative;overflow:hidden;padding:25px 28px;border-radius:22px;color:#fff;background:linear-gradient(118deg,#184eea 0%,#3b75ff 52%,#7d9fff 100%);box-shadow:0 16px 34px rgba(33,91,240,.24);}
 .templates-hero::after{content:'';position:absolute;width:330px;height:330px;left:-120px;bottom:-210px;border-radius:50%;background:rgba(255,255,255,.16);filter:blur(1px);}
@@ -7425,35 +7426,36 @@ function fillCertPicker(selected, shipType){
 function renderBolTplAdmin(){
   const el = document.getElementById('bolTplList');
   if(!el) return;
-  // صفحة الإدارة المبسطة: ثلاثة نماذج تشغيلية فقط، بلا إنشاء أو فلاتر أو قوالب إضافية.
+  // المجموعة تُبنى من النماذج المحفوظة بالفعل؛ لا نضيف أو نحذف أو نغيّر أي ID هنا.
+  const certKinds = new Set(['certificate','cert','origin']);
+  const certDb = bolTemplates.filter(t=>certKinds.has(String(t.kind||t.document_type||t.template_type||'').toLowerCase()));
+  const landDb = bolTemplates.filter(t=>!certDb.includes(t) && (t.ship_type==='land' || t.ship_type==='both'));
+  const seaDb = bolTemplates.filter(t=>!certDb.includes(t) && (t.ship_type==='sea' || t.ship_type==='both'));
   const rows = [
-    {id:'cert', icon:'award', name:'شهادة المنشأ', desc:'إدارة نموذج شهادة المنشأ المستخدم في النظام.', active:certWordTemplate.active !== false, doc:'certWordCoded', field:'إدارة الحقول', design:'تصميم الشهادة'},
-    {id:'land', icon:'truck', name:'بوليصة برية', desc:'إدارة نموذج بوليصة النقل البري.', active:!!company.bolCoded, doc:'bolCodedFree', field:'التحكم في الحقول', design:'تصميم البوليصة'},
-    {id:'sea', icon:'ship', name:'بوليصة بحرية', desc:'إدارة نموذج بوليصة الشحن البحري.', active:!!company.bolSeaCoded, doc:'bolSeaCodedFree', field:'التحكم في الحقول', design:'تصميم البوليصة'},
+    {group:'cert', id:'cert-word', icon:'award', name:'منشأ دبي التجريبي ليس للتداول', desc:'شهادة منشأ PDF مستقلة قابلة للتحرير.', active:certWordTemplate.active!==false, doc:'certWordCoded', local:'certWord'},
+    {group:'cert', id:'cert-coded', icon:'award', name:'شهادة منشأ مبنية بالكود', desc:'نموذج شهادة المنشأ المدمج في النظام.', active:!!company.certCoded, doc:'cert', local:'certCoded'},
+    {group:'land', id:'land-coded', icon:'truck', name:company.bolCodedLabel||'بوليصة برية مبنية بالكود', desc:'نموذج بوليصة النقل البري المدمج.', active:!!company.bolCoded, doc:'bolCodedFree', local:'landCoded'},
+    {group:'sea', id:'sea-coded', icon:'ship', name:company.bolSeaCodedLabel||'بوليصة بحرية مبنية بالكود', desc:'نموذج بوليصة الشحن البحري المدمج.', active:!!company.bolSeaCoded, doc:'bolSeaCodedFree', local:'seaCoded'},
+    ...certDb.map(t=>({group:'cert', id:t.id, icon:'award', name:t.name, desc:'نموذج شهادة منشأ محفوظ.', active:!!t.active, template:t})),
+    ...landDb.map(t=>({group:'land', id:t.id, icon:'truck', name:t.name, desc:t.kind==='coded'?'بوليصة برية مبنية بالكود.':'بوليصة برية بخلفية مرفوعة.', active:!!t.active, template:t})),
+    ...seaDb.map(t=>({group:'sea', id:t.id, icon:'ship', name:t.name, desc:t.kind==='coded'?'بوليصة بحرية مبنية بالكود.':'بوليصة بحرية بخلفية مرفوعة.', active:!!t.active, template:t})),
   ];
-  el.innerHTML = rows.map(row=>`<article class="bt-card ${row.active?'':'off'}" data-simple-template="${row.id}">
-    <div class="bt-thumb">${icon(row.icon,21)}</div><div class="bt-info"><div class="bt-name">${row.name} <span class="template-state ${row.active?'':'off'}">${row.active?'مفعّل':'متوقف'}</span></div><div class="bt-sub">${row.desc}</div></div>
-    <div class="cc-acts"><button class="btn btn-ghost btn-small simple-fields">${row.field}</button><button class="btn btn-ghost btn-small simple-design">${row.design}</button><button class="btn btn-ghost btn-small btn-enable simple-enable">تفعيل</button><button class="btn btn-ghost btn-small btn-disable simple-disable">إيقاف</button></div>
-  </article>`).join('');
+  const groupMeta = {cert:['شهادات المنشأ','جميع نماذج شهادة المنشأ المحفوظة في النظام.'],land:['البوالص البرية','جميع نماذج النقل البري المحفوظة في النظام.'],sea:['البوالص البحرية','جميع نماذج الشحن البحري المحفوظة في النظام.']};
+  const cardHtml = row=>`<article class="bt-card ${row.active?'':'off'}" data-simple-template="${row.id}"><div class="bt-thumb">${icon(row.icon,21)}</div><div class="bt-info"><div class="bt-name">${escapeHtml(row.name)} <span class="template-state ${row.active?'':'off'}">${row.active?'مفعّل':'متوقف'}</span></div><div class="bt-sub">${escapeHtml(row.desc)}</div></div><div class="cc-acts"><button class="btn btn-ghost btn-small simple-fields">التحكم في الحقول</button><button class="btn btn-ghost btn-small simple-design">${row.group==='cert'?'تصميم الشهادة':'تصميم البوليصة'}</button><button class="btn btn-ghost btn-small btn-enable simple-enable">تفعيل</button><button class="btn btn-ghost btn-small btn-disable simple-disable">إيقاف</button></div></article>`;
+  el.innerHTML = ['cert','land','sea'].map(group=>{ const [title,desc]=groupMeta[group]; const groupRows=rows.filter(row=>row.group===group); return `<section class="template-group"><h3>${title}</h3><p>${desc}</p><div class="template-group-list">${groupRows.map(cardHtml).join('')}</div></section>`; }).join('');
   hydrateIcons(el);
-  const openStudio = doc=>{ tplCurrentDoc=doc; tplSelectedKey=null; tplOpenEditor(); };
-  el.querySelectorAll('[data-simple-template]').forEach(card=>{
-    const row = rows.find(x=>x.id===card.dataset.simpleTemplate);
-    card.querySelector('.simple-fields').addEventListener('click', ()=>openStudio(row.doc));
-    card.querySelector('.simple-design').addEventListener('click', ()=>openStudio(row.doc));
-    card.querySelector('.simple-enable').addEventListener('click', async ()=>{
-      if(row.id==='cert'){ certWordTemplate.active=true; saveCertWordTemplate(); fillCertPicker(); }
-      if(row.id==='land'){ company.bolCoded=true; await saveCompany(); fillBolPicker(); }
-      if(row.id==='sea'){ company.bolSeaCoded=true; await saveCompany(); fillBolPicker(); }
-      renderBolTplAdmin(); toast('تم تفعيل النموذج ✓');
-    });
-    card.querySelector('.simple-disable').addEventListener('click', async ()=>{
-      if(row.id==='cert'){ certWordTemplate.active=false; saveCertWordTemplate(); fillCertPicker(); }
-      if(row.id==='land'){ company.bolCoded=false; await saveCompany(); fillBolPicker(); }
-      if(row.id==='sea'){ company.bolSeaCoded=false; await saveCompany(); fillBolPicker(); }
-      renderBolTplAdmin(); toast('تم إيقاف النموذج دون حذف بياناته');
-    });
-  });
+  const openStudio = row=>{
+    if(row.template && row.template.kind!=='coded'){ openBolTplFields(row.template.id); return; }
+    tplCurrentDoc=row.doc || (row.group==='sea'?'bolSeaCodedFree':row.group==='land'?'bolCodedFree':'certWordCoded'); tplSelectedKey=null; tplOpenEditor();
+  };
+  const setActive = async (row, active)=>{
+    if(row.local==='certWord'){ certWordTemplate.active=active; saveCertWordTemplate(); fillCertPicker(); }
+    else if(row.local==='certCoded'){ company.certCoded=active; await saveCompany(); fillCertPicker(); }
+    else if(row.local==='landCoded'){ company.bolCoded=active; await saveCompany(); fillBolPicker(); }
+    else if(row.local==='seaCoded'){ company.bolSeaCoded=active; await saveCompany(); fillBolPicker(); }
+    else if(row.template){ const {error}=await sb.from('bol_templates').update({active}).eq('id',row.template.id); if(error) throw error; row.template.active=active; fillBolPicker(); }
+  };
+  el.querySelectorAll('[data-simple-template]').forEach(card=>{ const row=rows.find(x=>x.id===card.dataset.simpleTemplate); card.querySelector('.simple-fields').addEventListener('click',()=>openStudio(row)); card.querySelector('.simple-design').addEventListener('click',()=>openStudio(row)); card.querySelector('.simple-enable').addEventListener('click',async()=>{try{await setActive(row,true);renderBolTplAdmin();toast('تم تفعيل النموذج ✓');}catch(e){dbError(e,'تعذّر التفعيل');}}); card.querySelector('.simple-disable').addEventListener('click',async()=>{try{await setActive(row,false);renderBolTplAdmin();toast('تم إيقاف النموذج دون حذف بياناته');}catch(e){dbError(e,'تعذّر الإيقاف');}}); });
   return;
   const cnt = document.getElementById('bolTplCount');
   // تشمل القائمة: شهادة PDF المستقلة وبوليصتي الكود، بجانب النماذج المرفوعة.
