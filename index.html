@@ -815,10 +815,14 @@ body{padding-right:230px;}
 .stamp-ctrls{flex:1;min-width:215px;}
 .stamp-ctrls .field{padding:6px 0;}
 
-/* محرر خانة شعار البوليصة المبنية بالكود */
+/* شعار البوليصة كطبقة مستقلة فوق صفحة A4، لا يحجز مساحة داخل الترويسة. */
 .logohead-stage{
-  position:relative;width:150px;height:87px;flex-shrink:0;
-  border:1.5px dashed var(--border);background:#fff;overflow:hidden;border-radius:var(--radius);
+  position:relative;width:300px;height:424px;flex-shrink:0;
+  border:1.5px solid var(--border);background:#fff;overflow:hidden;border-radius:var(--radius);
+}
+.logohead-stage iframe{
+  position:absolute;top:0;left:0;width:794px;height:1123px;border:0;
+  transform:scale(.3778);transform-origin:top left;pointer-events:none;
 }
 .logohead-handle{
   position:absolute;cursor:grab;border:2px dashed var(--brand);
@@ -827,10 +831,14 @@ body{padding-right:230px;}
 .logohead-handle:hover{box-shadow:var(--ring);}
 .logohead-handle:active{cursor:grabbing;}
 .logohead-handle img{width:100%;height:100%;display:block;object-fit:contain;pointer-events:none;}
-/* محرر خانة شعار البوليصة البحرية المبنية بالكود — نسبة أبعاد خانتها الفعلية (34×12مم) */
+/* شعار البوليصة البحرية كطبقة مستقلة فوق صفحة A4. */
 .bslogo-stage{
-  position:relative;width:196px;height:69px;flex-shrink:0;
-  border:1.5px dashed var(--border);background:#fff;overflow:hidden;border-radius:var(--radius);
+  position:relative;width:300px;height:424px;flex-shrink:0;
+  border:1.5px solid var(--border);background:#fff;overflow:hidden;border-radius:var(--radius);
+}
+.bslogo-stage iframe{
+  position:absolute;top:0;left:0;width:794px;height:1123px;border:0;
+  transform:scale(.3778);transform-origin:top left;pointer-events:none;
 }
 input[type=range]{accent-color:var(--brand);width:100%;}
 input[type=checkbox]{accent-color:var(--brand);}
@@ -3648,12 +3656,6 @@ body.role-staff #navWallet,body.role-staff #navAdmin{display:flex !important;}
           <label>اسم الشركة على البوليصة (لو فاضي هيستخدم الاسم العربي العادي)</label>
           <input type="text" id="co_bolCompanyName" placeholder="مثال: شركة اوليو للشحن والتخليص">
         </div>
-        <div class="field span2">
-          <label style="font-weight:400;color:var(--ink);cursor:pointer;display:block;">
-            <input type="checkbox" id="bc_freeLayout" style="width:auto;vertical-align:middle;">
-            تخطيط حر للحقول (اسحب أي حقل لأي مكان بدل الشبكة الثابتة — من "أماكن الحقول")
-          </label>
-        </div>
       </div>
 
       <div class="section-title">الألوان</div>
@@ -3710,10 +3712,11 @@ body.role-staff #navWallet,body.role-staff #navAdmin{display:flex !important;}
         </div>
       </div>
       <div style="font-size:12px;color:var(--muted);margin:4px 0 10px;">
-        اسحب الشعار جوّه خانته عشان تظبط مكانه وحجمه على البوليصة.
+        اسحب الشعار على المعاينة لتضعه في أي مكان على صفحة A4؛ الشعار لا يغيّر ترتيب أو مساحة عناصر البوليصة.
       </div>
       <div class="stamp-editor">
         <div class="logohead-stage" id="logoHeadStage">
+          <iframe id="bolLogoPreview" scrolling="no"></iframe>
           <div class="logohead-handle" id="logoHeadHandle">
             <img id="lhImg" alt="">
           </div>
@@ -3928,12 +3931,6 @@ body.role-staff #navWallet,body.role-staff #navAdmin{display:flex !important;}
           <label>اسم النموذج (يظهر في لوحة التحكم وقائمة اختيار البوليصة — لو فاضي هيستخدم "بوليصة بحرية مبنية بالكود")</label>
           <input type="text" id="co_bolSeaCodedLabel" placeholder="مثال: بوليصة الشحن البحري الرئيسية">
         </div>
-        <div class="field span2">
-          <label style="font-weight:400;color:var(--ink);cursor:pointer;display:block;">
-            <input type="checkbox" id="bs_freeLayout" style="width:auto;vertical-align:middle;">
-            تخطيط حر للحقول (اسحب أي حقل لأي مكان بدل الشبكة الثابتة — من "أماكن الحقول")
-          </label>
-        </div>
       </div>
 
       <div class="section-title">وكيل الشحن (Cargo Delivery Contact)</div>
@@ -3992,10 +3989,11 @@ body.role-staff #navWallet,body.role-staff #navAdmin{display:flex !important;}
         </div>
       </div>
       <div style="font-size:12px;color:var(--muted);margin:4px 0 10px;">
-        اسحب الشعار جوّه خانته عشان تظبط مكانه وحجمه على البوليصة البحرية تحديداً (مستقل عن البرية والفاتورة).
+        اسحب الشعار على المعاينة لتضعه في أي مكان على صفحة A4؛ الشعار لا يغيّر ترتيب أو مساحة عناصر البوليصة.
       </div>
       <div class="stamp-editor">
         <div class="bslogo-stage" id="bolSeaLogoStage">
+          <iframe id="bolSeaLogoPreview" scrolling="no"></iframe>
           <div class="logohead-handle" id="bolSeaLogoHandle">
             <img id="bslImg" alt="">
           </div>
@@ -5019,10 +5017,18 @@ async function loadCompany(){
   if(v) company = Object.assign({}, DEFAULT_COMPANY, v);
   company.stampPos = Object.assign({}, DEFAULT_COMPANY.stampPos, company.stampPos||{});
   company.logoPos = Object.assign({}, DEFAULT_COMPANY.logoPos, company.logoPos||{});
+  company.bolLogoPos = Object.assign({}, DEFAULT_COMPANY.bolLogoPos, company.bolLogoPos||{});
   company.bolSeaLogoPos = Object.assign({}, DEFAULT_COMPANY.bolSeaLogoPos, company.bolSeaLogoPos||{});
+  // موضع 90% كان خاصاً بخانة الرأس القديمة؛ نحوله مرة واحدة إلى موضع مناسب على كامل الصفحة.
+  if(company.bolSeaLogoPos.width > 55){
+    company.bolSeaLogoPos = Object.assign({}, DEFAULT_COMPANY.bolSeaLogoPos);
+  }
   company.bolStampPos = Object.assign({}, DEFAULT_COMPANY.bolStampPos, company.bolStampPos||{});
   company.certStampPos = Object.assign({}, DEFAULT_COMPANY.certStampPos, company.certStampPos||{});
   company.bolSeaStampPos = Object.assign({}, DEFAULT_COMPANY.bolSeaStampPos, company.bolSeaStampPos||{});
+  // القوالب المبنية بالكود تعتمد التخطيط الثابت فقط؛ تبقى مواضع الحقول القديمة محفوظة بلا حذف.
+  company.bolCodedFreeLayout = false;
+  company.bolSeaCodedFreeLayout = false;
   console.log('loadCompany: ' + (v ? 'من الخادم ✓' : 'افتراضي (لا يوجد على الخادم)'));
 }
 async function saveCompany(companyId){
@@ -5146,7 +5152,8 @@ const DEFAULT_COMPANY = {
   bolCodedLabel: '',      // اسم النموذج في القوائم (لوحة التحكم + فورم الشحنة) — لو فاضي هيستخدم الاسم الافتراضي
   bolCodedFreeLayout: false, // تخطيط حر لحقول البوليصة (سحب أي حقل لأي مكان) بدل الشبكة الثابتة — مواضعه في templatePositions.bolCodedFree
   bolCompanyName: '',     // اسم الشركة على البوليصة — مستقل عن nameAr، لو فاضي بيستخدم nameAr
-  logoPos: { top: 5, left: 5, width: 90 },  // نسب مئوية من خانة الشعار في رأس البوليصة المبنية بالكود
+  logoPos: { top: 5, left: 5, width: 90 },  // شعار الفواتير والشهادات
+  bolLogoPos: { top: 4, left: 4, width: 20, angle: 0 }, // شعار البوليصة البرية كطبقة مستقلة من صفحة A4
   bolLogo: '',             // شعار خاص بالبوليصة المبنية بالكود — لو فاضي بيستخدم logo العادي
   bolStamp: '',            // ختم خاص بالبوليصة المبنية بالكود — لو فاضي بيستخدم stamp العادي
   bolStampPos: { top: 85, left: 4, width: 22 },  // نسب مئوية من صفحة البوليصة كاملة
@@ -5180,7 +5187,7 @@ const DEFAULT_COMPANY = {
   bolSeaAgentName: '',       // اسم وكيل/شركة الشحن — يظهر في Cargo Delivery وFor and on behalf of
   bolSeaAgentAddress: '',    // عنوان وبيانات تواصل الوكيل — متعدد الأسطر
   bolSeaLogo: '',            // شعار خاص بالبوليصة البحرية — لو فاضي بيستخدم logo العادي
-  bolSeaLogoPos: { top: 5, left: 5, width: 90, angle: 0 },  // نسب مئوية من خانة شعار البوليصة البحرية (34×12مم) — مستقل عن logoPos
+  bolSeaLogoPos: { top: 8, left: 60, width: 20, angle: 0 }, // شعار البوليصة البحرية كطبقة مستقلة من صفحة A4
   bolSeaStamp: '',           // ختم خاص بالبوليصة البحرية — لو فاضي بيستخدم stamp العادي
   bolSeaStampPos: { top: 84, left: 74, width: 14, angle: 0 },  // نسب مئوية من صفحة البوليصة كاملة (خانة التوقيع تقع تقريباً عند top:83-94%, left:71-96.5%)
   bolSeaShowStamp: true,
@@ -7991,10 +7998,10 @@ function openBolCodedModal(){
   document.getElementById('bc_fTermsVal').textContent = company.bolFontTerms||10;
   document.getElementById('bc_showStamp').checked = company.bolShowStamp !== false;
   document.getElementById('bc_showSigLine').checked = !!company.bolShowSigLine;
-  document.getElementById('bc_freeLayout').checked = !!company.bolCodedFreeLayout;
   renderImgPrev('bc_logoPrev', company.bolLogo, 'bolLogo');
   renderImgPrev('bc_stampPrev', company.bolStamp, 'bolStamp');
   syncLogoHeadHandle();
+  refreshBolLogoPreview();
   refreshBolStampPreview();
   document.getElementById('bolCodedOverlay').classList.add('open');
 }
@@ -8008,7 +8015,7 @@ bolCodedOverlay.addEventListener('click', e=>{
     const key = e.target.dataset.key;
     company[key] = '';
     renderImgPrev({bolLogo:'bc_logoPrev', bolStamp:'bc_stampPrev'}[key], '', key);
-    if(key==='bolLogo') syncLogoHeadHandle();
+    if(key==='bolLogo'){ syncLogoHeadHandle(); refreshBolLogoPreview(); }
     if(key==='bolStamp') refreshBolStampPreview();
   }
 });
@@ -8021,7 +8028,7 @@ bolCodedOverlay.addEventListener('click', e=>{
     try{
       company[key] = await fileToScaledDataURL(f, maxDim);
       renderImgPrev(prevId, company[key], key);
-      if(key==='bolLogo') syncLogoHeadHandle();
+      if(key==='bolLogo'){ syncLogoHeadHandle(); refreshBolLogoPreview(); }
       if(key==='bolStamp') refreshBolStampPreview();
     }catch(e){
       alert('تعذّر قراءة الصورة. جرّب صورة تانية (PNG أو JPG).');
@@ -8072,7 +8079,7 @@ document.getElementById('bcSaveBtn').addEventListener('click', async ()=>{
   company.bolFontFields = parseFloat(document.getElementById('bc_fFields').value);
   company.bolFontGoods = parseFloat(document.getElementById('bc_fGoods').value);
   company.bolFontTerms = parseFloat(document.getElementById('bc_fTerms').value);
-  company.bolCodedFreeLayout = document.getElementById('bc_freeLayout').checked;
+  company.bolCodedFreeLayout = false;
   await saveCompany();
   addLog('edit', 'تحديث بوليصة الشحن المبنية بالكود');
   bolCodedOverlay.classList.remove('open');
@@ -8337,7 +8344,6 @@ document.getElementById('certStampResetBtn').addEventListener('click', ()=>{
 // ===== بوليصة الشحن البحرية المبنية بالكود =====
 function openBolSeaCodedModal(){
   document.getElementById('co_bolSeaCodedLabel').value = company.bolSeaCodedLabel||'';
-  document.getElementById('bs_freeLayout').checked = !!company.bolSeaCodedFreeLayout;
   document.getElementById('co_bolSeaAgentName').value = company.bolSeaAgentName||'';
   document.getElementById('bs_agentAddress').value = company.bolSeaAgentAddress||'';
   document.getElementById('bs_accent').value = company.bolSeaAccent || company.accent || '#16334a';
@@ -8452,7 +8458,7 @@ document.getElementById('bsPreviewBtn').addEventListener('click', ()=>{
 
 document.getElementById('bsSaveBtn').addEventListener('click', async ()=>{
   company.bolSeaCodedLabel = document.getElementById('co_bolSeaCodedLabel').value.trim();
-  company.bolSeaCodedFreeLayout = document.getElementById('bs_freeLayout').checked;
+  company.bolSeaCodedFreeLayout = false;
   company.bolSeaAgentName = document.getElementById('co_bolSeaAgentName').value.trim();
   company.bolSeaAgentAddress = document.getElementById('bs_agentAddress').value;
   company.bolSeaAccent = document.getElementById('bs_accent').value;
@@ -8488,6 +8494,14 @@ function refreshBolSeaStampPreview(){
   syncBolSeaStampHandle();
   refreshBolSeaBadgePreview();
   syncBolSeaLogoHandle();
+  refreshBolSeaLogoPreview();
+}
+
+function refreshBolSeaLogoPreview(){
+  const preview = document.getElementById('bolSeaLogoPreview');
+  if(!preview) return;
+  const html = bolSeaSheetCoded(bolSeaSampleRecordForPreview());
+  preview.srcdoc = `<!DOCTYPE html><html dir="ltr" lang="en"><head><meta charset="UTF-8"><style>${PRINT_STYLES}.sbl-logo-el{display:none!important}</style></head><body><div class="doc-page">${html}</div></body></html>`;
 }
 function syncBolSeaStampHandle(){
   const sp = company.bolSeaStampPos;
@@ -13181,9 +13195,9 @@ function bolSheetCoded(r, lang){
   const sectionVars = `--bol-gap:${bolGap};--bol-field-h:${bolFieldH};--bol-field-pad:${bolFieldPad};--bol-terms-pad:${bolTermsPad};--bol-terms-lh:${bolTermsLh};--bol-bl-h:${bolBlH};--bol-sheet-pad:${bolSheetPad};`;
 
   const logoSrc = c.bolLogo || c.logo;
-  const lp = c.logoPos || DEFAULT_COMPANY.logoPos;
+  const lp = c.bolLogoPos || DEFAULT_COMPANY.bolLogoPos;
   const logoHtml = logoSrc
-    ? `<div class="bol3-logo-el" style="top:${lp.top}%;left:${lp.left}%;width:${lp.width}%;"><img src="${logoSrc}" alt=""></div>`
+    ? `<div class="bol3-logo-el" style="top:${lp.top}%;left:${lp.left}%;width:${lp.width}%;transform:rotate(${lp.angle||0}deg);"><img src="${logoSrc}" alt=""></div>`
     : '';
 
   const wmSrc = c.watermark || logoSrc;
@@ -13236,6 +13250,7 @@ function bolSheetCoded(r, lang){
     return `
 <div class="doc-sheet bol3-sheet${ltrCls}" style="${colorVars}${goodsVars}${sectionVars}--bol-f-fields:${fFields}px;--bol-f-goods:${fGoods};--bol-f-terms:${fTerms}px;">
   ${stampZoneHtml}
+  ${logoHtml}
   ${freeField(fp('billNo'), v.billNo)}
   ${freeField(fp('shipper'), v.shipper)}
   ${freeField(fp('consignee'), v.consignee)}
@@ -13254,10 +13269,10 @@ function bolSheetCoded(r, lang){
   return `
 <div class="doc-sheet bol3-sheet${ltrCls}" style="${colorVars}${goodsVars}${sectionVars}--bol-f-fields:${fFields}px;--bol-f-goods:${fGoods};--bol-f-terms:${fTerms}px;">
   ${stampZoneHtml}
+  ${logoHtml}
 
   <div class="bol3-topbar">
     <div class="bol3-top-a">
-      <div class="loghead"><div class="zone">${logoHtml}</div></div>
       <span>ORIGINAL BILL OF LADING — ${esc(bolName)}</span>
     </div>
     <div class="bol3-top-b">
@@ -13589,7 +13604,7 @@ function bolSeaSheetCoded(r, lang){
   const logoSrc = c.bolSeaLogo || c.logo;
   const lp = c.bolSeaLogoPos || DEFAULT_COMPANY.bolSeaLogoPos;
   const logoHtml = logoSrc
-    ? `<div class="bol3-logo-el" style="top:${lp.top}%;left:${lp.left}%;width:${lp.width}%;transform:rotate(${lp.angle||0}deg);"><img src="${logoSrc}" alt=""></div>`
+    ? `<div class="sbl-logo-el" style="top:${lp.top}%;left:${lp.left}%;width:${lp.width}%;transform:rotate(${lp.angle||0}deg);"><img src="${logoSrc}" alt=""></div>`
     : '';
 
   const stampSrc = c.bolSeaStamp || c.stamp;
@@ -13661,6 +13676,7 @@ function bolSeaSheetCoded(r, lang){
   ${badgeHtml}
   ${wmHtml}
   ${stampHtml}
+  ${logoHtml}
   ${freeField(fp('shipper'), v.shipper)}
   ${freeField(fp('bookingNo'), v.bookingNo)}
   ${freeField(fp('billNo'), v.billNo)}
@@ -13694,6 +13710,7 @@ function bolSeaSheetCoded(r, lang){
   ${badgeHtml}
   ${wmHtml}
   ${stampHtml}
+  ${logoHtml}
   <div class="sbl-content">
 
   <div class="grid sbl-top3">
@@ -13717,7 +13734,6 @@ function bolSeaSheetCoded(r, lang){
       <div class="sbl-val">${esc(v.consignee)}</div>
     </div>
     <div class="sbl-logo-title">
-      <div class="sbl-logo-zone">${logoHtml}</div>
       <div class="sbl-doctitle">OCEAN OR COMBINED TRANSPORT<small>BILL OF LADING</small>${lang==='ar'?'<small>النقل البحري أو المُركَّب — بوليصة الشحن</small>':''}</div>
     </div>
   </div>
@@ -14169,8 +14185,8 @@ table.inv-items tr.blank td{height:var(--items-h,31px);}
 .bol3-field .bar .en{ direction:ltr; }
 .bol3-field .box{ min-height:var(--bol-field-h,40px); padding:var(--bol-field-pad,8px 12px); font-size:var(--bol-f-fields,12px); line-height:1.5; white-space:pre-line; }
 
-.bol3-logo-el{ position:absolute; }
 .bol3-logo-el img{ width:100%; display:block; object-fit:contain; }
+.bol3-logo-el,.sbl-logo-el{position:absolute;z-index:4;pointer-events:none;transform-origin:center;}
 
 .bol3-terms{ border:1.6px solid var(--bol-border,#8f2323); margin-bottom:var(--bol-gap,10px); }
 .bol3-terms .bar{ background:var(--accent); color:#fff; font-weight:700; font-size:10.5px; padding:5px 12px; }
@@ -14248,8 +14264,7 @@ table.bol3-goods td{ border:1px solid #DADADA; padding:var(--bol-goods-pad,7px 8
   display:flex;flex-direction:column;align-items:center;justify-content:center;
   gap:6px;padding:4px;text-align:center;min-height:24mm;
 }
-.sbl-logo-zone{width:34mm;height:12mm;position:relative;overflow:hidden;}
-.sbl-logo-zone img{max-width:100%;max-height:100%;object-fit:contain;}
+.sbl-logo-el img{width:100%;display:block;object-fit:contain;}
 .sbl-doctitle{font-size:12.5px;font-weight:800;letter-spacing:.02em;}
 .sbl-doctitle small{display:block;font-size:9px;font-weight:700;margin-top:2px;}
 
@@ -14718,19 +14733,28 @@ const logoHeadStage = document.getElementById('logoHeadStage');
 const logoHeadHandle = document.getElementById('logoHeadHandle');
 
 function syncLogoHeadHandle(){
-  const lp = company.logoPos;
+  const lp = company.bolLogoPos;
   logoHeadHandle.style.top = lp.top + '%';
   logoHeadHandle.style.left = lp.left + '%';
   logoHeadHandle.style.width = lp.width + '%';
   const lhImg = document.getElementById('lhImg');
-  lhImg.src = company.logo || '';
-  lhImg.style.opacity = company.logo ? '1' : '.35';
+  const logoSrc = company.bolLogo || company.logo;
+  lhImg.src = logoSrc || '';
+  lhImg.style.opacity = logoSrc ? '1' : '.35';
+  lhImg.style.transform = 'rotate(' + (lp.angle||0) + 'deg)';
   document.getElementById('co_logoPosW').value = lp.width;
   document.getElementById('co_logoPosT').value = lp.top;
   document.getElementById('co_logoPosL').value = lp.left;
   document.getElementById('co_logoPosWVal').textContent = lp.width;
   document.getElementById('co_logoPosTVal').textContent = lp.top;
   document.getElementById('co_logoPosLVal').textContent = lp.left;
+}
+
+function refreshBolLogoPreview(){
+  const preview = document.getElementById('bolLogoPreview');
+  if(!preview) return;
+  const html = bolSheetCoded(bolSampleRecordForPreview());
+  preview.srcdoc = `<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><style>${PRINT_STYLES}.bol3-logo-el{display:none!important}</style></head><body><div class="doc-page">${html}</div></body></html>`;
 }
 
 let logoHeadDrag = null;
@@ -14752,25 +14776,26 @@ logoHeadHandle.addEventListener('pointermove', e=>{
   let top  = (e.clientY - logoHeadDrag.dy - logoHeadDrag.sy) / logoHeadDrag.sh * 100;
   const maxL = 100 - (logoHeadDrag.bw / logoHeadDrag.sw * 100);
   const maxT = 100 - (logoHeadDrag.bh / logoHeadDrag.sh * 100);
-  company.logoPos.left = Math.round(Math.max(0, Math.min(maxL, left))*2)/2;
-  company.logoPos.top  = Math.round(Math.max(0, Math.min(maxT, top))*2)/2;
+  company.bolLogoPos.left = Math.round(Math.max(0, Math.min(maxL, left))*2)/2;
+  company.bolLogoPos.top  = Math.round(Math.max(0, Math.min(maxT, top))*2)/2;
   syncLogoHeadHandle();
+  refreshBolLogoPreview();
 });
 logoHeadHandle.addEventListener('pointerup', ()=>{ logoHeadDrag = null; });
 logoHeadHandle.addEventListener('pointercancel', ()=>{ logoHeadDrag = null; });
 
 document.getElementById('co_logoPosW').addEventListener('input', function(){
-  company.logoPos.width = parseFloat(this.value); syncLogoHeadHandle();
+  company.bolLogoPos.width = parseFloat(this.value); syncLogoHeadHandle(); refreshBolLogoPreview();
 });
 document.getElementById('co_logoPosT').addEventListener('input', function(){
-  company.logoPos.top = parseFloat(this.value); syncLogoHeadHandle();
+  company.bolLogoPos.top = parseFloat(this.value); syncLogoHeadHandle(); refreshBolLogoPreview();
 });
 document.getElementById('co_logoPosL').addEventListener('input', function(){
-  company.logoPos.left = parseFloat(this.value); syncLogoHeadHandle();
+  company.bolLogoPos.left = parseFloat(this.value); syncLogoHeadHandle(); refreshBolLogoPreview();
 });
 document.getElementById('logoPosResetBtn').addEventListener('click', ()=>{
-  company.logoPos = Object.assign({}, DEFAULT_COMPANY.logoPos);
-  syncLogoHeadHandle();
+  company.bolLogoPos = Object.assign({}, DEFAULT_COMPANY.bolLogoPos);
+  syncLogoHeadHandle(); refreshBolLogoPreview();
 });
 
 // ===== محرر خانة شعار البوليصة البحرية المبنية بالكود — مستقل عن البرية/الفاتورة =====
