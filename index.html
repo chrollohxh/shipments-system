@@ -13181,8 +13181,16 @@ function bolSheetCoded(r, lang){
   const bolName = (c.bolCompanyName||'').trim() || (lang==='en' ? (c.nameEn||c.nameAr) : c.nameAr);
 
   const MIN_ROWS = 5;
-  const items = Array.from({length:15}, (_,i)=>i+1).map(n=>({g:v['goods'+n], u:v['unit'+n]}))
-    .filter(x=>(x.g||'').trim() || (x.u||'').trim());
+  // بيانات كل صنف تبقى منفصلة: الكمية رقم من نموذج الإدخال، ونوع التعبئة من قائمته.
+  // لا ندمج الكمية داخل وصف الصنف حتى تظهر في عمودها الصحيح في البوليصة.
+  const items = Array.from({length:15}, (_, index) => {
+    const suffix = index === 0 ? '' : String(index + 1);
+    return {
+      g: r[`item${suffix}Desc`] || '',
+      q: r[`item${suffix}Qty`] || '',
+      u: r[`item${suffix}Unit`] || ''
+    };
+  }).filter(x => x.g.trim() || x.q.trim() || x.u.trim());
   const total = Math.max(items.length, MIN_ROWS);
   const rows = [];
   for(let i=0;i<total;i++) rows.push(items[i] || {g:'', u:''});
@@ -13190,7 +13198,7 @@ function bolSheetCoded(r, lang){
     const weightCells = i===0
       ? `<td class="c-w" rowspan="${total}">${esc(v.grossWeight)}</td><td class="c-w" rowspan="${total}">${esc(v.netWeight)}</td>`
       : '';
-    return `<tr><td class="c-qty">${esc(x.u)}</td><td class="c-desc">${esc(x.g)}</td>${weightCells}</tr>`;
+    return `<tr><td class="c-qty">${esc(x.q)}</td><td class="c-pack">${esc(x.u)}</td><td class="c-desc">${esc(x.g)}</td>${weightCells}</tr>`;
   }).join('');
   // تصغير تدريجي لجدول البضاعة مع زيادة عدد الأصناف — يضمن بقاء البوليصة صفحة A4 واحدة
   let goodsFsOverride='', goodsPad='7px 8px', goodsH='24px';
@@ -13325,6 +13333,7 @@ function bolSheetCoded(r, lang){
       <thead>
         <tr>
           <th rowspan="2" class="c-qty">${biText('Quantity','الكمية<br><span style="font-weight:400;font-size:9px;">Quantity</span>',lang)}</th>
+          <th rowspan="2" class="c-pack">${biText('Packing Type','نوع التعبئة<br><span style="font-weight:400;font-size:9px;">Packing Type</span>',lang)}</th>
           <th rowspan="2" class="c-desc">${biText('Description of Goods','مواصفات وتفاصيل البضاعة<br><span style="font-weight:400;font-size:9px;">Description of Goods</span>',lang)}</th>
           <th colspan="2">${biText('Weight','الوزن — Weight',lang)}</th>
         </tr>
@@ -14222,7 +14231,8 @@ table.inv-items tr.blank td{height:var(--items-h,31px);}
 table.bol3-goods{ position:relative; width:100%; border-collapse:collapse; font-size:var(--bol-f-goods,11.5px); }
 table.bol3-goods th{ background:var(--accent); color:#fff; font-weight:700; padding:var(--bol-goods-pad,6px 8px); border:1px solid var(--accent); }
 table.bol3-goods td{ border:1px solid #DADADA; padding:var(--bol-goods-pad,7px 8px); height:var(--bol-goods-h,24px); }
-.bol3-goods .c-qty{ width:14%; text-align:center; }
+.bol3-goods .c-qty{ width:10%; text-align:center; }
+.bol3-goods .c-pack{ width:13%; text-align:center; }
 .bol3-goods .c-desc{ text-align:right; }
 .bol3-goods .c-w{ width:11%; text-align:center; }
 
