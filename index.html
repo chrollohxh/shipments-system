@@ -3778,6 +3778,10 @@ body.role-staff #navWallet,body.role-staff #navAdmin{display:flex !important;}
             <label>من اليسار: <b id="bc_stampLVal">4</b>%</label>
             <input type="range" id="bc_stampL" min="0" max="92" step="0.5">
           </div>
+          <div class="field">
+            <label>زاوية الدوران: <b id="bc_stampAVal">0</b>°</label>
+            <input type="range" id="bc_stampA" min="-180" max="180" step="1">
+          </div>
           <button class="btn btn-ghost btn-small" id="bolStampResetBtn" style="margin-top:10px;">إرجاع للمكان الافتراضي</button>
         </div>
       </div>
@@ -5156,7 +5160,7 @@ const DEFAULT_COMPANY = {
   bolLogoPos: { top: 4, left: 4, width: 20, angle: 0 }, // شعار البوليصة البرية كطبقة مستقلة من صفحة A4
   bolLogo: '',             // شعار خاص بالبوليصة المبنية بالكود — لو فاضي بيستخدم logo العادي
   bolStamp: '',            // ختم خاص بالبوليصة المبنية بالكود — لو فاضي بيستخدم stamp العادي
-  bolStampPos: { top: 85, left: 4, width: 22 },  // نسب مئوية من صفحة البوليصة كاملة
+  bolStampPos: { top: 85, left: 4, width: 22, angle: 0 },  // نسب مئوية من صفحة البوليصة كاملة
   bolShowStamp: true,
   bolShowSigLine: false,
   bolAccent: '',            // لون البارات والحواف الرئيسي — لو فاضي بيستخدم accent العادي
@@ -8110,13 +8114,16 @@ function syncBolStampHandle(){
   bshImg.style.backgroundImage = stampSrc ? `url(${stampSrc})` : 'none';
   bshImg.style.border = stampSrc ? 'none' : '1px dashed #bbb';
   bshImg.style.borderRadius = stampSrc ? '0' : '50%';
+  bshImg.style.transform = `rotate(${sp.angle || 0}deg)`;
   document.getElementById('bshSig').style.display = company.bolShowSigLine ? 'block' : 'none';
   document.getElementById('bc_stampW').value = sp.width;
   document.getElementById('bc_stampT').value = sp.top;
   document.getElementById('bc_stampL').value = sp.left;
+  document.getElementById('bc_stampA').value = sp.angle || 0;
   document.getElementById('bc_stampWVal').textContent = sp.width;
   document.getElementById('bc_stampTVal').textContent = sp.top;
   document.getElementById('bc_stampLVal').textContent = sp.left;
+  document.getElementById('bc_stampAVal').textContent = sp.angle || 0;
 }
 
 const bolStampStage = document.getElementById('bolStampStage');
@@ -8155,6 +8162,9 @@ document.getElementById('bc_stampT').addEventListener('input', function(){
 });
 document.getElementById('bc_stampL').addEventListener('input', function(){
   company.bolStampPos.left = parseFloat(this.value); syncBolStampHandle();
+});
+document.getElementById('bc_stampA').addEventListener('input', function(){
+  company.bolStampPos.angle = parseFloat(this.value); syncBolStampHandle();
 });
 document.getElementById('bc_showStamp').addEventListener('change', function(){
   company.bolShowStamp = this.checked; syncBolStampHandle();
@@ -13206,7 +13216,7 @@ function bolSheetCoded(r, lang){
   const stampSrc = c.bolStamp || c.stamp;
   const bsp = c.bolStampPos || DEFAULT_COMPANY.bolStampPos;
   const stampZoneHtml = (c.bolShowStamp !== false && stampSrc)
-    ? `<div class="bol3-stampzone" style="top:${bsp.top}%;left:${bsp.left}%;width:${bsp.width}%;">
+    ? `<div class="bol3-stampzone" style="top:${bsp.top}%;left:${bsp.left}%;width:${bsp.width}%;transform:rotate(${bsp.angle || 0}deg);">
          <img src="${stampSrc}" alt="">
          ${c.bolShowSigLine ? `<div class="bol3-sigline">${lang==='en'?'Authorized Signature':'التوقيع المعتمد'}</div>` : ''}
        </div>`
@@ -13274,7 +13284,10 @@ function bolSheetCoded(r, lang){
 
   <div class="bol3-topbar">
     <div class="bol3-top-a">
-      <span>ORIGINAL BILL OF LADING — ${esc(bolName)}</span>
+      <div class="bol3-title-stack">
+        <span class="bol3-doc-title">ORIGINAL BILL OF LADING</span>
+        <span class="bol3-company-title">${esc(bolName)}</span>
+      </div>
     </div>
     <div class="bol3-top-b">
       <div class="en">Bill No:</div>
@@ -13285,23 +13298,23 @@ function bolSheetCoded(r, lang){
 
   <div class="bol3-fields">
     <div class="bol3-field">
-      <div class="bar">${bilingualBar('Shipper','الشاحن',lang)}</div>
+      <div class="bar bol3-bilingual">${bilingualBar('Shipper','الشاحن',lang)}</div>
       <div class="box">${esc(v.shipper)}</div>
     </div>
     <div class="bol3-field">
-      <div class="bar">${bilingualBar('Consignee','المرسل إليه',lang)}</div>
+      <div class="bar bol3-bilingual">${bilingualBar('Consignee','المرسل إليه',lang)}</div>
       <div class="box">${esc(v.consignee)}</div>
     </div>
     <div class="bol3-field">
-      <div class="bar">${bilingualBar('Notify Party','الطرف المخطر',lang)}</div>
+      <div class="bar bol3-bilingual">${bilingualBar('Notify Party','الطرف المخطر',lang)}</div>
       <div class="box">${esc(v.notify)}</div>
     </div>
     <div class="bol3-field">
-      <div class="bar">${bilingualBar('Port Of Loading','ميناء التحميل',lang)}</div>
+      <div class="bar bol3-bilingual">${bilingualBar('Port Of Loading','ميناء التحميل',lang)}</div>
       <div class="box">${esc(v.portLoading)}</div>
     </div>
     <div class="bol3-field">
-      <div class="bar">${bilingualBar('Port Of Discharge','ميناء التفريغ',lang)}</div>
+      <div class="bar bol3-bilingual">${bilingualBar('Port Of Discharge','ميناء التفريغ',lang)}</div>
       <div class="box">${esc(v.portDischarge)}</div>
     </div>
   </div>
@@ -14165,8 +14178,11 @@ table.inv-items tr.blank td{height:var(--items-h,31px);}
 }
 .bol3-top-a{
   flex:1; padding:8px 12px 14px; font-size:11.5px; font-weight:700;
-  display:flex; align-items:center; gap:10px; direction:ltr; text-align:left;
+  display:flex; align-items:center; justify-content:center; direction:ltr; text-align:center;
 }
+.bol3-title-stack{display:flex;flex-direction:column;align-items:center;gap:3px;line-height:1.2;}
+.bol3-doc-title{color:#C5222D;font-size:12px;font-weight:800;direction:ltr;}
+.bol3-company-title{color:var(--bol-text,#14213D);font-size:11px;font-weight:700;direction:rtl;}
 .bol3-top-a .loghead .zone{
   width:26mm; height:15mm; position:relative; overflow:hidden; flex:0 0 auto;
 }
@@ -14188,6 +14204,8 @@ table.inv-items tr.blank td{height:var(--items-h,31px);}
 .bol3-field .bar{ background:var(--accent); color:#fff; display:flex; justify-content:space-between;
   align-items:center; padding:5px 12px; font-weight:700; font-size:11px; }
 .bol3-field .bar .en{ direction:ltr; }
+.bol3-field .bar.bol3-bilingual{direction:ltr;}
+.bol3-field .bar.bol3-bilingual .ar{direction:rtl;}
 .bol3-field .box{ min-height:var(--bol-field-h,40px); padding:var(--bol-field-pad,8px 12px); font-size:var(--bol-f-fields,12px); line-height:1.5; white-space:pre-line; }
 
 .bol3-logo-el img{ width:100%; display:block; object-fit:contain; }
