@@ -14159,9 +14159,12 @@ table.inv-items tr.blank td{height:var(--items-h,31px);}
 .bol3-sheet.bol-ltr .bol3-meta3 .cell{border-inline-start:none;border-inline-end:1px solid #DADADA;}
 .bol3-sheet.bol-ltr .bol3-meta3 .cell:first-child{border-inline-end:none;}
 
-.bol3-topbar{ display:flex; border:1.6px solid var(--bol-border,#8f2323); margin-bottom:var(--bol-gap,10px); }
+.bol3-topbar{
+  display:flex;min-height:19mm;border:1.6px solid var(--bol-border,#8f2323);
+  margin-bottom:var(--bol-gap,10px);
+}
 .bol3-top-a{
-  flex:1; padding:8px 12px; font-size:11.5px; font-weight:700;
+  flex:1; padding:8px 12px 14px; font-size:11.5px; font-weight:700;
   display:flex; align-items:center; gap:10px; direction:ltr; text-align:left;
 }
 .bol3-top-a .loghead .zone{
