@@ -13223,9 +13223,10 @@ function bolSheetCoded(r, lang){
   const fTerms = c.bolFontTerms || 10;
   const colorVars = `--accent:${esc(accent)};--bol-border:${esc(borderColor)};--bol-text:${esc(textColor)};--bol-panel:${esc(panelColor)};`;
 
-  // تخطيط حر: كل حقل بموضعه/حجمه المحفوظ في templatePositions.bolCodedFree بدل الشبكة الثابتة —
-  // مفعَّل فقط لو صرّح المستخدم بذلك؛ المسار الثابت أدناه لا يتأثر إطلاقاً.
-  if(c.bolCodedFreeLayout){
+  // مواضع التخطيط الحر القديمة تظل محفوظة للمراجعة، لكن لا تُستخدم في البوليصة المبنية بالكود.
+  // القالب الثابت هو الوحيد المعتمد حتى يبقى المستند صفحة A4 سليمة دائماً.
+  const useLegacyFreeLayout = false;
+  if(useLegacyFreeLayout && c.bolCodedFreeLayout){
     const fp = (key) => fieldPos('bolCodedFree', TEMPLATE_FIELDS.bolCodedFree.find(d=>d.key===key));
     const goodsBlockHtml = `<div class="bol3-goods-wrap" style="position:static;margin-bottom:0;">
         <table class="bol3-goods">
@@ -13654,9 +13655,10 @@ function bolSeaSheetCoded(r, lang){
     }
   }
 
-  // تخطيط حر: كل حقل بموضعه/حجمه المحفوظ في templatePositions.bolSeaCodedFree بدل الشبكة الثابتة —
-  // مفعَّل فقط لو صرّح المستخدم بذلك؛ المسار الثابت أدناه لا يتأثر إطلاقاً.
-  if(c.bolSeaCodedFreeLayout){
+  // مواضع التخطيط الحر القديمة تظل محفوظة للمراجعة، لكن لا تُستخدم في البوليصة المبنية بالكود.
+  // القالب الثابت هو الوحيد المعتمد حتى يبقى المستند صفحة A4 سليمة دائماً.
+  const useLegacyFreeLayout = false;
+  if(useLegacyFreeLayout && c.bolSeaCodedFreeLayout){
     const fp = (key) => fieldPos('bolSeaCodedFree', TEMPLATE_FIELDS.bolSeaCodedFree.find(d=>d.key===key));
     const goodsBlockHtml = `<div class="sbl-goods-wrap" style="position:static;border-top:1px solid var(--sbl-border,#16334a);">
         <table class="sbl-goods">
