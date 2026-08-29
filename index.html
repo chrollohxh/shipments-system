@@ -13915,7 +13915,8 @@ function bolSheetCoded(r, lang){
   // بيانات كل صنف تبقى منفصلة: الكمية رقم من نموذج الإدخال، ونوع التعبئة من قائمته.
   // لا ندمج الكمية داخل وصف الصنف حتى تظهر في عمودها الصحيح في البوليصة.
   const items = Array.from({length:15}, (_, index) => {
-    const suffix = index === 0 ? '' : String(index + 1);
+    if(index === 0) return { g: r.itemDesc || '', q: r.qty || '', u: r.qtyUnit || '' };
+    const suffix = String(index + 1);
     return {
       g: r[`item${suffix}Desc`] || '',
       q: r[`item${suffix}Qty`] || '',
