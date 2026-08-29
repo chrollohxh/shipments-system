@@ -1827,6 +1827,90 @@ body.role-staff #navWallet,body.role-staff #navAdmin{display:flex !important;}
 .db-distribution{margin-bottom:8px;}.db-distribution-grid{display:grid;grid-template-columns:1.05fr .9fr 1.25fr;gap:16px;align-items:stretch;direction:ltr;}.db-distribution-grid>*{direction:rtl;}.db-donut-box{min-height:210px;background:#f9fbfe;border-radius:14px;display:grid;place-items:center;}.db-donut{width:136px;height:136px;border-radius:50%;display:grid;place-items:center;position:relative;}.db-donut:after{content:'';position:absolute;inset:21px;background:#f9fbfe;border-radius:50%;}.db-donut-center{position:relative;z-index:1;text-align:center;font-size:10px;color:#8998aa;}.db-donut-center b{display:block;font-size:19px;color:#27364c;margin-top:3px;}.db-mix{display:grid;gap:10px;}.db-mix-card{border:1px solid #e8eef6;border-radius:14px;padding:15px;background:#fbfcfe;}.db-mix-card b{font-size:18px;display:block;text-align:left;}.db-mix-card span{font-size:11px;font-weight:700;}.db-mix-card small{display:block;margin-top:8px;color:#94a2b4;font-size:9px;}.db-mix-icon{display:grid;place-items:center;width:32px;height:32px;border-radius:10px;background:#eaf3ff;color:#176fe8;margin-bottom:8px;}.db-mix-icon.sea{background:#e6fbf2;color:#20b979;}.db-insight{border-radius:14px;padding:19px;background:linear-gradient(135deg,#092e60,#1673eb);color:#fff;overflow:hidden;position:relative;}.db-insight:after{content:'';position:absolute;right:-50px;bottom:-60px;width:160px;height:160px;background:rgba(255,255,255,.09);border-radius:50%;}.db-insight h3{margin:15px 0 5px;font-size:18px;position:relative;z-index:1;}.db-insight p{position:relative;z-index:1;font-size:10px;color:#d9e9ff;}.db-bars{position:relative;z-index:1;margin-top:24px;padding:14px;border-radius:12px;background:rgba(255,255,255,.12);}.db-bars span{display:block;font-size:9px;margin:6px 0;}.db-bars i{display:block;height:6px;border-radius:8px;background:rgba(255,255,255,.25);}.db-bars i b{display:block;height:100%;border-radius:inherit;background:#fff;}.db-bars .sea-bar b{background:#5de0ad;}.db-insight-art{position:absolute;left:18px;bottom:14px;display:flex;align-items:end;gap:6px;color:rgba(255,255,255,.72);}.db-insight-art .ic{filter:drop-shadow(0 4px 6px rgba(0,0,0,.12));}
 @media(max-width:1180px){.shipment-dashboard .db-hero-stats,.db-three-grid,.db-distribution-grid{grid-template-columns:1fr 1fr;}.db-three-grid .db-panel:last-child{grid-column:span 2;}.db-insight{min-height:210px;}.db-donut-box{min-height:190px;}}
 @media(max-width:700px){.shipment-dashboard .db-hero-stats,.db-three-grid,.db-distribution-grid{grid-template-columns:1fr;}.db-three-grid .db-panel:last-child{grid-column:auto;}.db-hero{padding:20px;}.db-hero-art{display:none;}.db-stat-grid{gap:10px;}.db-panel{padding:15px;}}
+
+/* الهوية البصرية الموحدة للوحة التحكم */
+.shipment-dashboard{
+  --dashboard-violet:#6d35f2;
+  --dashboard-blue:#1677ee;
+  --dashboard-mist:#f5f8ff;
+  padding-top:8px;
+}
+.shipment-dashboard .db-hero-stats{
+  grid-template-columns:minmax(330px,1.34fr) minmax(360px,1fr);
+  gap:18px;
+  margin-bottom:22px;
+  padding:20px;
+  border-radius:26px;
+  background:
+    radial-gradient(circle at 5% 115%,rgba(255,255,255,.22) 0 38px,transparent 40px),
+    radial-gradient(circle at 90% -25%,rgba(255,255,255,.27) 0 92px,transparent 94px),
+    linear-gradient(120deg,#6330de 0%,#427df4 52%,#45b9f0 100%);
+  box-shadow:0 20px 42px rgba(58,84,201,.20);
+}
+.shipment-dashboard .db-hero{
+  min-height:178px;
+  padding:18px 22px;
+  border:1px solid rgba(255,255,255,.28);
+  border-radius:18px;
+  background:rgba(255,255,255,.16);
+  box-shadow:none;
+  backdrop-filter:blur(3px);
+}
+.shipment-dashboard .db-hero:after{display:none;}
+.db-hero-copy{max-width:350px;}
+.db-chip{background:rgba(255,255,255,.20);color:#fff;border:1px solid rgba(255,255,255,.20);}
+.db-hero h2{color:#fff;font-size:24px;line-height:1.45;margin:10px 0 5px;}
+.db-hero p{color:rgba(255,255,255,.84);font-size:11px;line-height:1.8;}
+.db-hero-art{width:43%;min-width:180px;filter:drop-shadow(0 12px 14px rgba(12,26,108,.16));}
+.db-hero-art img{max-height:145px;}
+.db-stat-grid{gap:12px;}
+.db-stat{
+  min-height:83px;
+  padding:13px 15px;
+  border:1px solid rgba(255,255,255,.52);
+  border-radius:16px;
+  background:rgba(255,255,255,.87);
+  box-shadow:0 8px 18px rgba(28,48,142,.13);
+}
+.db-stat-icon{width:33px;height:33px;border-radius:11px;}
+.db-stat-label{left:14px;top:14px;color:#667994;font-size:10px;}
+.db-stat-value{font-size:21px;line-height:1.1;margin-top:9px;color:#192f53;}
+.db-stat-foot{font-size:9px;margin-top:5px;}
+.db-three-grid{gap:18px;margin-bottom:18px;}
+.db-panel{
+  border:1px solid #e6ecf6;
+  border-radius:20px;
+  background:#fff;
+  box-shadow:0 10px 28px rgba(45,72,112,.07);
+  padding:19px;
+}
+.db-panel-title{margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #edf1f8;}
+.db-panel-title h3{font-size:15px;color:#1b3152;}
+.db-panel-title p{font-size:10px;color:#8c9db5;}
+.db-link{border:1px solid #dce7ff;background:#f5f8ff;color:#2674e9;padding:7px 11px;border-radius:10px;}
+.db-operations th{color:#8495ad;}
+.db-operations td{padding:11px 0;color:#6d809a;}
+.db-operations td:first-child{color:#30425b;}
+.db-type.land{background:#edf3ff;color:#316fe5;}
+.db-type.sea{background:#eafbf4;color:#24aa73;}
+.db-company{padding:12px 0;}
+.db-rank{background:#f0f5ff;color:#3777e8;}
+.db-all{background:linear-gradient(90deg,#f0f5ff,#e9f3ff);color:#2674e9;}
+.db-distribution{padding:21px;}
+.db-donut-box{background:linear-gradient(135deg,#fafcff,#f1f6ff);}
+.db-donut:after{background:#f7faff;}
+.db-mix-card{background:linear-gradient(135deg,#fbfdff,#f3f7ff);}
+.db-insight{background:linear-gradient(125deg,#6434e6,#286ee9 62%,#20a8e9);box-shadow:0 12px 26px rgba(56,89,214,.18);}
+.db-insight h3{font-size:17px;}
+.db-bars{background:rgba(255,255,255,.16);}
+@media(max-width:1180px){
+  .shipment-dashboard .db-hero-stats{grid-template-columns:1fr;}
+  .db-hero-art{max-width:280px;}
+}
+@media(max-width:700px){
+  .shipment-dashboard .db-hero-stats{padding:12px;border-radius:20px;}
+  .shipment-dashboard .db-hero{min-height:150px;}
+}
 </style>
   <link rel="stylesheet" href="wizard.css">
   <link rel="stylesheet" href="company-wizard.css">
