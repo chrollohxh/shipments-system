@@ -5788,8 +5788,7 @@ async function bootData(){
     step('الهوية والألوان', loadBranding),
     step('إعدادات الشركة', loadCompany),
     step('نماذج البوالص', loadBolTemplates),
-    step('هوية البوليصة والمنشأ', loadDocIdentity),
-    step('دليل السلع', loadCommodities)
+    step('هوية البوليصة والمنشأ', loadDocIdentity)
   ]).then(()=>{
     try{ applyBranding(); applyActiveCompany(); fillCertPicker(); }catch(e){ console.error(e); }
   });
@@ -6541,11 +6540,6 @@ document.getElementById('bbItems').addEventListener('click', async (e)=>{
 // أي عنصر قائمة بدون ربط بسلعة يستمر يعمل كنص حر بالضبط كما كان قبل هذا التحديث.
 let commodities = [];
 let cmEditId = null;
-async function loadCommodities(){
-  const {data, error} = await sb.from('commodities').select('*').order('usage_count', {ascending:false});
-  if(error) throw error;
-  commodities = data || [];
-}
 function normalizeArabic(s){
   return (s||'').toString()
     .replace(/[ً-ْٰـ]/g,'') // تشكيل وتطويل
@@ -6555,17 +6549,31 @@ function normalizeArabic(s){
     .replace(/\s+/g,' ')
     .trim();
 }
-// ترتيب النتائج: تطابق تام → يبدأ بالنص → يحتوي النص (بما فيه الكلمات المفتاحية
-// والأسماء البديلة) → مع أفضلية بسيطة للأكثر استخدامًا ضمن نفس الفئة.
-function searchCommodities(term, limit){
+// يهرّب أحرف LIKE الخاصة (% و _) حتى ما تتفسّرش كوايلد كارد داخل بحث المستخدم
+function escLike(s){ return (s||'').replace(/[%_]/g, m=>'\\'+m); }
+// بحث من الخادم (مش من نسخة محمّلة بالكامل بالمتصفح) — يدعم آلاف/عشرات آلاف السلع
+// بدون تحميلها كلها مقدماً. يجيب مرشحين من القاعدة بمطابقة نصية واسعة، ثم يرتّبهم
+// محلياً: تطابق تام → يبدأ بالنص → يحتوي النص → مع أفضلية للأكثر استخدامًا.
+async function searchCommodities(term, limit){
   limit = limit || 8;
   const raw = (term||'').trim();
   if(!raw) return [];
   const norm = normalizeArabic(raw).toLowerCase();
   const normEn = raw.toLowerCase();
-  const scored = [];
-  commodities.forEach(c=>{
-    if(c.is_active === false) return;
+  const eNorm = escLike(norm), eEn = escLike(normEn);
+  const or = [
+    `arabic_name_norm.ilike.%${eNorm}%`,
+    `english_name.ilike.%${eEn}%`,
+    `hs_code.ilike.${eEn}%`,
+    `category.ilike.%${eEn}%`,
+    `arabic_keywords.ilike.%${eNorm}%`,
+    `english_keywords.ilike.%${eEn}%`,
+    `aliases.ilike.%${eEn}%`
+  ].join(',');
+  const {data, error} = await sb.from('commodities').select('*')
+    .eq('is_active', true).or(or).order('usage_count', {ascending:false}).limit(80);
+  if(error){ console.error('searchCommodities', error); return []; }
+  const scored = (data||[]).map(c=>{
     const ar = normalizeArabic(c.arabic_name||'').toLowerCase();
     const en = (c.english_name||'').toLowerCase();
     const kwAr = normalizeArabic(c.arabic_keywords||'').toLowerCase();
@@ -6573,24 +6581,18 @@ function searchCommodities(term, limit){
     const aliasesAr = normalizeArabic(c.aliases||'').toLowerCase();
     const aliasesEn = (c.aliases||'').toLowerCase();
     const hs = (c.hs_code||'').toLowerCase();
-    let score = -1;
+    let score = 400;
     if(hs && hs === normEn) score = 1000;
     else if((ar && ar === norm) || (en && en === normEn)) score = 900;
     else if(hs && hs.startsWith(normEn)) score = 750;
     else if((ar && ar.startsWith(norm)) || (en && en.startsWith(normEn))) score = 700;
-    else if((ar && ar.includes(norm)) || (en && en.includes(normEn)) ||
-            (kwAr && kwAr.includes(norm)) || (kwEn && kwEn.includes(normEn)) ||
-            (aliasesAr && aliasesAr.includes(norm)) || (aliasesEn && aliasesEn.includes(normEn))) score = 400;
-    if(score < 0) return;
     score += Math.min(c.usage_count||0, 50) * 0.5;
-    scored.push({c, score});
+    return {c, score};
   });
   scored.sort((a,b)=> b.score - a.score);
   return scored.slice(0, limit).map(x=>x.c);
 }
 async function bumpCommodityUsage(id){
-  const c = commodities.find(x=>x.id===id);
-  if(c) c.usage_count = (c.usage_count||0) + 1;
   try{ await sb.rpc('bump_commodity_usage', {cid: id}); }catch(e){ console.warn('bump usage failed', e); }
 }
 
@@ -6599,6 +6601,8 @@ let csActiveInput = null;
 let csActiveIndex = -1;
 let csDebounce = null;
 let csInlineTargetInput = null;
+let csLastResults = [];
+let csRequestToken = 0;
 const commoditySuggestBox = document.getElementById('commoditySuggestBox');
 function csClose(){
   commoditySuggestBox.classList.remove('open');
@@ -6613,6 +6617,7 @@ function csPositionBelow(input){
   commoditySuggestBox.style.width = Math.max(r.width, 260) + 'px';
 }
 function csRender(input, results, term){
+  csLastResults = results;
   csActiveIndex = -1;
   let html = results.map((c,i)=>`
     <div class="cs-item" data-i="${i}">
@@ -6643,13 +6648,22 @@ function attachCommodityAutocomplete(input){
     const el = this;
     clearTimeout(csDebounce);
     csActiveInput = el;
-    csDebounce = setTimeout(()=>{
+    csDebounce = setTimeout(async ()=>{
       if(!term.trim()){ csClose(); return; }
-      csRender(el, searchCommodities(term, 8), term);
+      const myToken = ++csRequestToken;
+      const results = await searchCommodities(term, 8);
+      if(myToken !== csRequestToken || csActiveInput !== el) return; // رد متأخر لبحث قديم — تجاهله
+      csRender(el, results, term);
     }, 250);
   });
-  input.addEventListener('focus', function(){
-    if(this.value.trim()){ csActiveInput = this; csRender(this, searchCommodities(this.value, 8), this.value); }
+  input.addEventListener('focus', async function(){
+    if(!this.value.trim()) return;
+    const el = this;
+    csActiveInput = el;
+    const myToken = ++csRequestToken;
+    const results = await searchCommodities(this.value, 8);
+    if(myToken !== csRequestToken || csActiveInput !== el) return;
+    csRender(el, results, this.value);
   });
   input.addEventListener('keydown', function(e){
     if(!commoditySuggestBox.classList.contains('open') || csActiveInput!==this) return;
@@ -6682,8 +6696,7 @@ commoditySuggestBox.addEventListener('click', e=>{
   }
   const item = e.target.closest('.cs-item');
   if(!item) return;
-  const results = searchCommodities(csActiveInput.value, 8);
-  const c = results[+item.dataset.i];
+  const c = csLastResults[+item.dataset.i];
   if(c) csSelect(csActiveInput, c);
 });
 document.addEventListener('click', e=>{
@@ -6727,38 +6740,50 @@ document.getElementById('cmSaveBtn').addEventListener('click', async ()=>{
     aliases: document.getElementById('cm_aliases').value.trim(),
     updated_at: new Date().toISOString()
   };
-  let savedId = cmEditId;
+  let savedObj = null;
   try{
     if(cmEditId){
       const {error} = await sb.from('commodities').update(row).eq('id', cmEditId);
       if(error) throw error;
-      Object.assign(commodities.find(x=>x.id===cmEditId), row);
+      savedObj = Object.assign({id: cmEditId}, row);
     }else{
       const {data, error} = await sb.from('commodities').insert(row).select().single();
       if(error) throw error;
-      commodities.unshift(data);
-      savedId = data.id;
+      savedObj = data;
     }
   }catch(e){ dbError(e, 'تعذّر حفظ السلعة'); return; }
   toast('تم حفظ السلعة ✓');
   addLog(cmEditId?'edit':'add', (cmEditId?'تعديل سلعة: ':'إضافة سلعة: ')+ar);
   commodityOverlay.classList.remove('open');
-  renderCommodityAdmin();
-  if(csInlineTargetInput){
-    const c = commodities.find(x=>x.id===savedId);
-    if(c) csSelect(csInlineTargetInput, c);
+  if(csInlineTargetInput && savedObj){
+    csSelect(csInlineTargetInput, savedObj);
     csInlineTargetInput = null;
   }
+  renderCommodityAdmin();
 });
 
 // ---- لوحة إدارة دليل السلع ----
 let cmSearchDebounce = null;
-function renderCommodityAdmin(){
+let cmRenderToken = 0;
+async function renderCommodityAdmin(){
   const box = document.getElementById('cmItems');
   if(!box) return;
-  document.getElementById('cmCount').textContent = `(${commodities.length})`;
+  const myToken = ++cmRenderToken;
   const term = (document.getElementById('cmSearch').value||'').trim();
-  const list = term ? searchCommodities(term, 200) : commodities.slice(0, 200);
+  // العدد الإجمالي يُجلب بشكل منفصل وخفيف (بدون تحميل الصفوف نفسها) عشان يبقى دقيق
+  // حتى لو تجاوز عدد السلع حد الـ1000 صف الافتراضي لأي استعلام واحد.
+  sb.from('commodities').select('id', {count:'exact', head:true}).then(({count})=>{
+    if(myToken === cmRenderToken && typeof count === 'number') document.getElementById('cmCount').textContent = `(${count})`;
+  });
+  let list;
+  if(term){
+    list = await searchCommodities(term, 200);
+  }else{
+    const {data, error} = await sb.from('commodities').select('*').order('usage_count', {ascending:false}).limit(200);
+    list = error ? [] : (data||[]);
+  }
+  if(myToken !== cmRenderToken) return; // بحث/تحديث أحدث بدأ بعده — تجاهل هذه النتيجة المتأخرة
+  commodities = list;
   document.getElementById('cmVisibleCount').textContent = list.length + ' معروضة';
   box.innerHTML = list.length ? list.map(c=>`
     <div class="lk-row" data-id="${c.id}">
