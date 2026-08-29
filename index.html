@@ -1631,16 +1631,43 @@ body.role-staff #backTop{display:none !important;}
 .nav-badge.all{background:var(--brand);}
 
 /* ===== لوحة التحكم ===== */
-.admin-tabs{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;}
-.admin-tab{
-  font-family:inherit;font-weight:700;font-size:14px;padding:11px 20px;cursor:pointer;
-  border:1.5px solid var(--border);background:var(--white);border-radius:999px;color:var(--ink);
-  transition:all .2s var(--ease);
+#viewAdmin{max-width:1320px;margin-inline:auto;padding-top:8px;}
+.admin-control-hero{
+  position:relative;isolation:isolate;overflow:hidden;margin:0 0 18px;padding:26px 30px;
+  min-height:128px;border-radius:24px;color:#fff;
+  background:linear-gradient(125deg,#143b80 0%,#1e78ed 48%,#6555f3 100%);
+  box-shadow:0 18px 42px rgba(28,91,194,.22);
 }
-.admin-tab:hover{border-color:var(--brand);color:var(--brand);}
-.admin-tab.active{background:var(--brand);color:#fff;border-color:var(--brand);box-shadow:0 3px 10px rgba(200,16,46,.3);}
+.admin-control-hero:before,.admin-control-hero:after{
+  content:"";position:absolute;z-index:-1;border-radius:50%;filter:blur(1px);opacity:.52;
+}
+.admin-control-hero:before{width:220px;height:220px;left:-75px;bottom:-145px;background:#7ce1ff;}
+.admin-control-hero:after{width:180px;height:180px;right:24%;top:-125px;background:#d8c5ff;}
+.admin-control-hero h2{margin:5px 0 4px;font-size:27px;letter-spacing:-.5px;color:#fff;}
+.admin-control-hero p{margin:0;color:rgba(255,255,255,.84);font-size:14px;}
+.admin-control-kicker{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:800;color:#d9ecff;}
+.admin-control-kicker:before{content:"";width:8px;height:8px;border-radius:50%;background:#55e5b6;box-shadow:0 0 0 5px rgba(85,229,182,.14);}
+.admin-tabs{
+  display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin:-42px 24px 22px;padding:13px;
+  position:relative;z-index:2;border:1px solid rgba(218,231,250,.88);border-radius:19px;
+  background:rgba(255,255,255,.93);box-shadow:0 13px 32px rgba(37,72,125,.14);backdrop-filter:blur(12px);
+}
+.admin-tab{
+  font-family:inherit;font-weight:800;font-size:13px;line-height:1;padding:13px 17px;cursor:pointer;
+  border:1px solid #e1eaf7;background:#f9fbff;border-radius:12px;color:#34506f;
+  transition:transform .2s var(--ease),box-shadow .2s var(--ease),background .2s var(--ease),color .2s var(--ease);
+}
+.admin-tab:hover{border-color:#a9c9ff;color:#1264df;background:#fff;transform:translateY(-2px);box-shadow:0 8px 18px rgba(45,112,221,.13);}
+.admin-tab.active{background:linear-gradient(135deg,#1777ee,#5b54ef);color:#fff;border-color:transparent;box-shadow:0 9px 18px rgba(34,101,225,.3);}
 .admin-pane{display:none;}
 .admin-pane.active{display:block;animation:viewIn .25s var(--ease);}
+@media(max-width:720px){
+  #viewAdmin{padding-top:0;}
+  .admin-control-hero{padding:23px 20px;min-height:118px;border-radius:18px;}
+  .admin-control-hero h2{font-size:23px;}
+  .admin-tabs{margin:-26px 10px 18px;padding:9px;gap:7px;border-radius:15px;}
+  .admin-tab{flex:1 1 calc(50% - 7px);padding:12px 9px;font-size:12px;text-align:center;}
+}
 
 .user-row{
   display:flex;align-items:center;gap:14px;padding:14px 0;
@@ -5288,18 +5315,6 @@ async function loadCompany(){
   if(v) company = Object.assign({}, DEFAULT_COMPANY, v);
   company.stampPos = Object.assign({}, DEFAULT_COMPANY.stampPos, company.stampPos||{});
   company.logoPos = Object.assign({}, DEFAULT_COMPANY.logoPos, company.logoPos||{});
-  company.bolLogoPos = Object.assign({}, DEFAULT_COMPANY.bolLogoPos, company.bolLogoPos||{});
-  company.bolSeaLogoPos = Object.assign({}, DEFAULT_COMPANY.bolSeaLogoPos, company.bolSeaLogoPos||{});
-  // موضع 90% كان خاصاً بخانة الرأس القديمة؛ نحوله مرة واحدة إلى موضع مناسب على كامل الصفحة.
-  if(company.bolSeaLogoPos.width > 55){
-    company.bolSeaLogoPos = Object.assign({}, DEFAULT_COMPANY.bolSeaLogoPos);
-  }
-  company.bolStampPos = Object.assign({}, DEFAULT_COMPANY.bolStampPos, company.bolStampPos||{});
-  company.certStampPos = Object.assign({}, DEFAULT_COMPANY.certStampPos, company.certStampPos||{});
-  company.bolSeaStampPos = Object.assign({}, DEFAULT_COMPANY.bolSeaStampPos, company.bolSeaStampPos||{});
-  // القوالب المبنية بالكود تعتمد التخطيط الثابت فقط؛ تبقى مواضع الحقول القديمة محفوظة بلا حذف.
-  company.bolCodedFreeLayout = false;
-  company.bolSeaCodedFreeLayout = false;
   console.log('loadCompany: ' + (v ? 'من الخادم ✓' : 'افتراضي (لا يوجد على الخادم)'));
 }
 async function saveCompany(companyId){
@@ -5419,18 +5434,25 @@ const DEFAULT_COMPANY = {
   bolImgSea: '',         // نموذج بوليصة (بحري)
   stampPos: { top: 66, left: 10, width: 20 },   // نسب مئوية من الصفحة
   showSigLine: true,
+  logoPos: { top: 5, left: 5, width: 90 }  // شعار الفواتير والشهادات
+};
+let company = Object.assign({}, DEFAULT_COMPANY);
+
+// ===== هوية المستندات المستقلة: البوليصة البرية/البحرية وشهادة المنشأ =====
+// مستقلة تماماً عن الشركات — إعداد عام واحد للنظام كله، لا يتأثر بتبديل الشركة النشطة.
+// الفاتورة المبدئية/النهائية وباكنج ليست تبقى مرتبطة بهوية كل شركة كما هي، بدون تغيير.
+const DEFAULT_DOC_IDENTITY = {
   bolCoded: false,        // إتاحة نموذج البوليصة المبني بالكود كخيار في قائمة اختيار البوليصة
   bolCodedLabel: '',      // اسم النموذج في القوائم (لوحة التحكم + فورم الشحنة) — لو فاضي هيستخدم الاسم الافتراضي
   bolCodedFreeLayout: false, // تخطيط حر لحقول البوليصة (سحب أي حقل لأي مكان) بدل الشبكة الثابتة — مواضعه في templatePositions.bolCodedFree
-  bolCompanyName: '',     // اسم الشركة على البوليصة — مستقل عن nameAr، لو فاضي بيستخدم nameAr
-  logoPos: { top: 5, left: 5, width: 90 },  // شعار الفواتير والشهادات
+  bolCompanyName: '',     // اسم الشركة على البوليصة — مستقل عن أي شركة عميل
   bolLogoPos: { top: 4, left: 4, width: 20, angle: 0 }, // شعار البوليصة البرية كطبقة مستقلة من صفحة A4
-  bolLogo: '',             // شعار خاص بالبوليصة المبنية بالكود — لو فاضي بيستخدم logo العادي
-  bolStamp: '',            // ختم خاص بالبوليصة المبنية بالكود — لو فاضي بيستخدم stamp العادي
+  bolLogo: '',             // شعار خاص بالبوليصة المبنية بالكود
+  bolStamp: '',            // ختم خاص بالبوليصة المبنية بالكود
   bolStampPos: { top: 85, left: 4, width: 22, angle: 0 },  // نسب مئوية من صفحة البوليصة كاملة
   bolShowStamp: true,
   bolShowSigLine: false,
-  bolAccent: '',            // لون البارات والحواف الرئيسي — لو فاضي بيستخدم accent العادي
+  bolAccent: '',            // لون البارات والحواف الرئيسي
   bolBorderColor: '#8f2323', // لون الحدود والفواصل
   bolTextColor: '#14213D',   // لون النص الأساسي
   bolPanelColor: '#F4F4F4',  // لون خلفية الخانات الثانوية (زي رقم الفاتورة وتاريخ الشحن)
@@ -5439,13 +5461,13 @@ const DEFAULT_COMPANY = {
   bolFontTerms: 10,         // حجم خط الشروط والتذييل بالبكسل
 
   certCoded: false,        // إتاحة شهادة المنشأ (بري) المبنية بالكود كخيار عند إنشاء الشحنة
-  certCompanyName: '',     // اسم الشركة على الشهادة — مستقل عن nameAr، لو فاضي بيستخدم nameAr
-  certLogo: '',             // شعار خاص بشهادة المنشأ المبنية بالكود — لو فاضي بيستخدم logo العادي (نفس موضع logoPos)
-  certStamp: '',            // ختم خاص بشهادة المنشأ المبنية بالكود — لو فاضي بيستخدم stamp العادي
+  certCompanyName: '',     // اسم الشركة على الشهادة — مستقل عن أي شركة عميل
+  certLogo: '',             // شعار خاص بشهادة المنشأ المبنية بالكود
+  certStamp: '',            // ختم خاص بشهادة المنشأ المبنية بالكود
   certStampPos: { top: 80, left: 4, width: 22 },  // نسب مئوية من صفحة الشهادة كاملة
   certShowStamp: true,
   certShowSigLine: false,
-  certAccent: '',            // لون البارات والحواف الرئيسي — لو فاضي بيستخدم accent العادي
+  certAccent: '',            // لون البارات والحواف الرئيسي
   certBorderColor: '#8f2323', // لون الحدود والفواصل
   certTextColor: '#14213D',   // لون النص الأساسي
   certPanelColor: '#F4F4F4',  // لون خلفية الخانات الثانوية
@@ -5457,12 +5479,12 @@ const DEFAULT_COMPANY = {
   bolSeaCodedFreeLayout: false, // تخطيط حر لحقول البوليصة البحرية بدل الشبكة الثابتة — مواضعه في templatePositions.bolSeaCodedFree
   bolSeaAgentName: '',       // اسم وكيل/شركة الشحن — يظهر في Cargo Delivery وFor and on behalf of
   bolSeaAgentAddress: '',    // عنوان وبيانات تواصل الوكيل — متعدد الأسطر
-  bolSeaLogo: '',            // شعار خاص بالبوليصة البحرية — لو فاضي بيستخدم logo العادي
+  bolSeaLogo: '',            // شعار خاص بالبوليصة البحرية
   bolSeaLogoPos: { top: 8, left: 60, width: 20, angle: 0 }, // شعار البوليصة البحرية كطبقة مستقلة من صفحة A4
-  bolSeaStamp: '',           // ختم خاص بالبوليصة البحرية — لو فاضي بيستخدم stamp العادي
+  bolSeaStamp: '',           // ختم خاص بالبوليصة البحرية
   bolSeaStampPos: { top: 84, left: 74, width: 14, angle: 0 },  // نسب مئوية من صفحة البوليصة كاملة (خانة التوقيع تقع تقريباً عند top:83-94%, left:71-96.5%)
   bolSeaShowStamp: true,
-  bolSeaAccent: '',           // لون الشارة (ORIGINAL) — لو فاضي بيستخدم accent العادي
+  bolSeaAccent: '',           // لون الشارة (ORIGINAL)
   bolSeaBorderColor: '#16334a', // لون حدود الخانات والعناوين
   bolSeaTextColor: '#14213D',   // لون النص الأساسي
   bolSeaPanelColor: '#EAF1F4',  // لون خلفية رأس جدول البضاعة
@@ -5470,7 +5492,7 @@ const DEFAULT_COMPANY = {
   bolSeaFontGoods: 9,         // حجم خط جدول البضاعة بالبكسل
   bolSeaTermsText: '',        // نص الشروط السفلي — لو فاضي بيستخدم النص الافتراضي
   bolSeaBadgeImg: '',         // استيكر البوليصة (صورة PNG بشفافية) — بديل شارة ORIGINAL النصية. لو فاضي ما يظهرش شيء
-  bolSeaBadgePos: { top: 0.5, left: 1, width: 5, angle: 0 },  // نسب مئوية من صفحة البوليصة كاملة — صغير ومحصور داخل الهامش العلوي (14مم) افتراضياً كي لا يتداخل مع بيانات الشاحن، يُعدَّل بالسحب
+  bolSeaBadgePos: { top: 0.5, left: 1, width: 5, angle: 0 },  // نسب مئوية من صفحة البوليصة كاملة
   bolSeaWmText: '',           // نص العلامة المائية — لو فاضي ما تظهرش
   bolSeaWmFontSize: 24,       // حجم خط العلامة المائية بالبكسل
   bolSeaWmOpacity: 8,         // شفافية العلامة المائية % (من 3 إلى 30)
@@ -5478,7 +5500,47 @@ const DEFAULT_COMPANY = {
   bolSeaWmColor: '#000000',   // لون العلامة المائية
   bolSeaWmRepeat: 'once'      // 'once' مرة واحدة في المنتصف أو 'tile' متكررة كنمط
 };
-let company = Object.assign({}, DEFAULT_COMPANY);
+let docIdentity = Object.assign({}, DEFAULT_DOC_IDENTITY);
+async function loadDocIdentity(){
+  const saved = await dbGetSetting('docIdentity');
+  let needsSave = false;
+  if(saved){
+    docIdentity = Object.assign({}, DEFAULT_DOC_IDENTITY, saved);
+  }else{
+    // ترحيل تلقائي لمرة واحدة: قبل هذا التحديث كانت هذه الإعدادات محفوظة على الشركة
+    // الافتراضية. ننسخها هنا حتى لا يحتاج أي شعار/ختم مضبوط بالفعل لإعادة ضبط.
+    const src = companies.find(c=>c.is_default) || companies[0];
+    const migrated = Object.assign({}, DEFAULT_DOC_IDENTITY);
+    if(src && src.settings){
+      Object.keys(DEFAULT_DOC_IDENTITY).forEach(k=>{
+        if(src.settings[k] !== undefined) migrated[k] = src.settings[k];
+      });
+      // قبل هذا التحديث كان اسم البوليصة/الشهادة يرجع تلقائياً لاسم الشركة النشطة لو
+      // فاضي — نثبّت القيمة الفعلية هنا حتى لا تختفي بعد فصل الهوية عن الشركة.
+      if(!migrated.bolCompanyName) migrated.bolCompanyName = src.name_ar || src.name_en || '';
+      if(!migrated.certCompanyName) migrated.certCompanyName = src.name_ar || src.name_en || '';
+      if(!migrated.bolSeaAgentName) migrated.bolSeaAgentName = src.name_ar || src.name_en || '';
+    }
+    docIdentity = migrated;
+    needsSave = true;
+  }
+  docIdentity.bolLogoPos = Object.assign({}, DEFAULT_DOC_IDENTITY.bolLogoPos, docIdentity.bolLogoPos||{});
+  docIdentity.bolSeaLogoPos = Object.assign({}, DEFAULT_DOC_IDENTITY.bolSeaLogoPos, docIdentity.bolSeaLogoPos||{});
+  // موضع 90% كان خاصاً بخانة الرأس القديمة؛ نحوله مرة واحدة إلى موضع مناسب على كامل الصفحة.
+  if(docIdentity.bolSeaLogoPos.width > 55){
+    docIdentity.bolSeaLogoPos = Object.assign({}, DEFAULT_DOC_IDENTITY.bolSeaLogoPos);
+    needsSave = true;
+  }
+  docIdentity.bolStampPos = Object.assign({}, DEFAULT_DOC_IDENTITY.bolStampPos, docIdentity.bolStampPos||{});
+  docIdentity.certStampPos = Object.assign({}, DEFAULT_DOC_IDENTITY.certStampPos, docIdentity.certStampPos||{});
+  docIdentity.bolSeaStampPos = Object.assign({}, DEFAULT_DOC_IDENTITY.bolSeaStampPos, docIdentity.bolSeaStampPos||{});
+  if(needsSave){
+    try{ await saveDocIdentity(); }catch(e){ console.warn('docIdentity migration save failed', e); }
+  }
+}
+async function saveDocIdentity(){
+  await dbSetSetting('docIdentity', docIdentity);
+}
 
 
 
@@ -5637,9 +5699,10 @@ async function bootData(){
   Promise.all([
     step('الهوية والألوان', loadBranding),
     step('إعدادات الشركة', loadCompany),
-    step('نماذج البوالص', loadBolTemplates)
+    step('نماذج البوالص', loadBolTemplates),
+    step('هوية البوليصة والمنشأ', loadDocIdentity)
   ]).then(()=>{
-    try{ applyBranding(); applyActiveCompany(); }catch(e){ console.error(e); }
+    try{ applyBranding(); applyActiveCompany(); fillCertPicker(); }catch(e){ console.error(e); }
   });
   // يعالج سباق تحميل الإعدادات القديمة مع الشركة النشطة بعد اكتمال البيانات الأساسية.
   try{ applyActiveCompany(); fillLookupSelects(); renderBankOptions(''); }catch(e){ console.error(e); }
@@ -7683,14 +7746,14 @@ function fillBolPicker(selected, shipType){
   const list = bolTplsFor(st);
   let opts = '<option value="">— النموذج الافتراضي —</option>';
   if(st === 'sea'){
-    if(company.bolSeaCoded) opts += `<option value="coded-sea">${escapeHtml(company.bolSeaCodedLabel || 'بوليصة بحرية مبنية بالكود')} — HTML</option>`;
+    if(docIdentity.bolSeaCoded) opts += `<option value="coded-sea">${escapeHtml(docIdentity.bolSeaCodedLabel || 'بوليصة بحرية مبنية بالكود')} — HTML</option>`;
   }else{
-    if(company.bolCoded) opts += `<option value="coded">${escapeHtml(company.bolCodedLabel || 'بوليصة مبنية بالكود')} — HTML</option>`;
+    if(docIdentity.bolCoded) opts += `<option value="coded">${escapeHtml(docIdentity.bolCodedLabel || 'بوليصة مبنية بالكود')} — HTML</option>`;
   }
   opts += list.map(t=>`<option value="${t.id}">${escapeHtml(t.name)} — ${t.kind==='coded'?'مبني بالكود':'صورة مرفوعة'}${t.is_default?' (افتراضي)':''}</option>`).join('');
   sel.innerHTML = opts;
-  if(selected === 'coded'){ if(company.bolCoded && st!=='sea') sel.value = 'coded'; }
-  else if(selected === 'coded-sea'){ if(company.bolSeaCoded && st==='sea') sel.value = 'coded-sea'; }
+  if(selected === 'coded'){ if(docIdentity.bolCoded && st!=='sea') sel.value = 'coded'; }
+  else if(selected === 'coded-sea'){ if(docIdentity.bolSeaCoded && st==='sea') sel.value = 'coded-sea'; }
   else if(selected && list.find(t=>t.id===selected)) sel.value = selected;
 }
 
@@ -7701,14 +7764,14 @@ function fillCertPicker(selected, shipType){
   const st = shipType || document.getElementById('f_shipType')?.value || 'land';
   if(wrap) wrap.style.display = (st === 'sea') ? '' : 'none';
   let opts = '<option value="">— صورة مرفوعة —</option>';
-  if(company.certCoded){
+  if(docIdentity.certCoded){
     opts += '<option value="coded">شهادة منشأ مبنية بالكود — HTML</option>';
     if(certWordTemplate.active !== false) opts += '<option value="coded-word">شهادة منشأ - PDF قابل للتحرير</option>';
   }
   if(st === 'sea') opts += '<option value="dubai-pdf">منشأ دبي التجريبي ليس للتداول — PDF ثابت</option>';
   sel.innerHTML = opts;
-  if(selected === 'coded' && company.certCoded) sel.value = selected;
-  if(selected === 'coded-word' && company.certCoded && certWordTemplate.active !== false) sel.value = selected;
+  if(selected === 'coded' && docIdentity.certCoded) sel.value = selected;
+  if(selected === 'coded-word' && docIdentity.certCoded && certWordTemplate.active !== false) sel.value = selected;
   if(selected === 'dubai-pdf' && st === 'sea') sel.value = selected;
 }
 
@@ -7723,9 +7786,9 @@ function renderBolTplAdmin(){
   const seaDb = bolTemplates.filter(t=>!certDb.includes(t) && (t.ship_type==='sea' || t.ship_type==='both'));
   const rows = [
     {group:'cert', id:'cert-word', icon:'award', name:'منشأ دبي التجريبي ليس للتداول', desc:'شهادة منشأ PDF مستقلة قابلة للتحرير.', active:certWordTemplate.active!==false, doc:'certWordCoded', local:'certWord'},
-    {group:'cert', id:'cert-coded', icon:'award', name:'شهادة منشأ مبنية بالكود', desc:'نموذج شهادة المنشأ المدمج في النظام.', active:!!company.certCoded, doc:'cert', local:'certCoded'},
-    {group:'land', id:'land-coded', icon:'truck', name:company.bolCodedLabel||'بوليصة برية مبنية بالكود', desc:'نموذج بوليصة النقل البري المدمج.', active:!!company.bolCoded, doc:'bolCodedFree', local:'landCoded'},
-    {group:'sea', id:'sea-coded', icon:'ship', name:company.bolSeaCodedLabel||'بوليصة بحرية مبنية بالكود', desc:'نموذج بوليصة الشحن البحري المدمج.', active:!!company.bolSeaCoded, doc:'bolSeaCodedFree', local:'seaCoded'},
+    {group:'cert', id:'cert-coded', icon:'award', name:'شهادة منشأ مبنية بالكود', desc:'نموذج شهادة المنشأ المدمج في النظام.', active:!!docIdentity.certCoded, doc:'cert', local:'certCoded'},
+    {group:'land', id:'land-coded', icon:'truck', name:docIdentity.bolCodedLabel||'بوليصة برية مبنية بالكود', desc:'نموذج بوليصة النقل البري المدمج.', active:!!docIdentity.bolCoded, doc:'bolCodedFree', local:'landCoded'},
+    {group:'sea', id:'sea-coded', icon:'ship', name:docIdentity.bolSeaCodedLabel||'بوليصة بحرية مبنية بالكود', desc:'نموذج بوليصة الشحن البحري المدمج.', active:!!docIdentity.bolSeaCoded, doc:'bolSeaCodedFree', local:'seaCoded'},
     ...certDb.map(t=>({group:'cert', id:t.id, icon:'award', name:t.name, desc:'نموذج شهادة منشأ محفوظ.', active:!!t.active, template:t})),
     ...landDb.map(t=>({group:'land', id:t.id, icon:'truck', name:t.name, desc:t.kind==='coded'?'بوليصة برية مبنية بالكود.':'بوليصة برية بخلفية مرفوعة.', active:!!t.active, template:t})),
     ...seaDb.map(t=>({group:'sea', id:t.id, icon:'ship', name:t.name, desc:t.kind==='coded'?'بوليصة بحرية مبنية بالكود.':'بوليصة بحرية بخلفية مرفوعة.', active:!!t.active, template:t})),
@@ -7768,9 +7831,9 @@ function renderBolTplAdmin(){
   };
   const setActive = async (row, active)=>{
     if(row.local==='certWord'){ certWordTemplate.active=active; saveCertWordTemplate(); fillCertPicker(); }
-    else if(row.local==='certCoded'){ company.certCoded=active; await saveCompany(); fillCertPicker(); }
-    else if(row.local==='landCoded'){ company.bolCoded=active; await saveCompany(); fillBolPicker(); }
-    else if(row.local==='seaCoded'){ company.bolSeaCoded=active; await saveCompany(); fillBolPicker(); }
+    else if(row.local==='certCoded'){ docIdentity.certCoded=active; await saveDocIdentity(); fillCertPicker(); }
+    else if(row.local==='landCoded'){ docIdentity.bolCoded=active; await saveDocIdentity(); fillBolPicker(); }
+    else if(row.local==='seaCoded'){ docIdentity.bolSeaCoded=active; await saveDocIdentity(); fillBolPicker(); }
     else if(row.template){ const {error}=await sb.from('bol_templates').update({active}).eq('id',row.template.id); if(error) throw error; row.template.active=active; fillBolPicker(); }
   };
   el.querySelectorAll('[data-simple-template]').forEach(card=>{ const row=rows.find(x=>x.id===card.dataset.simpleTemplate); card.querySelector('.simple-fields')?.addEventListener('click',()=>openFieldManager(row)); card.querySelector('.simple-design').addEventListener('click',()=>openVisualDesigner(row)); card.querySelector('.simple-enable').addEventListener('click',async()=>{try{await setActive(row,true);renderBolTplAdmin();toast('تم تفعيل النموذج ✓');}catch(e){dbError(e,'تعذّر التفعيل');}}); card.querySelector('.simple-disable').addEventListener('click',async()=>{try{await setActive(row,false);renderBolTplAdmin();toast('تم إيقاف النموذج دون حذف بياناته');}catch(e){dbError(e,'تعذّر الإيقاف');}}); });
@@ -7781,34 +7844,34 @@ function renderBolTplAdmin(){
 
   // كارتا النماذج المبنية بالكود — دايماً أول عنصرين في نفس القائمة
   const codedCard = `
-    <div class="bt-card ${company.bolCoded?'':'off'}" data-id="coded" data-group="bol land">
+    <div class="bt-card ${docIdentity.bolCoded?'':'off'}" data-id="coded" data-group="bol land">
       <div class="bt-thumb">${icon('doc',20)}</div>
       <div class="bt-info">
-        <div class="bt-name">${escapeHtml(company.bolCodedLabel || 'بوليصة برية مبنية بالكود')}
-          ${company.bolCoded ? '' : '<span class="cc-off">موقوف</span>'}
+        <div class="bt-name">${escapeHtml(docIdentity.bolCodedLabel || 'بوليصة برية مبنية بالكود')}
+          ${docIdentity.bolCoded ? '' : '<span class="cc-off">موقوف</span>'}
         </div>
-        <div class="bt-sub">بري · HTML/CSS${company.bolCompanyName ? ' · '+escapeHtml(company.bolCompanyName) : ''}</div>
+        <div class="bt-sub">بري · HTML/CSS${docIdentity.bolCompanyName ? ' · '+escapeHtml(docIdentity.bolCompanyName) : ''}</div>
       </div>
       <div class="cc-acts">
-        <button class="btn btn-ghost btn-small" id="bcFieldsBtn">أماكن الحقول${company.bolCodedFreeLayout?' (حر ✓)':''}</button>
+        <button class="btn btn-ghost btn-small" id="bcFieldsBtn">أماكن الحقول${docIdentity.bolCodedFreeLayout?' (حر ✓)':''}</button>
         <button class="btn btn-ghost btn-small" id="bcEditBtn">تعديل</button>
-        <button class="btn btn-ghost btn-small" id="bcToggleBtn">${company.bolCoded?'إيقاف':'تفعيل'}</button>
+        <button class="btn btn-ghost btn-small" id="bcToggleBtn">${docIdentity.bolCoded?'إيقاف':'تفعيل'}</button>
       </div>
     </div>`;
 
   const codedSeaCard = `
-    <div class="bt-card ${company.bolSeaCoded?'':'off'}" data-id="coded-sea" data-group="bol sea">
+    <div class="bt-card ${docIdentity.bolSeaCoded?'':'off'}" data-id="coded-sea" data-group="bol sea">
       <div class="bt-thumb">${icon('doc',20)}</div>
       <div class="bt-info">
-        <div class="bt-name">${escapeHtml(company.bolSeaCodedLabel || 'بوليصة بحرية مبنية بالكود')}
-          ${company.bolSeaCoded ? '' : '<span class="cc-off">موقوف</span>'}
+        <div class="bt-name">${escapeHtml(docIdentity.bolSeaCodedLabel || 'بوليصة بحرية مبنية بالكود')}
+          ${docIdentity.bolSeaCoded ? '' : '<span class="cc-off">موقوف</span>'}
         </div>
-        <div class="bt-sub">بحري · HTML/CSS${company.bolSeaAgentName ? ' · '+escapeHtml(company.bolSeaAgentName) : ''}</div>
+        <div class="bt-sub">بحري · HTML/CSS${docIdentity.bolSeaAgentName ? ' · '+escapeHtml(docIdentity.bolSeaAgentName) : ''}</div>
       </div>
       <div class="cc-acts">
-        <button class="btn btn-ghost btn-small" id="bsFieldsBtn">أماكن الحقول${company.bolSeaCodedFreeLayout?' (حر ✓)':''}</button>
+        <button class="btn btn-ghost btn-small" id="bsFieldsBtn">أماكن الحقول${docIdentity.bolSeaCodedFreeLayout?' (حر ✓)':''}</button>
         <button class="btn btn-ghost btn-small" id="bsEditBtn">تعديل</button>
-        <button class="btn btn-ghost btn-small" id="bsToggleBtn">${company.bolSeaCoded?'إيقاف':'تفعيل'}</button>
+        <button class="btn btn-ghost btn-small" id="bsToggleBtn">${docIdentity.bolSeaCoded?'إيقاف':'تفعيل'}</button>
       </div>
     </div>`;
 
@@ -7859,8 +7922,8 @@ function renderBolTplAdmin(){
   el.innerHTML = certPdfCard + codedCard + codedSeaCard + uploadedCards;
   const total = bolTemplates.length + 4;
   const active = bolTemplates.filter(t=>t.active).length +
-    (company.bolCoded ? 1 : 0) + (company.bolSeaCoded ? 1 : 0) +
-    (company.certCoded ? 1 : 0) + (certWordTemplate.active === false ? 0 : 1);
+    (docIdentity.bolCoded ? 1 : 0) + (docIdentity.bolSeaCoded ? 1 : 0) +
+    (docIdentity.certCoded ? 1 : 0) + (certWordTemplate.active === false ? 0 : 1);
   const statTotal = document.getElementById('tplStatTotal');
   const statBol = document.getElementById('tplStatBol');
   const statCert = document.getElementById('tplStatCert');
@@ -7881,8 +7944,8 @@ function renderBolTplAdmin(){
     tplCurrentDoc = 'bolCodedFree'; tplSelectedKey = null; tplOpenEditor();
   });
   document.getElementById('bcToggleBtn').addEventListener('click', async ()=>{
-    company.bolCoded = !company.bolCoded;
-    await saveCompany();
+    docIdentity.bolCoded = !docIdentity.bolCoded;
+    await saveDocIdentity();
     renderBolTplAdmin(); fillBolPicker();
   });
   document.getElementById('bsEditBtn').addEventListener('click', ()=>{
@@ -7893,8 +7956,8 @@ function renderBolTplAdmin(){
     tplCurrentDoc = 'bolSeaCodedFree'; tplSelectedKey = null; tplOpenEditor();
   });
   document.getElementById('bsToggleBtn').addEventListener('click', async ()=>{
-    company.bolSeaCoded = !company.bolSeaCoded;
-    await saveCompany();
+    docIdentity.bolSeaCoded = !docIdentity.bolSeaCoded;
+    await saveDocIdentity();
     renderBolTplAdmin(); fillBolPicker();
   });
   const openCertPdfEditor = ()=>{
@@ -8138,17 +8201,17 @@ function renderCertTplAdmin(){
   const el = document.getElementById('certTplList');
   if(!el) return;
   el.innerHTML = `
-    <div class="bt-card ${company.certCoded?'':'off'}" data-id="coded" data-group="cert land">
+    <div class="bt-card ${docIdentity.certCoded?'':'off'}" data-id="coded" data-group="cert land">
       <div class="bt-thumb">${icon('doc',20)}</div>
       <div class="bt-info">
         <div class="bt-name">شهادة منشأ مبنية بالكود
-          ${company.certCoded ? '' : '<span class="cc-off">موقوف</span>'}
+          ${docIdentity.certCoded ? '' : '<span class="cc-off">موقوف</span>'}
         </div>
-        <div class="bt-sub">بري · HTML/CSS${company.certCompanyName ? ' · '+escapeHtml(company.certCompanyName) : ''}</div>
+        <div class="bt-sub">بري · HTML/CSS${docIdentity.certCompanyName ? ' · '+escapeHtml(docIdentity.certCompanyName) : ''}</div>
       </div>
       <div class="cc-acts">
         <button class="btn btn-ghost btn-small" id="cfEditBtn">تعديل</button>
-        <button class="btn btn-ghost btn-small" id="cfToggleBtn">${company.certCoded?'إيقاف':'تفعيل'}</button>
+        <button class="btn btn-ghost btn-small" id="cfToggleBtn">${docIdentity.certCoded?'إيقاف':'تفعيل'}</button>
       </div>
     </div>`;
   hydrateIcons(el);
@@ -8156,8 +8219,8 @@ function renderCertTplAdmin(){
 
   document.getElementById('cfEditBtn').addEventListener('click', openCertCodedModal);
   document.getElementById('cfToggleBtn').addEventListener('click', async ()=>{
-    company.certCoded = !company.certCoded;
-    await saveCompany();
+    docIdentity.certCoded = !docIdentity.certCoded;
+    await saveDocIdentity();
     renderCertTplAdmin(); fillCertPicker();
   });
 }
@@ -8173,8 +8236,8 @@ function renderRecentTemplates(){
   };
   const items = [
     {name:'منشأ دبي التجريبي ليس للتداول', ref:'PDF ثابت', date:'PDF أصلي', icon:'award', doc:'certWordCoded'},
-    {name:company.bolCodedLabel || 'بوليصة برية مبنية بالكود', ref:'بري', date:'قالب أساسي', icon:'truck', doc:'bolCodedFree'},
-    {name:company.bolSeaCodedLabel || 'بوليصة بحرية مبنية بالكود', ref:'بحري', date:'قالب أساسي', icon:'ship', doc:'bolSeaCodedFree'},
+    {name:docIdentity.bolCodedLabel || 'بوليصة برية مبنية بالكود', ref:'بري', date:'قالب أساسي', icon:'truck', doc:'bolCodedFree'},
+    {name:docIdentity.bolSeaCodedLabel || 'بوليصة بحرية مبنية بالكود', ref:'بحري', date:'قالب أساسي', icon:'ship', doc:'bolSeaCodedFree'},
     ...bolTemplates.slice(0,3).map(t=>({
       name:t.name, ref:SHIP_AR[t.ship_type] || 'نموذج', date:formatDate(t.updated_at || t.created_at),
       icon:'doc', templateId:t.id
@@ -8255,22 +8318,22 @@ function bolSeaSampleRecordForPreview(){
 }
 
 function openBolCodedModal(){
-  document.getElementById('co_bolCodedLabel').value = company.bolCodedLabel||'';
-  document.getElementById('co_bolCompanyName').value = company.bolCompanyName||'';
-  document.getElementById('bc_accent').value = company.bolAccent || company.accent || '#B3272D';
-  document.getElementById('bc_borderColor').value = company.bolBorderColor || DEFAULT_COMPANY.bolBorderColor;
-  document.getElementById('bc_textColor').value = company.bolTextColor || DEFAULT_COMPANY.bolTextColor;
-  document.getElementById('bc_panelColor').value = company.bolPanelColor || DEFAULT_COMPANY.bolPanelColor;
-  document.getElementById('bc_fFields').value = company.bolFontFields||11;
-  document.getElementById('bc_fGoods').value = company.bolFontGoods||11;
-  document.getElementById('bc_fTerms').value = company.bolFontTerms||10;
-  document.getElementById('bc_fFieldsVal').textContent = company.bolFontFields||11;
-  document.getElementById('bc_fGoodsVal').textContent = company.bolFontGoods||11;
-  document.getElementById('bc_fTermsVal').textContent = company.bolFontTerms||10;
-  document.getElementById('bc_showStamp').checked = company.bolShowStamp !== false;
-  document.getElementById('bc_showSigLine').checked = !!company.bolShowSigLine;
-  renderImgPrev('bc_logoPrev', company.bolLogo, 'bolLogo');
-  renderImgPrev('bc_stampPrev', company.bolStamp, 'bolStamp');
+  document.getElementById('co_bolCodedLabel').value = docIdentity.bolCodedLabel||'';
+  document.getElementById('co_bolCompanyName').value = docIdentity.bolCompanyName||'';
+  document.getElementById('bc_accent').value = docIdentity.bolAccent || company.accent || '#B3272D';
+  document.getElementById('bc_borderColor').value = docIdentity.bolBorderColor || DEFAULT_DOC_IDENTITY.bolBorderColor;
+  document.getElementById('bc_textColor').value = docIdentity.bolTextColor || DEFAULT_DOC_IDENTITY.bolTextColor;
+  document.getElementById('bc_panelColor').value = docIdentity.bolPanelColor || DEFAULT_DOC_IDENTITY.bolPanelColor;
+  document.getElementById('bc_fFields').value = docIdentity.bolFontFields||11;
+  document.getElementById('bc_fGoods').value = docIdentity.bolFontGoods||11;
+  document.getElementById('bc_fTerms').value = docIdentity.bolFontTerms||10;
+  document.getElementById('bc_fFieldsVal').textContent = docIdentity.bolFontFields||11;
+  document.getElementById('bc_fGoodsVal').textContent = docIdentity.bolFontGoods||11;
+  document.getElementById('bc_fTermsVal').textContent = docIdentity.bolFontTerms||10;
+  document.getElementById('bc_showStamp').checked = docIdentity.bolShowStamp !== false;
+  document.getElementById('bc_showSigLine').checked = !!docIdentity.bolShowSigLine;
+  renderImgPrev('bc_logoPrev', docIdentity.bolLogo, 'bolLogo');
+  renderImgPrev('bc_stampPrev', docIdentity.bolStamp, 'bolStamp');
   syncLogoHeadHandle();
   refreshBolLogoPreview();
   refreshBolStampPreview();
@@ -8316,14 +8379,14 @@ bolCodedOverlay.addEventListener('click', e=>{
   });
 });
 document.getElementById('bcColorsResetBtn').addEventListener('click', ()=>{
-  company.bolAccent = '';
-  company.bolBorderColor = DEFAULT_COMPANY.bolBorderColor;
-  company.bolTextColor = DEFAULT_COMPANY.bolTextColor;
-  company.bolPanelColor = DEFAULT_COMPANY.bolPanelColor;
+  docIdentity.bolAccent = '';
+  docIdentity.bolBorderColor = DEFAULT_DOC_IDENTITY.bolBorderColor;
+  docIdentity.bolTextColor = DEFAULT_DOC_IDENTITY.bolTextColor;
+  docIdentity.bolPanelColor = DEFAULT_DOC_IDENTITY.bolPanelColor;
   document.getElementById('bc_accent').value = company.accent || '#B3272D';
-  document.getElementById('bc_borderColor').value = company.bolBorderColor;
-  document.getElementById('bc_textColor').value = company.bolTextColor;
-  document.getElementById('bc_panelColor').value = company.bolPanelColor;
+  document.getElementById('bc_borderColor').value = docIdentity.bolBorderColor;
+  document.getElementById('bc_textColor').value = docIdentity.bolTextColor;
+  document.getElementById('bc_panelColor').value = docIdentity.bolPanelColor;
   refreshBolStampPreview();
 });
 [['bc_fFields','bolFontFields','bc_fFieldsVal'],
@@ -8341,17 +8404,17 @@ document.getElementById('bcPreviewBtn').addEventListener('click', ()=>{
 });
 
 document.getElementById('bcSaveBtn').addEventListener('click', async ()=>{
-  company.bolCodedLabel = document.getElementById('co_bolCodedLabel').value.trim();
-  company.bolCompanyName = document.getElementById('co_bolCompanyName').value.trim();
-  company.bolAccent = document.getElementById('bc_accent').value;
-  company.bolBorderColor = document.getElementById('bc_borderColor').value;
-  company.bolTextColor = document.getElementById('bc_textColor').value;
-  company.bolPanelColor = document.getElementById('bc_panelColor').value;
-  company.bolFontFields = parseFloat(document.getElementById('bc_fFields').value);
-  company.bolFontGoods = parseFloat(document.getElementById('bc_fGoods').value);
-  company.bolFontTerms = parseFloat(document.getElementById('bc_fTerms').value);
-  company.bolCodedFreeLayout = false;
-  await saveCompany();
+  docIdentity.bolCodedLabel = document.getElementById('co_bolCodedLabel').value.trim();
+  docIdentity.bolCompanyName = document.getElementById('co_bolCompanyName').value.trim();
+  docIdentity.bolAccent = document.getElementById('bc_accent').value;
+  docIdentity.bolBorderColor = document.getElementById('bc_borderColor').value;
+  docIdentity.bolTextColor = document.getElementById('bc_textColor').value;
+  docIdentity.bolPanelColor = document.getElementById('bc_panelColor').value;
+  docIdentity.bolFontFields = parseFloat(document.getElementById('bc_fFields').value);
+  docIdentity.bolFontGoods = parseFloat(document.getElementById('bc_fGoods').value);
+  docIdentity.bolFontTerms = parseFloat(document.getElementById('bc_fTerms').value);
+  docIdentity.bolCodedFreeLayout = false;
+  await saveDocIdentity();
   addLog('edit', 'تحديث بوليصة الشحن المبنية بالكود');
   bolCodedOverlay.classList.remove('open');
   renderBolTplAdmin();
@@ -8360,10 +8423,10 @@ document.getElementById('bcSaveBtn').addEventListener('click', async ()=>{
 
 // ===== محرر ختم البوليصة المبنية بالكود — سحب حر مثل الفاتورة =====
 function refreshBolStampPreview(){
-  const saved = company.bolShowStamp;
-  company.bolShowStamp = false;
+  const saved = docIdentity.bolShowStamp;
+  docIdentity.bolShowStamp = false;
   const html = bolSheetCoded(bolSampleRecordForPreview());
-  company.bolShowStamp = saved;
+  docIdentity.bolShowStamp = saved;
   document.getElementById('bolStampPreview').srcdoc =
     `<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8">
      <style>${PRINT_STYLES}</style></head>
@@ -8371,18 +8434,18 @@ function refreshBolStampPreview(){
   syncBolStampHandle();
 }
 function syncBolStampHandle(){
-  const sp = company.bolStampPos;
-  bolStampHandle.classList.toggle('hidden', company.bolShowStamp === false);
+  const sp = docIdentity.bolStampPos;
+  bolStampHandle.classList.toggle('hidden', docIdentity.bolShowStamp === false);
   bolStampHandle.style.top = sp.top + '%';
   bolStampHandle.style.left = sp.left + '%';
   bolStampHandle.style.width = sp.width + '%';
-  const stampSrc = company.bolStamp || company.stamp;
+  const stampSrc = docIdentity.bolStamp || company.stamp;
   const bshImg = document.getElementById('bshImg');
   bshImg.style.backgroundImage = stampSrc ? `url(${stampSrc})` : 'none';
   bshImg.style.border = stampSrc ? 'none' : '1px dashed #bbb';
   bshImg.style.borderRadius = stampSrc ? '0' : '50%';
   bshImg.style.transform = `rotate(${sp.angle || 0}deg)`;
-  document.getElementById('bshSig').style.display = company.bolShowSigLine ? 'block' : 'none';
+  document.getElementById('bshSig').style.display = docIdentity.bolShowSigLine ? 'block' : 'none';
   document.getElementById('bc_stampW').value = sp.width;
   document.getElementById('bc_stampT').value = sp.top;
   document.getElementById('bc_stampL').value = sp.left;
@@ -8414,51 +8477,51 @@ bolStampHandle.addEventListener('pointermove', e=>{
   let top  = (e.clientY - bolStampDrag.dy - bolStampDrag.sy) / bolStampDrag.sh * 100;
   const maxL = 100 - (bolStampDrag.bw / bolStampDrag.sw * 100);
   const maxT = 100 - (bolStampDrag.bh / bolStampDrag.sh * 100);
-  company.bolStampPos.left = Math.round(Math.max(0, Math.min(maxL, left))*2)/2;
-  company.bolStampPos.top  = Math.round(Math.max(0, Math.min(maxT, top))*2)/2;
+  docIdentity.bolStampPos.left = Math.round(Math.max(0, Math.min(maxL, left))*2)/2;
+  docIdentity.bolStampPos.top  = Math.round(Math.max(0, Math.min(maxT, top))*2)/2;
   syncBolStampHandle();
 });
 bolStampHandle.addEventListener('pointerup', ()=>{ bolStampDrag = null; });
 bolStampHandle.addEventListener('pointercancel', ()=>{ bolStampDrag = null; });
 
 document.getElementById('bc_stampW').addEventListener('input', function(){
-  company.bolStampPos.width = parseFloat(this.value); syncBolStampHandle();
+  docIdentity.bolStampPos.width = parseFloat(this.value); syncBolStampHandle();
 });
 document.getElementById('bc_stampT').addEventListener('input', function(){
-  company.bolStampPos.top = parseFloat(this.value); syncBolStampHandle();
+  docIdentity.bolStampPos.top = parseFloat(this.value); syncBolStampHandle();
 });
 document.getElementById('bc_stampL').addEventListener('input', function(){
-  company.bolStampPos.left = parseFloat(this.value); syncBolStampHandle();
+  docIdentity.bolStampPos.left = parseFloat(this.value); syncBolStampHandle();
 });
 document.getElementById('bc_stampA').addEventListener('input', function(){
-  company.bolStampPos.angle = parseFloat(this.value); syncBolStampHandle();
+  docIdentity.bolStampPos.angle = parseFloat(this.value); syncBolStampHandle();
 });
 document.getElementById('bc_showStamp').addEventListener('change', function(){
-  company.bolShowStamp = this.checked; syncBolStampHandle();
+  docIdentity.bolShowStamp = this.checked; syncBolStampHandle();
 });
 document.getElementById('bc_showSigLine').addEventListener('change', function(){
-  company.bolShowSigLine = this.checked; syncBolStampHandle();
+  docIdentity.bolShowSigLine = this.checked; syncBolStampHandle();
 });
 document.getElementById('bolStampResetBtn').addEventListener('click', ()=>{
-  company.bolStampPos = Object.assign({}, DEFAULT_COMPANY.bolStampPos);
+  docIdentity.bolStampPos = Object.assign({}, DEFAULT_DOC_IDENTITY.bolStampPos);
   syncBolStampHandle();
 });
 
 // ===== شهادة المنشأ (بري) المبنية بالكود =====
 function openCertCodedModal(){
-  document.getElementById('co_certCompanyName').value = company.certCompanyName||'';
-  document.getElementById('cf_accent').value = company.certAccent || company.accent || '#B3272D';
-  document.getElementById('cf_borderColor').value = company.certBorderColor || DEFAULT_COMPANY.certBorderColor;
-  document.getElementById('cf_textColor').value = company.certTextColor || DEFAULT_COMPANY.certTextColor;
-  document.getElementById('cf_panelColor').value = company.certPanelColor || DEFAULT_COMPANY.certPanelColor;
-  document.getElementById('cf_fFields').value = company.certFontFields||11;
-  document.getElementById('cf_fGoods').value = company.certFontGoods||11;
-  document.getElementById('cf_fFieldsVal').textContent = company.certFontFields||11;
-  document.getElementById('cf_fGoodsVal').textContent = company.certFontGoods||11;
-  document.getElementById('cf_showStamp').checked = company.certShowStamp !== false;
-  document.getElementById('cf_showSigLine').checked = !!company.certShowSigLine;
-  renderImgPrev('cf_logoPrev', company.certLogo, 'certLogo');
-  renderImgPrev('cf_stampPrev', company.certStamp, 'certStamp');
+  document.getElementById('co_certCompanyName').value = docIdentity.certCompanyName||'';
+  document.getElementById('cf_accent').value = docIdentity.certAccent || company.accent || '#B3272D';
+  document.getElementById('cf_borderColor').value = docIdentity.certBorderColor || DEFAULT_DOC_IDENTITY.certBorderColor;
+  document.getElementById('cf_textColor').value = docIdentity.certTextColor || DEFAULT_DOC_IDENTITY.certTextColor;
+  document.getElementById('cf_panelColor').value = docIdentity.certPanelColor || DEFAULT_DOC_IDENTITY.certPanelColor;
+  document.getElementById('cf_fFields').value = docIdentity.certFontFields||11;
+  document.getElementById('cf_fGoods').value = docIdentity.certFontGoods||11;
+  document.getElementById('cf_fFieldsVal').textContent = docIdentity.certFontFields||11;
+  document.getElementById('cf_fGoodsVal').textContent = docIdentity.certFontGoods||11;
+  document.getElementById('cf_showStamp').checked = docIdentity.certShowStamp !== false;
+  document.getElementById('cf_showSigLine').checked = !!docIdentity.certShowSigLine;
+  renderImgPrev('cf_logoPrev', docIdentity.certLogo, 'certLogo');
+  renderImgPrev('cf_stampPrev', docIdentity.certStamp, 'certStamp');
   refreshCertStampPreview();
   document.getElementById('certCodedOverlay').classList.add('open');
 }
@@ -8500,14 +8563,14 @@ certCodedOverlay.addEventListener('click', e=>{
   });
 });
 document.getElementById('cfColorsResetBtn').addEventListener('click', ()=>{
-  company.certAccent = '';
-  company.certBorderColor = DEFAULT_COMPANY.certBorderColor;
-  company.certTextColor = DEFAULT_COMPANY.certTextColor;
-  company.certPanelColor = DEFAULT_COMPANY.certPanelColor;
+  docIdentity.certAccent = '';
+  docIdentity.certBorderColor = DEFAULT_DOC_IDENTITY.certBorderColor;
+  docIdentity.certTextColor = DEFAULT_DOC_IDENTITY.certTextColor;
+  docIdentity.certPanelColor = DEFAULT_DOC_IDENTITY.certPanelColor;
   document.getElementById('cf_accent').value = company.accent || '#B3272D';
-  document.getElementById('cf_borderColor').value = company.certBorderColor;
-  document.getElementById('cf_textColor').value = company.certTextColor;
-  document.getElementById('cf_panelColor').value = company.certPanelColor;
+  document.getElementById('cf_borderColor').value = docIdentity.certBorderColor;
+  document.getElementById('cf_textColor').value = docIdentity.certTextColor;
+  document.getElementById('cf_panelColor').value = docIdentity.certPanelColor;
   refreshCertStampPreview();
 });
 [['cf_fFields','certFontFields','cf_fFieldsVal'],
@@ -8524,14 +8587,14 @@ document.getElementById('cfPreviewBtn').addEventListener('click', ()=>{
 });
 
 document.getElementById('cfSaveBtn').addEventListener('click', async ()=>{
-  company.certCompanyName = document.getElementById('co_certCompanyName').value.trim();
-  company.certAccent = document.getElementById('cf_accent').value;
-  company.certBorderColor = document.getElementById('cf_borderColor').value;
-  company.certTextColor = document.getElementById('cf_textColor').value;
-  company.certPanelColor = document.getElementById('cf_panelColor').value;
-  company.certFontFields = parseFloat(document.getElementById('cf_fFields').value);
-  company.certFontGoods = parseFloat(document.getElementById('cf_fGoods').value);
-  await saveCompany();
+  docIdentity.certCompanyName = document.getElementById('co_certCompanyName').value.trim();
+  docIdentity.certAccent = document.getElementById('cf_accent').value;
+  docIdentity.certBorderColor = document.getElementById('cf_borderColor').value;
+  docIdentity.certTextColor = document.getElementById('cf_textColor').value;
+  docIdentity.certPanelColor = document.getElementById('cf_panelColor').value;
+  docIdentity.certFontFields = parseFloat(document.getElementById('cf_fFields').value);
+  docIdentity.certFontGoods = parseFloat(document.getElementById('cf_fGoods').value);
+  await saveDocIdentity();
   addLog('edit', 'تحديث شهادة المنشأ المبنية بالكود');
   certCodedOverlay.classList.remove('open');
   renderCertTplAdmin();
@@ -8540,10 +8603,10 @@ document.getElementById('cfSaveBtn').addEventListener('click', async ()=>{
 
 // ===== محرر ختم شهادة المنشأ المبنية بالكود — سحب حر مثل الفاتورة =====
 function refreshCertStampPreview(){
-  const saved = company.certShowStamp;
-  company.certShowStamp = false;
+  const saved = docIdentity.certShowStamp;
+  docIdentity.certShowStamp = false;
   const html = certSheetCoded(certSampleRecordForPreview());
-  company.certShowStamp = saved;
+  docIdentity.certShowStamp = saved;
   document.getElementById('certStampPreview').srcdoc =
     `<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8">
      <style>${PRINT_STYLES}</style></head>
@@ -8551,17 +8614,17 @@ function refreshCertStampPreview(){
   syncCertStampHandle();
 }
 function syncCertStampHandle(){
-  const sp = company.certStampPos;
-  certStampHandle.classList.toggle('hidden', company.certShowStamp === false);
+  const sp = docIdentity.certStampPos;
+  certStampHandle.classList.toggle('hidden', docIdentity.certShowStamp === false);
   certStampHandle.style.top = sp.top + '%';
   certStampHandle.style.left = sp.left + '%';
   certStampHandle.style.width = sp.width + '%';
-  const stampSrc = company.certStamp || company.stamp;
+  const stampSrc = docIdentity.certStamp || company.stamp;
   const cshImg = document.getElementById('cshImg');
   cshImg.style.backgroundImage = stampSrc ? `url(${stampSrc})` : 'none';
   cshImg.style.border = stampSrc ? 'none' : '1px dashed #bbb';
   cshImg.style.borderRadius = stampSrc ? '0' : '50%';
-  document.getElementById('cshSig').style.display = company.certShowSigLine ? 'block' : 'none';
+  document.getElementById('cshSig').style.display = docIdentity.certShowSigLine ? 'block' : 'none';
   document.getElementById('cf_stampW').value = sp.width;
   document.getElementById('cf_stampT').value = sp.top;
   document.getElementById('cf_stampL').value = sp.left;
@@ -8591,59 +8654,59 @@ certStampHandle.addEventListener('pointermove', e=>{
   let top  = (e.clientY - certStampDrag.dy - certStampDrag.sy) / certStampDrag.sh * 100;
   const maxL = 100 - (certStampDrag.bw / certStampDrag.sw * 100);
   const maxT = 100 - (certStampDrag.bh / certStampDrag.sh * 100);
-  company.certStampPos.left = Math.round(Math.max(0, Math.min(maxL, left))*2)/2;
-  company.certStampPos.top  = Math.round(Math.max(0, Math.min(maxT, top))*2)/2;
+  docIdentity.certStampPos.left = Math.round(Math.max(0, Math.min(maxL, left))*2)/2;
+  docIdentity.certStampPos.top  = Math.round(Math.max(0, Math.min(maxT, top))*2)/2;
   syncCertStampHandle();
 });
 certStampHandle.addEventListener('pointerup', ()=>{ certStampDrag = null; });
 certStampHandle.addEventListener('pointercancel', ()=>{ certStampDrag = null; });
 
 document.getElementById('cf_stampW').addEventListener('input', function(){
-  company.certStampPos.width = parseFloat(this.value); syncCertStampHandle();
+  docIdentity.certStampPos.width = parseFloat(this.value); syncCertStampHandle();
 });
 document.getElementById('cf_stampT').addEventListener('input', function(){
-  company.certStampPos.top = parseFloat(this.value); syncCertStampHandle();
+  docIdentity.certStampPos.top = parseFloat(this.value); syncCertStampHandle();
 });
 document.getElementById('cf_stampL').addEventListener('input', function(){
-  company.certStampPos.left = parseFloat(this.value); syncCertStampHandle();
+  docIdentity.certStampPos.left = parseFloat(this.value); syncCertStampHandle();
 });
 document.getElementById('cf_showStamp').addEventListener('change', function(){
-  company.certShowStamp = this.checked; syncCertStampHandle();
+  docIdentity.certShowStamp = this.checked; syncCertStampHandle();
 });
 document.getElementById('cf_showSigLine').addEventListener('change', function(){
-  company.certShowSigLine = this.checked; syncCertStampHandle();
+  docIdentity.certShowSigLine = this.checked; syncCertStampHandle();
 });
 document.getElementById('certStampResetBtn').addEventListener('click', ()=>{
-  company.certStampPos = Object.assign({}, DEFAULT_COMPANY.certStampPos);
+  docIdentity.certStampPos = Object.assign({}, DEFAULT_DOC_IDENTITY.certStampPos);
   syncCertStampHandle();
 });
 
 // ===== بوليصة الشحن البحرية المبنية بالكود =====
 function openBolSeaCodedModal(){
-  document.getElementById('co_bolSeaCodedLabel').value = company.bolSeaCodedLabel||'';
-  document.getElementById('co_bolSeaAgentName').value = company.bolSeaAgentName||'';
-  document.getElementById('bs_agentAddress').value = company.bolSeaAgentAddress||'';
-  document.getElementById('bs_accent').value = company.bolSeaAccent || company.accent || '#16334a';
-  document.getElementById('bs_borderColor').value = company.bolSeaBorderColor || DEFAULT_COMPANY.bolSeaBorderColor;
-  document.getElementById('bs_textColor').value = company.bolSeaTextColor || DEFAULT_COMPANY.bolSeaTextColor;
-  document.getElementById('bs_panelColor').value = company.bolSeaPanelColor || DEFAULT_COMPANY.bolSeaPanelColor;
-  document.getElementById('bs_fFields').value = company.bolSeaFontFields||9.6;
-  document.getElementById('bs_fGoods').value = company.bolSeaFontGoods||9;
-  document.getElementById('bs_fFieldsVal').textContent = company.bolSeaFontFields||9.6;
-  document.getElementById('bs_fGoodsVal').textContent = company.bolSeaFontGoods||9;
-  document.getElementById('bs_showStamp').checked = company.bolSeaShowStamp !== false;
-  document.getElementById('bs_terms').value = company.bolSeaTermsText||'';
-  document.getElementById('bs_wmText').value = company.bolSeaWmText||'';
-  document.getElementById('bs_wmFont').value = company.bolSeaWmFontSize||24;
-  document.getElementById('bs_wmFontVal').textContent = company.bolSeaWmFontSize||24;
-  document.getElementById('bs_wmOpacity').value = company.bolSeaWmOpacity??8;
-  document.getElementById('bs_wmOpacityVal').textContent = company.bolSeaWmOpacity??8;
-  document.getElementById('bs_wmAngle').value = String(company.bolSeaWmAngle??45);
-  document.getElementById('bs_wmColor').value = company.bolSeaWmColor || '#000000';
-  document.getElementById('bs_wmRepeat').value = company.bolSeaWmRepeat || 'once';
-  renderImgPrev('bs_logoPrev', company.bolSeaLogo, 'bolSeaLogo');
-  renderImgPrev('bs_stampPrev', company.bolSeaStamp, 'bolSeaStamp');
-  renderImgPrev('bs_badgePrev', company.bolSeaBadgeImg, 'bolSeaBadgeImg');
+  document.getElementById('co_bolSeaCodedLabel').value = docIdentity.bolSeaCodedLabel||'';
+  document.getElementById('co_bolSeaAgentName').value = docIdentity.bolSeaAgentName||'';
+  document.getElementById('bs_agentAddress').value = docIdentity.bolSeaAgentAddress||'';
+  document.getElementById('bs_accent').value = docIdentity.bolSeaAccent || company.accent || '#16334a';
+  document.getElementById('bs_borderColor').value = docIdentity.bolSeaBorderColor || DEFAULT_DOC_IDENTITY.bolSeaBorderColor;
+  document.getElementById('bs_textColor').value = docIdentity.bolSeaTextColor || DEFAULT_DOC_IDENTITY.bolSeaTextColor;
+  document.getElementById('bs_panelColor').value = docIdentity.bolSeaPanelColor || DEFAULT_DOC_IDENTITY.bolSeaPanelColor;
+  document.getElementById('bs_fFields').value = docIdentity.bolSeaFontFields||9.6;
+  document.getElementById('bs_fGoods').value = docIdentity.bolSeaFontGoods||9;
+  document.getElementById('bs_fFieldsVal').textContent = docIdentity.bolSeaFontFields||9.6;
+  document.getElementById('bs_fGoodsVal').textContent = docIdentity.bolSeaFontGoods||9;
+  document.getElementById('bs_showStamp').checked = docIdentity.bolSeaShowStamp !== false;
+  document.getElementById('bs_terms').value = docIdentity.bolSeaTermsText||'';
+  document.getElementById('bs_wmText').value = docIdentity.bolSeaWmText||'';
+  document.getElementById('bs_wmFont').value = docIdentity.bolSeaWmFontSize||24;
+  document.getElementById('bs_wmFontVal').textContent = docIdentity.bolSeaWmFontSize||24;
+  document.getElementById('bs_wmOpacity').value = docIdentity.bolSeaWmOpacity??8;
+  document.getElementById('bs_wmOpacityVal').textContent = docIdentity.bolSeaWmOpacity??8;
+  document.getElementById('bs_wmAngle').value = String(docIdentity.bolSeaWmAngle??45);
+  document.getElementById('bs_wmColor').value = docIdentity.bolSeaWmColor || '#000000';
+  document.getElementById('bs_wmRepeat').value = docIdentity.bolSeaWmRepeat || 'once';
+  renderImgPrev('bs_logoPrev', docIdentity.bolSeaLogo, 'bolSeaLogo');
+  renderImgPrev('bs_stampPrev', docIdentity.bolSeaStamp, 'bolSeaStamp');
+  renderImgPrev('bs_badgePrev', docIdentity.bolSeaBadgeImg, 'bolSeaBadgeImg');
   refreshBolSeaStampPreview();
   document.getElementById('bolSeaCodedOverlay').classList.add('open');
 }
@@ -8686,14 +8749,14 @@ bolSeaCodedOverlay.addEventListener('click', e=>{
   });
 });
 document.getElementById('bsColorsResetBtn').addEventListener('click', ()=>{
-  company.bolSeaAccent = '';
-  company.bolSeaBorderColor = DEFAULT_COMPANY.bolSeaBorderColor;
-  company.bolSeaTextColor = DEFAULT_COMPANY.bolSeaTextColor;
-  company.bolSeaPanelColor = DEFAULT_COMPANY.bolSeaPanelColor;
+  docIdentity.bolSeaAccent = '';
+  docIdentity.bolSeaBorderColor = DEFAULT_DOC_IDENTITY.bolSeaBorderColor;
+  docIdentity.bolSeaTextColor = DEFAULT_DOC_IDENTITY.bolSeaTextColor;
+  docIdentity.bolSeaPanelColor = DEFAULT_DOC_IDENTITY.bolSeaPanelColor;
   document.getElementById('bs_accent').value = company.accent || '#16334a';
-  document.getElementById('bs_borderColor').value = company.bolSeaBorderColor;
-  document.getElementById('bs_textColor').value = company.bolSeaTextColor;
-  document.getElementById('bs_panelColor').value = company.bolSeaPanelColor;
+  document.getElementById('bs_borderColor').value = docIdentity.bolSeaBorderColor;
+  document.getElementById('bs_textColor').value = docIdentity.bolSeaTextColor;
+  document.getElementById('bs_panelColor').value = docIdentity.bolSeaPanelColor;
   refreshBolSeaStampPreview();
 });
 [['bs_fFields','bolSeaFontFields','bs_fFieldsVal'],
@@ -8707,7 +8770,7 @@ document.getElementById('bsColorsResetBtn').addEventListener('click', ()=>{
 
 // ===== العلامة المائية لمنع التزوير =====
 document.getElementById('bs_wmText').addEventListener('input', function(){
-  company.bolSeaWmText = this.value.trim();
+  docIdentity.bolSeaWmText = this.value.trim();
   refreshBolSeaStampPreview();
 });
 [['bs_wmFont','bolSeaWmFontSize','bs_wmFontVal'],
@@ -8725,7 +8788,7 @@ document.getElementById('bs_wmText').addEventListener('input', function(){
   });
 });
 document.getElementById('bs_wmColor').addEventListener('change', function(){
-  company.bolSeaWmColor = this.value;
+  docIdentity.bolSeaWmColor = this.value;
   refreshBolSeaStampPreview();
 });
 
@@ -8734,24 +8797,24 @@ document.getElementById('bsPreviewBtn').addEventListener('click', ()=>{
 });
 
 document.getElementById('bsSaveBtn').addEventListener('click', async ()=>{
-  company.bolSeaCodedLabel = document.getElementById('co_bolSeaCodedLabel').value.trim();
-  company.bolSeaCodedFreeLayout = false;
-  company.bolSeaAgentName = document.getElementById('co_bolSeaAgentName').value.trim();
-  company.bolSeaAgentAddress = document.getElementById('bs_agentAddress').value;
-  company.bolSeaAccent = document.getElementById('bs_accent').value;
-  company.bolSeaBorderColor = document.getElementById('bs_borderColor').value;
-  company.bolSeaTextColor = document.getElementById('bs_textColor').value;
-  company.bolSeaPanelColor = document.getElementById('bs_panelColor').value;
-  company.bolSeaFontFields = parseFloat(document.getElementById('bs_fFields').value);
-  company.bolSeaFontGoods = parseFloat(document.getElementById('bs_fGoods').value);
-  company.bolSeaTermsText = document.getElementById('bs_terms').value;
-  company.bolSeaWmText = document.getElementById('bs_wmText').value.trim();
-  company.bolSeaWmFontSize = parseInt(document.getElementById('bs_wmFont').value,10);
-  company.bolSeaWmOpacity = parseInt(document.getElementById('bs_wmOpacity').value,10);
-  company.bolSeaWmAngle = parseInt(document.getElementById('bs_wmAngle').value,10);
-  company.bolSeaWmColor = document.getElementById('bs_wmColor').value;
-  company.bolSeaWmRepeat = document.getElementById('bs_wmRepeat').value;
-  await saveCompany();
+  docIdentity.bolSeaCodedLabel = document.getElementById('co_bolSeaCodedLabel').value.trim();
+  docIdentity.bolSeaCodedFreeLayout = false;
+  docIdentity.bolSeaAgentName = document.getElementById('co_bolSeaAgentName').value.trim();
+  docIdentity.bolSeaAgentAddress = document.getElementById('bs_agentAddress').value;
+  docIdentity.bolSeaAccent = document.getElementById('bs_accent').value;
+  docIdentity.bolSeaBorderColor = document.getElementById('bs_borderColor').value;
+  docIdentity.bolSeaTextColor = document.getElementById('bs_textColor').value;
+  docIdentity.bolSeaPanelColor = document.getElementById('bs_panelColor').value;
+  docIdentity.bolSeaFontFields = parseFloat(document.getElementById('bs_fFields').value);
+  docIdentity.bolSeaFontGoods = parseFloat(document.getElementById('bs_fGoods').value);
+  docIdentity.bolSeaTermsText = document.getElementById('bs_terms').value;
+  docIdentity.bolSeaWmText = document.getElementById('bs_wmText').value.trim();
+  docIdentity.bolSeaWmFontSize = parseInt(document.getElementById('bs_wmFont').value,10);
+  docIdentity.bolSeaWmOpacity = parseInt(document.getElementById('bs_wmOpacity').value,10);
+  docIdentity.bolSeaWmAngle = parseInt(document.getElementById('bs_wmAngle').value,10);
+  docIdentity.bolSeaWmColor = document.getElementById('bs_wmColor').value;
+  docIdentity.bolSeaWmRepeat = document.getElementById('bs_wmRepeat').value;
+  await saveDocIdentity();
   addLog('edit', 'تحديث بوليصة الشحن البحرية المبنية بالكود');
   bolSeaCodedOverlay.classList.remove('open');
   renderBolTplAdmin();
@@ -8760,10 +8823,10 @@ document.getElementById('bsSaveBtn').addEventListener('click', async ()=>{
 
 // ===== محرر ختم البوليصة البحرية المبنية بالكود — سحب حر مثل الفاتورة =====
 function refreshBolSeaStampPreview(){
-  const saved = company.bolSeaShowStamp;
-  company.bolSeaShowStamp = false;
+  const saved = docIdentity.bolSeaShowStamp;
+  docIdentity.bolSeaShowStamp = false;
   const html = bolSeaSheetCoded(bolSeaSampleRecordForPreview());
-  company.bolSeaShowStamp = saved;
+  docIdentity.bolSeaShowStamp = saved;
   document.getElementById('bolSeaStampPreview').srcdoc =
     `<!DOCTYPE html><html dir="ltr" lang="en"><head><meta charset="UTF-8">
      <style>${PRINT_STYLES}</style></head>
@@ -8781,12 +8844,12 @@ function refreshBolSeaLogoPreview(){
   preview.srcdoc = `<!DOCTYPE html><html dir="ltr" lang="en"><head><meta charset="UTF-8"><style>${PRINT_STYLES}.sbl-logo-el{display:none!important}</style></head><body><div class="doc-page">${html}</div></body></html>`;
 }
 function syncBolSeaStampHandle(){
-  const sp = company.bolSeaStampPos;
-  bolSeaStampHandle.classList.toggle('hidden', company.bolSeaShowStamp === false);
+  const sp = docIdentity.bolSeaStampPos;
+  bolSeaStampHandle.classList.toggle('hidden', docIdentity.bolSeaShowStamp === false);
   bolSeaStampHandle.style.top = sp.top + '%';
   bolSeaStampHandle.style.left = sp.left + '%';
   bolSeaStampHandle.style.width = sp.width + '%';
-  const stampSrc = company.bolSeaStamp || company.stamp;
+  const stampSrc = docIdentity.bolSeaStamp || company.stamp;
   const bssImg = document.getElementById('bssImg');
   bssImg.style.backgroundImage = stampSrc ? `url(${stampSrc})` : 'none';
   bssImg.style.border = stampSrc ? 'none' : '1px dashed #bbb';
@@ -8823,39 +8886,39 @@ bolSeaStampHandle.addEventListener('pointermove', e=>{
   let top  = (e.clientY - bolSeaStampDrag.dy - bolSeaStampDrag.sy) / bolSeaStampDrag.sh * 100;
   const maxL = 100 - (bolSeaStampDrag.bw / bolSeaStampDrag.sw * 100);
   const maxT = 100 - (bolSeaStampDrag.bh / bolSeaStampDrag.sh * 100);
-  company.bolSeaStampPos.left = Math.round(Math.max(0, Math.min(maxL, left))*2)/2;
-  company.bolSeaStampPos.top  = Math.round(Math.max(0, Math.min(maxT, top))*2)/2;
+  docIdentity.bolSeaStampPos.left = Math.round(Math.max(0, Math.min(maxL, left))*2)/2;
+  docIdentity.bolSeaStampPos.top  = Math.round(Math.max(0, Math.min(maxT, top))*2)/2;
   syncBolSeaStampHandle();
 });
 bolSeaStampHandle.addEventListener('pointerup', ()=>{ bolSeaStampDrag = null; });
 bolSeaStampHandle.addEventListener('pointercancel', ()=>{ bolSeaStampDrag = null; });
 
 document.getElementById('bs_stampW').addEventListener('input', function(){
-  company.bolSeaStampPos.width = parseFloat(this.value); syncBolSeaStampHandle();
+  docIdentity.bolSeaStampPos.width = parseFloat(this.value); syncBolSeaStampHandle();
 });
 document.getElementById('bs_stampT').addEventListener('input', function(){
-  company.bolSeaStampPos.top = parseFloat(this.value); syncBolSeaStampHandle();
+  docIdentity.bolSeaStampPos.top = parseFloat(this.value); syncBolSeaStampHandle();
 });
 document.getElementById('bs_stampL').addEventListener('input', function(){
-  company.bolSeaStampPos.left = parseFloat(this.value); syncBolSeaStampHandle();
+  docIdentity.bolSeaStampPos.left = parseFloat(this.value); syncBolSeaStampHandle();
 });
 document.getElementById('bs_stampA').addEventListener('input', function(){
-  company.bolSeaStampPos.angle = parseFloat(this.value); syncBolSeaStampHandle();
+  docIdentity.bolSeaStampPos.angle = parseFloat(this.value); syncBolSeaStampHandle();
 });
 document.getElementById('bs_showStamp').addEventListener('change', function(){
-  company.bolSeaShowStamp = this.checked; syncBolSeaStampHandle();
+  docIdentity.bolSeaShowStamp = this.checked; syncBolSeaStampHandle();
 });
 document.getElementById('bolSeaStampResetBtn').addEventListener('click', ()=>{
-  company.bolSeaStampPos = Object.assign({}, DEFAULT_COMPANY.bolSeaStampPos);
+  docIdentity.bolSeaStampPos = Object.assign({}, DEFAULT_DOC_IDENTITY.bolSeaStampPos);
   syncBolSeaStampHandle();
 });
 
 // ===== محرر استيكر البوليصة البحرية — سحب حر مثل الختم =====
 function refreshBolSeaBadgePreview(){
-  const saved = company.bolSeaBadgeImg;
-  company.bolSeaBadgeImg = ''; // نخفي الاستيكر الفعلي في المعاينة، يظهر مقبض السحب بدلاً منه
+  const saved = docIdentity.bolSeaBadgeImg;
+  docIdentity.bolSeaBadgeImg = ''; // نخفي الاستيكر الفعلي في المعاينة، يظهر مقبض السحب بدلاً منه
   const html = bolSeaSheetCoded(bolSeaSampleRecordForPreview());
-  company.bolSeaBadgeImg = saved;
+  docIdentity.bolSeaBadgeImg = saved;
   document.getElementById('bolSeaBadgePreview').srcdoc =
     `<!DOCTYPE html><html dir="ltr" lang="en"><head><meta charset="UTF-8">
      <style>${PRINT_STYLES}</style></head>
@@ -8863,12 +8926,12 @@ function refreshBolSeaBadgePreview(){
   syncBolSeaBadgeHandle();
 }
 function syncBolSeaBadgeHandle(){
-  const bp = company.bolSeaBadgePos;
-  bolSeaBadgeHandle.classList.toggle('hidden', !company.bolSeaBadgeImg);
+  const bp = docIdentity.bolSeaBadgePos;
+  bolSeaBadgeHandle.classList.toggle('hidden', !docIdentity.bolSeaBadgeImg);
   bolSeaBadgeHandle.style.top = bp.top + '%';
   bolSeaBadgeHandle.style.left = bp.left + '%';
   bolSeaBadgeHandle.style.width = bp.width + '%';
-  const badgeSrc = company.bolSeaBadgeImg;
+  const badgeSrc = docIdentity.bolSeaBadgeImg;
   const bsbImg = document.getElementById('bsbImg');
   bsbImg.style.backgroundImage = badgeSrc ? `url(${badgeSrc})` : 'none';
   bsbImg.style.border = badgeSrc ? 'none' : '1px dashed #bbb';
@@ -8904,27 +8967,27 @@ bolSeaBadgeHandle.addEventListener('pointermove', e=>{
   let top  = (e.clientY - bolSeaBadgeDrag.dy - bolSeaBadgeDrag.sy) / bolSeaBadgeDrag.sh * 100;
   const maxL = 100 - (bolSeaBadgeDrag.bw / bolSeaBadgeDrag.sw * 100);
   const maxT = 100 - (bolSeaBadgeDrag.bh / bolSeaBadgeDrag.sh * 100);
-  company.bolSeaBadgePos.left = Math.round(Math.max(0, Math.min(maxL, left))*2)/2;
-  company.bolSeaBadgePos.top  = Math.round(Math.max(0, Math.min(maxT, top))*2)/2;
+  docIdentity.bolSeaBadgePos.left = Math.round(Math.max(0, Math.min(maxL, left))*2)/2;
+  docIdentity.bolSeaBadgePos.top  = Math.round(Math.max(0, Math.min(maxT, top))*2)/2;
   syncBolSeaBadgeHandle();
 });
 bolSeaBadgeHandle.addEventListener('pointerup', ()=>{ bolSeaBadgeDrag = null; });
 bolSeaBadgeHandle.addEventListener('pointercancel', ()=>{ bolSeaBadgeDrag = null; });
 
 document.getElementById('bs_badgeW').addEventListener('input', function(){
-  company.bolSeaBadgePos.width = parseFloat(this.value); syncBolSeaBadgeHandle();
+  docIdentity.bolSeaBadgePos.width = parseFloat(this.value); syncBolSeaBadgeHandle();
 });
 document.getElementById('bs_badgeT').addEventListener('input', function(){
-  company.bolSeaBadgePos.top = parseFloat(this.value); syncBolSeaBadgeHandle();
+  docIdentity.bolSeaBadgePos.top = parseFloat(this.value); syncBolSeaBadgeHandle();
 });
 document.getElementById('bs_badgeL').addEventListener('input', function(){
-  company.bolSeaBadgePos.left = parseFloat(this.value); syncBolSeaBadgeHandle();
+  docIdentity.bolSeaBadgePos.left = parseFloat(this.value); syncBolSeaBadgeHandle();
 });
 document.getElementById('bs_badgeA').addEventListener('input', function(){
-  company.bolSeaBadgePos.angle = parseFloat(this.value); syncBolSeaBadgeHandle();
+  docIdentity.bolSeaBadgePos.angle = parseFloat(this.value); syncBolSeaBadgeHandle();
 });
 document.getElementById('bolSeaBadgeResetBtn').addEventListener('click', ()=>{
-  company.bolSeaBadgePos = Object.assign({}, DEFAULT_COMPANY.bolSeaBadgePos);
+  docIdentity.bolSeaBadgePos = Object.assign({}, DEFAULT_DOC_IDENTITY.bolSeaBadgePos);
   syncBolSeaBadgeHandle();
 });
 
@@ -13443,9 +13506,9 @@ function biText(en, arCombined, lang){ return lang==='en' ? en : arCombined; }
 function bolSheetCoded(r, lang){
   lang = (lang==='en') ? 'en' : 'ar';
   const ltrCls = lang==='en' ? ' bol-ltr' : '';
-  const c = company;
+  const c = Object.assign({}, company, docIdentity);
   const v = bolValues(r);
-  const bolName = (c.bolCompanyName||'').trim() || (lang==='en' ? (c.nameEn||c.nameAr) : c.nameAr);
+  const bolName = (c.bolCompanyName||'').trim();
 
   const MIN_ROWS = 5;
   // بيانات كل صنف تبقى منفصلة: الكمية رقم من نموذج الإدخال، ونوع التعبئة من قائمته.
@@ -13480,7 +13543,7 @@ function bolSheetCoded(r, lang){
   const sectionVars = `--bol-gap:${bolGap};--bol-field-h:${bolFieldH};--bol-field-pad:${bolFieldPad};--bol-terms-pad:${bolTermsPad};--bol-terms-lh:${bolTermsLh};--bol-bl-h:${bolBlH};--bol-sheet-pad:${bolSheetPad};`;
 
   const logoSrc = c.bolLogo || c.logo;
-  const lp = c.bolLogoPos || DEFAULT_COMPANY.bolLogoPos;
+  const lp = c.bolLogoPos || DEFAULT_DOC_IDENTITY.bolLogoPos;
   const logoHtml = logoSrc
     ? `<div class="bol3-logo-el" style="top:${lp.top}%;left:${lp.left}%;width:${lp.width}%;transform:rotate(${lp.angle||0}deg);"><img src="${logoSrc}" alt=""></div>`
     : '';
@@ -13489,7 +13552,7 @@ function bolSheetCoded(r, lang){
   const watermarkHtml = wmSrc ? `<div class="bol3-watermark"><img src="${wmSrc}" alt=""></div>` : '';
 
   const stampSrc = c.bolStamp || c.stamp;
-  const bsp = c.bolStampPos || DEFAULT_COMPANY.bolStampPos;
+  const bsp = c.bolStampPos || DEFAULT_DOC_IDENTITY.bolStampPos;
   const stampZoneHtml = (c.bolShowStamp !== false && stampSrc)
     ? `<div class="bol3-stampzone" style="top:${bsp.top}%;left:${bsp.left}%;width:${bsp.width}%;transform:rotate(${bsp.angle || 0}deg);">
          <img src="${stampSrc}" alt="">
@@ -13500,9 +13563,9 @@ function bolSheetCoded(r, lang){
   const termsHtml = (lang==='en' ? BOL_TERMS_EN : BOL_TERMS_DEFAULT).map(tx=>`<li>${esc(tx)}</li>`).join('');
 
   const accent = c.bolAccent || c.accent || '#B3272D';
-  const borderColor = c.bolBorderColor || DEFAULT_COMPANY.bolBorderColor;
-  const textColor = c.bolTextColor || DEFAULT_COMPANY.bolTextColor;
-  const panelColor = c.bolPanelColor || DEFAULT_COMPANY.bolPanelColor;
+  const borderColor = c.bolBorderColor || DEFAULT_DOC_IDENTITY.bolBorderColor;
+  const textColor = c.bolTextColor || DEFAULT_DOC_IDENTITY.bolTextColor;
+  const panelColor = c.bolPanelColor || DEFAULT_DOC_IDENTITY.bolPanelColor;
   const fFields = c.bolFontFields || 11;
   const fGoods = goodsFsOverride || (c.bolFontGoods || 11) + 'px';
   const fTerms = c.bolFontTerms || 10;
@@ -13692,9 +13755,9 @@ function certSheetWord(r, lang){
 function certSheetCoded(r, lang){
   lang = (lang==='en') ? 'en' : 'ar';
   const ltrCls = lang==='en' ? ' bol-ltr' : '';
-  const c = company;
+  const c = Object.assign({}, company, docIdentity);
   const v = certValues(r);
-  const certName = (c.certCompanyName||'').trim() || (lang==='en' ? (c.nameEn||c.nameAr) : c.nameAr);
+  const certName = (c.certCompanyName||'').trim();
 
   const MIN_ROWS = 5;
   const items = Array.from({length:15}, (_,i)=>i+1).map(n=>({g:v['goodsLine'+n], u:v['unitLine'+n]}))
@@ -13730,7 +13793,7 @@ function certSheetCoded(r, lang){
   const watermarkHtml = wmSrc ? `<div class="bol3-watermark"><img src="${wmSrc}" alt=""></div>` : '';
 
   const stampSrc = c.certStamp || c.stamp;
-  const csp = c.certStampPos || DEFAULT_COMPANY.certStampPos;
+  const csp = c.certStampPos || DEFAULT_DOC_IDENTITY.certStampPos;
   const stampZoneHtml = (c.certShowStamp !== false && stampSrc)
     ? `<div class="bol3-stampzone" style="top:${csp.top}%;left:${csp.left}%;width:${csp.width}%;">
          <img src="${stampSrc}" alt="">
@@ -13744,9 +13807,9 @@ function certSheetCoded(r, lang){
   const termsHtml = `<li>${esc(declareText)}</li>`;
 
   const accent = c.certAccent || c.accent || '#B3272D';
-  const borderColor = c.certBorderColor || DEFAULT_COMPANY.certBorderColor;
-  const textColor = c.certTextColor || DEFAULT_COMPANY.certTextColor;
-  const panelColor = c.certPanelColor || DEFAULT_COMPANY.certPanelColor;
+  const borderColor = c.certBorderColor || DEFAULT_DOC_IDENTITY.certBorderColor;
+  const textColor = c.certTextColor || DEFAULT_DOC_IDENTITY.certTextColor;
+  const panelColor = c.certPanelColor || DEFAULT_DOC_IDENTITY.certPanelColor;
   const fFields = c.certFontFields || 11;
   const fGoods = goodsFsOverride || (c.certFontGoods || 11) + 'px';
   const colorVars = `--accent:${esc(accent)};--bol-border:${esc(borderColor)};--bol-text:${esc(textColor)};--bol-panel:${esc(panelColor)};`;
@@ -13867,7 +13930,7 @@ function buildWmTileBg(text, fontSize, color, angleDeg){
 
 function bolSeaSheetCoded(r, lang){
   lang = (lang==='en') ? 'en' : 'ar';
-  const c = company;
+  const c = Object.assign({}, company, docIdentity);
   const v = bolSeaValues(r);
 
   const MIN_ROWS = 3;
@@ -13892,18 +13955,18 @@ function bolSeaSheetCoded(r, lang){
   const goodsVars = `--sbl-goods-pad:${goodsPad};`;
 
   const logoSrc = c.bolSeaLogo || c.logo;
-  const lp = c.bolSeaLogoPos || DEFAULT_COMPANY.bolSeaLogoPos;
+  const lp = c.bolSeaLogoPos || DEFAULT_DOC_IDENTITY.bolSeaLogoPos;
   const logoHtml = logoSrc
     ? `<div class="sbl-logo-el" style="top:${lp.top}%;left:${lp.left}%;width:${lp.width}%;transform:rotate(${lp.angle||0}deg);"><img src="${logoSrc}" alt=""></div>`
     : '';
 
   const stampSrc = c.bolSeaStamp || c.stamp;
-  const bsp = c.bolSeaStampPos || DEFAULT_COMPANY.bolSeaStampPos;
+  const bsp = c.bolSeaStampPos || DEFAULT_DOC_IDENTITY.bolSeaStampPos;
   const stampHtml = (c.bolSeaShowStamp !== false && stampSrc)
     ? `<div class="sbl-stampzone" style="top:${bsp.top}%;left:${bsp.left}%;width:${bsp.width}%;transform:rotate(${bsp.angle||0}deg);"><img src="${stampSrc}" alt=""></div>`
     : '';
 
-  const agentName = (c.bolSeaAgentName||'').trim() || c.nameEn || c.nameAr;
+  const agentName = (c.bolSeaAgentName||'').trim();
   const agentAddr = c.bolSeaAgentAddress || '';
 
   const termsTextDefaultEn = 'Received by the Carrier the goods described above, in apparent good order and condition unless otherwise noted, for carriage subject to the terms ' +
@@ -13915,15 +13978,15 @@ function bolSeaSheetCoded(r, lang){
   const termsText = (c.bolSeaTermsText||'').trim() || (lang==='ar' ? SBL_TERMS_AR : termsTextDefaultEn);
 
   const accent = c.bolSeaAccent || c.accent || '#16334a';
-  const borderColor = c.bolSeaBorderColor || DEFAULT_COMPANY.bolSeaBorderColor;
-  const textColor = c.bolSeaTextColor || DEFAULT_COMPANY.bolSeaTextColor;
-  const panelColor = c.bolSeaPanelColor || DEFAULT_COMPANY.bolSeaPanelColor;
+  const borderColor = c.bolSeaBorderColor || DEFAULT_DOC_IDENTITY.bolSeaBorderColor;
+  const textColor = c.bolSeaTextColor || DEFAULT_DOC_IDENTITY.bolSeaTextColor;
+  const panelColor = c.bolSeaPanelColor || DEFAULT_DOC_IDENTITY.bolSeaPanelColor;
   const fFields = c.bolSeaFontFields || 9.6;
   const fGoods = goodsFsOverride || (c.bolSeaFontGoods || 9) + 'px';
   const colorVars = `--sbl-accent:${esc(accent)};--sbl-border:${esc(borderColor)};--sbl-text:${esc(textColor)};--sbl-panel:${esc(panelColor)};`;
 
   // استيكر البوليصة — صورة بديلة عن شارة ORIGINAL النصية القديمة، لا تظهر إلا لو رُفعت صورة فعلاً
-  const bdp = c.bolSeaBadgePos || DEFAULT_COMPANY.bolSeaBadgePos;
+  const bdp = c.bolSeaBadgePos || DEFAULT_DOC_IDENTITY.bolSeaBadgePos;
   const badgeHtml = c.bolSeaBadgeImg
     ? `<img class="sbl-badge-img" src="${c.bolSeaBadgeImg}" alt="" style="top:${bdp.top}%;left:${bdp.left}%;width:${bdp.width}%;transform:rotate(${bdp.angle||0}deg);">`
     : '';
@@ -15033,12 +15096,12 @@ const logoHeadStage = document.getElementById('logoHeadStage');
 const logoHeadHandle = document.getElementById('logoHeadHandle');
 
 function syncLogoHeadHandle(){
-  const lp = company.bolLogoPos;
+  const lp = docIdentity.bolLogoPos;
   logoHeadHandle.style.top = lp.top + '%';
   logoHeadHandle.style.left = lp.left + '%';
   logoHeadHandle.style.width = lp.width + '%';
   const lhImg = document.getElementById('lhImg');
-  const logoSrc = company.bolLogo || company.logo;
+  const logoSrc = docIdentity.bolLogo || company.logo;
   lhImg.src = logoSrc || '';
   lhImg.style.opacity = logoSrc ? '1' : '.35';
   lhImg.style.transform = 'rotate(' + (lp.angle||0) + 'deg)';
@@ -15076,8 +15139,8 @@ logoHeadHandle.addEventListener('pointermove', e=>{
   let top  = (e.clientY - logoHeadDrag.dy - logoHeadDrag.sy) / logoHeadDrag.sh * 100;
   const maxL = 100 - (logoHeadDrag.bw / logoHeadDrag.sw * 100);
   const maxT = 100 - (logoHeadDrag.bh / logoHeadDrag.sh * 100);
-  company.bolLogoPos.left = Math.round(Math.max(0, Math.min(maxL, left))*2)/2;
-  company.bolLogoPos.top  = Math.round(Math.max(0, Math.min(maxT, top))*2)/2;
+  docIdentity.bolLogoPos.left = Math.round(Math.max(0, Math.min(maxL, left))*2)/2;
+  docIdentity.bolLogoPos.top  = Math.round(Math.max(0, Math.min(maxT, top))*2)/2;
   syncLogoHeadHandle();
   refreshBolLogoPreview();
 });
@@ -15085,16 +15148,16 @@ logoHeadHandle.addEventListener('pointerup', ()=>{ logoHeadDrag = null; });
 logoHeadHandle.addEventListener('pointercancel', ()=>{ logoHeadDrag = null; });
 
 document.getElementById('co_logoPosW').addEventListener('input', function(){
-  company.bolLogoPos.width = parseFloat(this.value); syncLogoHeadHandle(); refreshBolLogoPreview();
+  docIdentity.bolLogoPos.width = parseFloat(this.value); syncLogoHeadHandle(); refreshBolLogoPreview();
 });
 document.getElementById('co_logoPosT').addEventListener('input', function(){
-  company.bolLogoPos.top = parseFloat(this.value); syncLogoHeadHandle(); refreshBolLogoPreview();
+  docIdentity.bolLogoPos.top = parseFloat(this.value); syncLogoHeadHandle(); refreshBolLogoPreview();
 });
 document.getElementById('co_logoPosL').addEventListener('input', function(){
-  company.bolLogoPos.left = parseFloat(this.value); syncLogoHeadHandle(); refreshBolLogoPreview();
+  docIdentity.bolLogoPos.left = parseFloat(this.value); syncLogoHeadHandle(); refreshBolLogoPreview();
 });
 document.getElementById('logoPosResetBtn').addEventListener('click', ()=>{
-  company.bolLogoPos = Object.assign({}, DEFAULT_COMPANY.bolLogoPos);
+  docIdentity.bolLogoPos = Object.assign({}, DEFAULT_DOC_IDENTITY.bolLogoPos);
   syncLogoHeadHandle(); refreshBolLogoPreview();
 });
 
@@ -15103,12 +15166,12 @@ const bolSeaLogoStage = document.getElementById('bolSeaLogoStage');
 const bolSeaLogoHandle = document.getElementById('bolSeaLogoHandle');
 
 function syncBolSeaLogoHandle(){
-  const lp = company.bolSeaLogoPos;
+  const lp = docIdentity.bolSeaLogoPos;
   bolSeaLogoHandle.style.top = lp.top + '%';
   bolSeaLogoHandle.style.left = lp.left + '%';
   bolSeaLogoHandle.style.width = lp.width + '%';
   const bslImg = document.getElementById('bslImg');
-  const logoSrc = company.bolSeaLogo || company.logo;
+  const logoSrc = docIdentity.bolSeaLogo || company.logo;
   bslImg.src = logoSrc || '';
   bslImg.style.opacity = logoSrc ? '1' : '.35';
   bslImg.style.transform = 'rotate(' + (lp.angle||0) + 'deg)';
@@ -15141,8 +15204,8 @@ bolSeaLogoHandle.addEventListener('pointermove', e=>{
   let top  = (e.clientY - bolSeaLogoDrag.dy - bolSeaLogoDrag.sy) / bolSeaLogoDrag.sh * 100;
   const maxL = 100 - (bolSeaLogoDrag.bw / bolSeaLogoDrag.sw * 100);
   const maxT = 100 - (bolSeaLogoDrag.bh / bolSeaLogoDrag.sh * 100);
-  company.bolSeaLogoPos.left = Math.round(Math.max(0, Math.min(maxL, left))*2)/2;
-  company.bolSeaLogoPos.top  = Math.round(Math.max(0, Math.min(maxT, top))*2)/2;
+  docIdentity.bolSeaLogoPos.left = Math.round(Math.max(0, Math.min(maxL, left))*2)/2;
+  docIdentity.bolSeaLogoPos.top  = Math.round(Math.max(0, Math.min(maxT, top))*2)/2;
   syncBolSeaLogoHandle();
 });
 bolSeaLogoHandle.addEventListener('pointerup', ()=>{
@@ -15152,19 +15215,19 @@ bolSeaLogoHandle.addEventListener('pointerup', ()=>{
 bolSeaLogoHandle.addEventListener('pointercancel', ()=>{ bolSeaLogoDrag = null; });
 
 document.getElementById('bs_logoPosW').addEventListener('input', function(){
-  company.bolSeaLogoPos.width = parseFloat(this.value); syncBolSeaLogoHandle(); refreshBolSeaStampPreview();
+  docIdentity.bolSeaLogoPos.width = parseFloat(this.value); syncBolSeaLogoHandle(); refreshBolSeaStampPreview();
 });
 document.getElementById('bs_logoPosT').addEventListener('input', function(){
-  company.bolSeaLogoPos.top = parseFloat(this.value); syncBolSeaLogoHandle(); refreshBolSeaStampPreview();
+  docIdentity.bolSeaLogoPos.top = parseFloat(this.value); syncBolSeaLogoHandle(); refreshBolSeaStampPreview();
 });
 document.getElementById('bs_logoPosL').addEventListener('input', function(){
-  company.bolSeaLogoPos.left = parseFloat(this.value); syncBolSeaLogoHandle(); refreshBolSeaStampPreview();
+  docIdentity.bolSeaLogoPos.left = parseFloat(this.value); syncBolSeaLogoHandle(); refreshBolSeaStampPreview();
 });
 document.getElementById('bs_logoPosA').addEventListener('input', function(){
-  company.bolSeaLogoPos.angle = parseFloat(this.value); syncBolSeaLogoHandle(); refreshBolSeaStampPreview();
+  docIdentity.bolSeaLogoPos.angle = parseFloat(this.value); syncBolSeaLogoHandle(); refreshBolSeaStampPreview();
 });
 document.getElementById('bolSeaLogoPosResetBtn').addEventListener('click', ()=>{
-  company.bolSeaLogoPos = Object.assign({}, DEFAULT_COMPANY.bolSeaLogoPos);
+  docIdentity.bolSeaLogoPos = Object.assign({}, DEFAULT_DOC_IDENTITY.bolSeaLogoPos);
   syncBolSeaLogoHandle();
   refreshBolSeaStampPreview();
 });
@@ -15277,10 +15340,10 @@ function tplOpenEditor(companyId, options={}){
   company = companyDataFor(tplEditCompanyId ? {companyId: tplEditCompanyId} : null);
   // نحافظ على البوليصة المبنية بالكود بتخطيطها الأصلي؛ حقول الاستوديو طبقة ضبط فوقها فقط.
   // الإصدار السابق فعّل التخطيط الحر تلقائياً، لذلك نوقفه هنا لاستعادة الشكل المعتمد.
-  const restoreFixedLayout = (tplCurrentDoc === 'bolCodedFree' && company.bolCodedFreeLayout) ||
-    (tplCurrentDoc === 'bolSeaCodedFree' && company.bolSeaCodedFreeLayout);
-  if(tplCurrentDoc === 'bolCodedFree') company.bolCodedFreeLayout = false;
-  if(tplCurrentDoc === 'bolSeaCodedFree') company.bolSeaCodedFreeLayout = false;
+  const restoreFixedLayout = (tplCurrentDoc === 'bolCodedFree' && docIdentity.bolCodedFreeLayout) ||
+    (tplCurrentDoc === 'bolSeaCodedFree' && docIdentity.bolSeaCodedFreeLayout);
+  if(tplCurrentDoc === 'bolCodedFree') docIdentity.bolCodedFreeLayout = false;
+  if(tplCurrentDoc === 'bolSeaCodedFree') docIdentity.bolSeaCodedFreeLayout = false;
   syncTemplatePositions();
   fillTplCompanyPicker();
   document.getElementById('tplEditorOverlay').classList.add('open');
