@@ -5774,7 +5774,6 @@ async function bootData(){
     step('المستخدمون', loadUsers),
     step('عناوين البنوك', loadBankBook),
     step('القوائم الجاهزة', loadLookups),
-    step('دليل السلع', loadCommodities),
     step('سجل العمليات', loadLog),
     step('الشحنات', loadRecords),
     step('المهام', loadTasks),
@@ -5789,7 +5788,8 @@ async function bootData(){
     step('الهوية والألوان', loadBranding),
     step('إعدادات الشركة', loadCompany),
     step('نماذج البوالص', loadBolTemplates),
-    step('هوية البوليصة والمنشأ', loadDocIdentity)
+    step('هوية البوليصة والمنشأ', loadDocIdentity),
+    step('دليل السلع', loadCommodities)
   ]).then(()=>{
     try{ applyBranding(); applyActiveCompany(); fillCertPicker(); }catch(e){ console.error(e); }
   });
@@ -6764,7 +6764,7 @@ function renderCommodityAdmin(){
     <div class="lk-row" data-id="${c.id}">
       <div class="lk-txt">
         <b>${escapeHtml(c.arabic_name||'')}</b>${c.english_name? ' — '+escapeHtml(c.english_name) : ''}
-        <small>${[c.hs_code?'HS: '+escapeHtml(c.hs_code):'', c.category?escapeHtml(c.category):'', 'استُخدمت '+(c.usage_count||0)+' مرة', c.is_active===false?'معطّلة':''].filter(Boolean).join(' · ')}</small>
+        <small>${[c.hs_code?'HS: '+escapeHtml(c.hs_code):'', c.category?escapeHtml(c.category):'', c.duty?'الرسم: '+escapeHtml(c.duty):'', 'استُخدمت '+(c.usage_count||0)+' مرة', c.is_active===false?'معطّلة':''].filter(Boolean).join(' · ')}</small>
       </div>
       <div class="lk-acts">
         <select class="lookup-sel cm-addlist-sel" style="padding:6px 10px;font-size:12.5px;" data-id="${c.id}">
