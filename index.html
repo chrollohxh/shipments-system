@@ -6637,7 +6637,7 @@ function csRender(input, results, term){
 }
 function csSelect(input, c){
   // تعبئة تلقائية بدون Reload — لا نمسح أي قيمة أخرى كتبها المستخدم في حقول مجاورة.
-  input.value = c.arabic_name || c.english_name || '';
+  input.value = c.english_name || c.arabic_name || '';
   input.dispatchEvent(new Event('change', {bubbles:true}));
   bumpCommodityUsage(c.id);
   csClose();
