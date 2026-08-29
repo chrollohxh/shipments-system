@@ -180,6 +180,27 @@ body{padding-right:230px;}
 .lookup-sel:hover{border-color:#CFCFCF;}
 .lookup-sel:focus{outline:none;border-color:var(--brand);box-shadow:var(--ring);}
 
+/* ===== بحث السلع الذكي (دليل السلع) ===== */
+.commodity-suggest{
+  position:fixed;z-index:500;background:var(--white);border:1px solid var(--border);
+  border-radius:var(--radius);box-shadow:var(--shadow);max-height:320px;overflow-y:auto;
+  display:none;
+}
+.commodity-suggest.open{display:block;}
+.cs-item{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:9px 14px;cursor:pointer;border-bottom:1px solid var(--border-soft);
+}
+.cs-item:last-child{border-bottom:none;}
+.cs-item:hover,.cs-item.active{background:var(--brand-light);}
+.cs-item-main{min-width:0;}
+.cs-item-ar{font-size:14px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cs-item-en{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cs-item-hs{font-size:11px;color:var(--muted);font-family:'IBM Plex Mono',monospace;flex-shrink:0;white-space:nowrap;}
+.cs-add-new{display:flex;align-items:center;gap:8px;padding:10px 14px;cursor:pointer;color:var(--brand);font-weight:700;font-size:13.5px;}
+.cs-add-new:hover{background:var(--brand-light);}
+.cs-empty{padding:14px;color:var(--muted);font-size:13px;text-align:center;}
+
 /* ===== دفتر عناوين البنوك ===== */
 .bank-picker{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
 .bank-picker select{
@@ -2642,7 +2663,7 @@ body.role-staff #navWallet,body.role-staff #navAdmin{display:flex !important;}
     <div class="grid">
       <div class="field span2">
         <label>وصف الصنف</label>
-        <select id="f_itemDesc" class="lookup-sel"></select>
+        <input type="text" id="f_itemDesc" class="lookup-sel commodity-input" autocomplete="off" placeholder="اكتب للبحث…">
       </div>
       <div class="field">
         <label>الكمية</label>
@@ -2673,7 +2694,7 @@ body.role-staff #navWallet,body.role-staff #navAdmin{display:flex !important;}
         <div class="grid" style="grid-template-columns:1fr 1fr;margin-bottom:14px;">
           <div class="field span2">
             <label>الصنف 2 — الوصف</label>
-            <select id="f_item2Desc" class="lookup-sel"></select>
+            <input type="text" id="f_item2Desc" class="lookup-sel commodity-input" autocomplete="off" placeholder="اكتب للبحث…">
           </div>
           <div class="field">
             <label>الصنف 2 — الكمية</label>
@@ -2697,7 +2718,7 @@ body.role-staff #navWallet,body.role-staff #navAdmin{display:flex !important;}
         <div class="grid" style="grid-template-columns:1fr 1fr;margin-bottom:14px;">
           <div class="field span2">
             <label>الصنف 3 — الوصف</label>
-            <select id="f_item3Desc" class="lookup-sel"></select>
+            <input type="text" id="f_item3Desc" class="lookup-sel commodity-input" autocomplete="off" placeholder="اكتب للبحث…">
           </div>
           <div class="field">
             <label>الصنف 3 — الكمية</label>
@@ -2721,7 +2742,7 @@ body.role-staff #navWallet,body.role-staff #navAdmin{display:flex !important;}
         <div class="grid" style="grid-template-columns:1fr 1fr;margin-bottom:14px;">
           <div class="field span2">
             <label>الصنف 4 — الوصف</label>
-            <select id="f_item4Desc" class="lookup-sel"></select>
+            <input type="text" id="f_item4Desc" class="lookup-sel commodity-input" autocomplete="off" placeholder="اكتب للبحث…">
           </div>
           <div class="field">
             <label>الصنف 4 — الكمية</label>
@@ -2745,7 +2766,7 @@ body.role-staff #navWallet,body.role-staff #navAdmin{display:flex !important;}
         <div class="grid" style="grid-template-columns:1fr 1fr;margin-bottom:14px;">
           <div class="field span2">
             <label>الصنف 5 — الوصف</label>
-            <select id="f_item5Desc" class="lookup-sel"></select>
+            <input type="text" id="f_item5Desc" class="lookup-sel commodity-input" autocomplete="off" placeholder="اكتب للبحث…">
           </div>
           <div class="field">
             <label>الصنف 5 — الكمية</label>
@@ -2769,7 +2790,7 @@ body.role-staff #navWallet,body.role-staff #navAdmin{display:flex !important;}
         <div class="grid" style="grid-template-columns:1fr 1fr;margin-bottom:14px;">
           <div class="field span2">
             <label>الصنف 6 — الوصف</label>
-            <select id="f_item6Desc" class="lookup-sel"></select>
+            <input type="text" id="f_item6Desc" class="lookup-sel commodity-input" autocomplete="off" placeholder="اكتب للبحث…">
           </div>
           <div class="field">
             <label>الصنف 6 — الكمية</label>
@@ -2793,7 +2814,7 @@ body.role-staff #navWallet,body.role-staff #navAdmin{display:flex !important;}
         <div class="grid" style="grid-template-columns:1fr 1fr;margin-bottom:14px;">
           <div class="field span2">
             <label>الصنف 7 — الوصف</label>
-            <select id="f_item7Desc" class="lookup-sel"></select>
+            <input type="text" id="f_item7Desc" class="lookup-sel commodity-input" autocomplete="off" placeholder="اكتب للبحث…">
           </div>
           <div class="field">
             <label>الصنف 7 — الكمية</label>
@@ -2817,7 +2838,7 @@ body.role-staff #navWallet,body.role-staff #navAdmin{display:flex !important;}
         <div class="grid" style="grid-template-columns:1fr 1fr;margin-bottom:14px;">
           <div class="field span2">
             <label>الصنف 8 — الوصف</label>
-            <select id="f_item8Desc" class="lookup-sel"></select>
+            <input type="text" id="f_item8Desc" class="lookup-sel commodity-input" autocomplete="off" placeholder="اكتب للبحث…">
           </div>
           <div class="field">
             <label>الصنف 8 — الكمية</label>
@@ -2841,7 +2862,7 @@ body.role-staff #navWallet,body.role-staff #navAdmin{display:flex !important;}
         <div class="grid" style="grid-template-columns:1fr 1fr;margin-bottom:14px;">
           <div class="field span2">
             <label>الصنف 9 — الوصف</label>
-            <select id="f_item9Desc" class="lookup-sel"></select>
+            <input type="text" id="f_item9Desc" class="lookup-sel commodity-input" autocomplete="off" placeholder="اكتب للبحث…">
           </div>
           <div class="field">
             <label>الصنف 9 — الكمية</label>
@@ -2865,7 +2886,7 @@ body.role-staff #navWallet,body.role-staff #navAdmin{display:flex !important;}
         <div class="grid" style="grid-template-columns:1fr 1fr;margin-bottom:14px;">
           <div class="field span2">
             <label>الصنف 10 — الوصف</label>
-            <select id="f_item10Desc" class="lookup-sel"></select>
+            <input type="text" id="f_item10Desc" class="lookup-sel commodity-input" autocomplete="off" placeholder="اكتب للبحث…">
           </div>
           <div class="field">
             <label>الصنف 10 — الكمية</label>
@@ -2889,7 +2910,7 @@ body.role-staff #navWallet,body.role-staff #navAdmin{display:flex !important;}
         <div class="grid" style="grid-template-columns:1fr 1fr;margin-bottom:14px;">
           <div class="field span2">
             <label>الصنف 11 — الوصف</label>
-            <select id="f_item11Desc" class="lookup-sel"></select>
+            <input type="text" id="f_item11Desc" class="lookup-sel commodity-input" autocomplete="off" placeholder="اكتب للبحث…">
           </div>
           <div class="field">
             <label>الصنف 11 — الكمية</label>
@@ -2913,7 +2934,7 @@ body.role-staff #navWallet,body.role-staff #navAdmin{display:flex !important;}
         <div class="grid" style="grid-template-columns:1fr 1fr;margin-bottom:14px;">
           <div class="field span2">
             <label>الصنف 12 — الوصف</label>
-            <select id="f_item12Desc" class="lookup-sel"></select>
+            <input type="text" id="f_item12Desc" class="lookup-sel commodity-input" autocomplete="off" placeholder="اكتب للبحث…">
           </div>
           <div class="field">
             <label>الصنف 12 — الكمية</label>
@@ -2937,7 +2958,7 @@ body.role-staff #navWallet,body.role-staff #navAdmin{display:flex !important;}
         <div class="grid" style="grid-template-columns:1fr 1fr;margin-bottom:14px;">
           <div class="field span2">
             <label>الصنف 13 — الوصف</label>
-            <select id="f_item13Desc" class="lookup-sel"></select>
+            <input type="text" id="f_item13Desc" class="lookup-sel commodity-input" autocomplete="off" placeholder="اكتب للبحث…">
           </div>
           <div class="field">
             <label>الصنف 13 — الكمية</label>
@@ -2961,7 +2982,7 @@ body.role-staff #navWallet,body.role-staff #navAdmin{display:flex !important;}
         <div class="grid" style="grid-template-columns:1fr 1fr;margin-bottom:14px;">
           <div class="field span2">
             <label>الصنف 14 — الوصف</label>
-            <select id="f_item14Desc" class="lookup-sel"></select>
+            <input type="text" id="f_item14Desc" class="lookup-sel commodity-input" autocomplete="off" placeholder="اكتب للبحث…">
           </div>
           <div class="field">
             <label>الصنف 14 — الكمية</label>
@@ -2985,7 +3006,7 @@ body.role-staff #navWallet,body.role-staff #navAdmin{display:flex !important;}
         <div class="grid" style="grid-template-columns:1fr 1fr;margin-bottom:14px;">
           <div class="field span2">
             <label>الصنف 15 — الوصف</label>
-            <select id="f_item15Desc" class="lookup-sel"></select>
+            <input type="text" id="f_item15Desc" class="lookup-sel commodity-input" autocomplete="off" placeholder="اكتب للبحث…">
           </div>
           <div class="field">
             <label>الصنف 15 — الكمية</label>
@@ -3337,6 +3358,7 @@ body.role-staff #navWallet,body.role-staff #navAdmin{display:flex !important;}
       <button class="admin-tab active" data-atab="users" data-ic="users">المستخدمون</button>
       <button class="admin-tab" data-atab="brand" data-ic="palette">الأيقونات والهوية</button>
       <button class="admin-tab" data-atab="lists" data-ic="list">القوائم الجاهزة</button>
+      <button class="admin-tab" data-atab="commodities" data-ic="award">دليل السلع</button>
       <button class="admin-tab" data-atab="clients" data-ic="users">العملاء</button>
       <button class="admin-tab" data-atab="companies" data-ic="building">الشركات</button>
       <button class="admin-tab" data-atab="templates" data-ic="doc">النماذج والمستندات</button>
@@ -3473,6 +3495,21 @@ body.role-staff #navWallet,body.role-staff #navAdmin{display:flex !important;}
             <button class="btn btn-primary btn-small" id="bankAddBtn" data-ic="plus">إضافة عنوان بنكي</button>
           </div>
           <div id="bbItems" class="lk-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- دليل السلع -->
+    <div class="admin-pane" id="apaneCommodities">
+      <div class="dash-card">
+        <h3>دليل السلع <span class="cnt" id="cmCount"></span></h3>
+        <div>
+          <div class="lk-toolbar">
+            <input type="text" id="cmSearch" class="lookup-sel" style="flex:1;min-width:220px;" placeholder="ابحث بالاسم العربي أو الإنجليزي أو HS Code أو كلمة مفتاحية…">
+            <button class="btn btn-primary btn-small" id="cmAddBtn" data-ic="plus">إضافة سلعة</button>
+            <span class="lk-count" id="cmVisibleCount"></span>
+          </div>
+          <div id="cmItems" class="lk-list"></div>
         </div>
       </div>
     </div>
@@ -4879,6 +4916,57 @@ SWIFT: NBEGEGCX"></textarea>
   </div>
 </div>
 
+<div class="overlay" id="commodityOverlay">
+  <div class="detail-card" style="max-width:520px;">
+    <div class="dh">
+      <div><h2 id="cmModalTitle">سلعة جديدة</h2></div>
+      <button class="close-x" id="cmCloseX" data-ic="close"></button>
+    </div>
+    <div style="padding:0 22px;">
+      <div class="grid">
+        <div class="field span2">
+          <label>الاسم العربي</label>
+          <input type="text" id="cm_ar">
+        </div>
+        <div class="field span2">
+          <label>الاسم الإنجليزي</label>
+          <input type="text" id="cm_en" dir="ltr">
+        </div>
+        <div class="field">
+          <label>HS Code</label>
+          <input type="text" id="cm_hs" dir="ltr">
+        </div>
+        <div class="field">
+          <label>التصنيف</label>
+          <input type="text" id="cm_cat">
+        </div>
+        <div class="field">
+          <label>التصنيف الفرعي</label>
+          <input type="text" id="cm_subcat">
+        </div>
+        <div class="field span2">
+          <label>كلمات مفتاحية عربية (افصل بينها بفاصلة)</label>
+          <input type="text" id="cm_kwAr">
+        </div>
+        <div class="field span2">
+          <label>كلمات مفتاحية إنجليزية (افصل بينها بفاصلة)</label>
+          <input type="text" id="cm_kwEn" dir="ltr">
+        </div>
+        <div class="field span2">
+          <label>أسماء بديلة (افصل بينها بفاصلة)</label>
+          <input type="text" id="cm_aliases">
+        </div>
+      </div>
+    </div>
+    <div class="detail-actions" style="padding:18px 22px 26px;">
+      <button class="btn btn-primary" id="cmSaveBtn">حفظ</button>
+      <button class="btn btn-ghost" id="cmCancelBtn">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<div class="commodity-suggest" id="commoditySuggestBox"></div>
+
 <div class="tpl-editor-overlay" id="tplEditorOverlay">
   <div class="tpl-editor-card">
     <div class="tpl-editor-header">
@@ -5686,6 +5774,7 @@ async function bootData(){
     step('المستخدمون', loadUsers),
     step('عناوين البنوك', loadBankBook),
     step('القوائم الجاهزة', loadLookups),
+    step('دليل السلع', loadCommodities),
     step('سجل العمليات', loadLog),
     step('الشحنات', loadRecords),
     step('المهام', loadTasks),
@@ -5855,7 +5944,7 @@ function fillLookupSelects(){
       (lookups[d.key]||[]).map(v=>`<option value="${escapeHtml(v)}">${escapeHtml(shortLabel(v))}</option>`).join('');
     d.fields.forEach(fid=>{
       const el = document.getElementById(fid);
-      if(!el) return;
+      if(!el || el.tagName !== 'SELECT') return; // حقول وصف الصنف بقت إدخال بحث ذكي، مش قائمة منسدلة
       const cur = el.value;
       el.innerHTML = opts;
       if(cur) setLookupValue(el, cur);
@@ -5864,6 +5953,7 @@ function fillLookupSelects(){
 }
 function setLookupValue(el, val){
   val = (val||'').toString();
+  if(el.tagName !== 'SELECT'){ el.value = val; return; }
   if(!val){ el.value=''; return; }
   if(!Array.from(el.options).some(o=>o.value===val)){
     const o = document.createElement('option');
@@ -6182,13 +6272,14 @@ function applyBranding(){
 document.querySelectorAll('.admin-tab').forEach(t=>{
   t.addEventListener('click', ()=>{
     document.querySelectorAll('.admin-tab').forEach(x=>x.classList.toggle('active', x===t));
-    const map = {users:'apaneUsers', brand:'apaneBrand', lists:'apaneLists', clients:'apaneClients', companies:'apaneCompanies', templates:'apaneTemplates', data:'apaneData'};
+    const map = {users:'apaneUsers', brand:'apaneBrand', lists:'apaneLists', commodities:'apaneCommodities', clients:'apaneClients', companies:'apaneCompanies', templates:'apaneTemplates', data:'apaneData'};
     Object.entries(map).forEach(([k,id])=>{
       document.getElementById(id).classList.toggle('active', k===t.dataset.atab);
     });
     if(t.dataset.atab==='data') renderDataStats();
     if(t.dataset.atab==='brand') fillBrandForm();
     if(t.dataset.atab==='lists') renderLookupAdmin();
+    if(t.dataset.atab==='commodities') renderCommodityAdmin();
     if(t.dataset.atab==='companies'){
       renderCompaniesAdmin();
       if(!companiesLoaded) loadCompanies();
@@ -6442,6 +6533,292 @@ document.getElementById('bbItems').addEventListener('click', async (e)=>{
     bankBook = bankBook.filter(x=>x.id!==b.id);
     renderBankOptions(''); renderBankAdmin();
     addLog('del','حذف عنوان بنكي: '+b.nick);
+  }
+});
+
+// ===== دليل السلع (Commodity Catalog) =====
+// قاعدة مركزية موحّدة للسلع — مستقلة عن "القوائم الجاهزة" (lookups) ولا تبدّل بنيتها،
+// أي عنصر قائمة بدون ربط بسلعة يستمر يعمل كنص حر بالضبط كما كان قبل هذا التحديث.
+let commodities = [];
+let cmEditId = null;
+async function loadCommodities(){
+  const {data, error} = await sb.from('commodities').select('*').order('usage_count', {ascending:false});
+  if(error) throw error;
+  commodities = data || [];
+}
+function normalizeArabic(s){
+  return (s||'').toString()
+    .replace(/[ً-ْٰـ]/g,'') // تشكيل وتطويل
+    .replace(/[إأآا]/g,'ا')
+    .replace(/ى/g,'ي')
+    .replace(/ة/g,'ه')
+    .replace(/\s+/g,' ')
+    .trim();
+}
+// ترتيب النتائج: تطابق تام → يبدأ بالنص → يحتوي النص (بما فيه الكلمات المفتاحية
+// والأسماء البديلة) → مع أفضلية بسيطة للأكثر استخدامًا ضمن نفس الفئة.
+function searchCommodities(term, limit){
+  limit = limit || 8;
+  const raw = (term||'').trim();
+  if(!raw) return [];
+  const norm = normalizeArabic(raw).toLowerCase();
+  const normEn = raw.toLowerCase();
+  const scored = [];
+  commodities.forEach(c=>{
+    if(c.is_active === false) return;
+    const ar = normalizeArabic(c.arabic_name||'').toLowerCase();
+    const en = (c.english_name||'').toLowerCase();
+    const kwAr = normalizeArabic(c.arabic_keywords||'').toLowerCase();
+    const kwEn = (c.english_keywords||'').toLowerCase();
+    const aliasesAr = normalizeArabic(c.aliases||'').toLowerCase();
+    const aliasesEn = (c.aliases||'').toLowerCase();
+    const hs = (c.hs_code||'').toLowerCase();
+    let score = -1;
+    if(hs && hs === normEn) score = 1000;
+    else if((ar && ar === norm) || (en && en === normEn)) score = 900;
+    else if(hs && hs.startsWith(normEn)) score = 750;
+    else if((ar && ar.startsWith(norm)) || (en && en.startsWith(normEn))) score = 700;
+    else if((ar && ar.includes(norm)) || (en && en.includes(normEn)) ||
+            (kwAr && kwAr.includes(norm)) || (kwEn && kwEn.includes(normEn)) ||
+            (aliasesAr && aliasesAr.includes(norm)) || (aliasesEn && aliasesEn.includes(normEn))) score = 400;
+    if(score < 0) return;
+    score += Math.min(c.usage_count||0, 50) * 0.5;
+    scored.push({c, score});
+  });
+  scored.sort((a,b)=> b.score - a.score);
+  return scored.slice(0, limit).map(x=>x.c);
+}
+async function bumpCommodityUsage(id){
+  const c = commodities.find(x=>x.id===id);
+  if(c) c.usage_count = (c.usage_count||0) + 1;
+  try{ await sb.rpc('bump_commodity_usage', {cid: id}); }catch(e){ console.warn('bump usage failed', e); }
+}
+
+// ---- اقتراحات الكتابة (Autocomplete) — قابلة لإعادة الاستخدام على أي حقل .commodity-input ----
+let csActiveInput = null;
+let csActiveIndex = -1;
+let csDebounce = null;
+let csInlineTargetInput = null;
+const commoditySuggestBox = document.getElementById('commoditySuggestBox');
+function csClose(){
+  commoditySuggestBox.classList.remove('open');
+  commoditySuggestBox.innerHTML = '';
+  csActiveInput = null;
+  csActiveIndex = -1;
+}
+function csPositionBelow(input){
+  const r = input.getBoundingClientRect();
+  commoditySuggestBox.style.left = r.left + 'px';
+  commoditySuggestBox.style.top = (r.bottom + 4) + 'px';
+  commoditySuggestBox.style.width = Math.max(r.width, 260) + 'px';
+}
+function csRender(input, results, term){
+  csActiveIndex = -1;
+  let html = results.map((c,i)=>`
+    <div class="cs-item" data-i="${i}">
+      <div class="cs-item-main">
+        <div class="cs-item-ar">${escapeHtml(c.arabic_name||'')}</div>
+        ${c.english_name ? `<div class="cs-item-en">${escapeHtml(c.english_name)}</div>` : ''}
+      </div>
+      ${c.hs_code ? `<div class="cs-item-hs">${escapeHtml(c.hs_code)}</div>` : ''}
+    </div>`).join('');
+  if(!results.length) html = `<div class="cs-empty">لا توجد نتائج مطابقة</div>`;
+  if(term && term.trim()){
+    html += `<div class="cs-add-new" id="csAddNew">${icon('plus',14)} إضافة "${escapeHtml(shortLabel(term.trim(),30))}" كسلعة جديدة</div>`;
+  }
+  commoditySuggestBox.innerHTML = html;
+  csPositionBelow(input);
+  commoditySuggestBox.classList.add('open');
+}
+function csSelect(input, c){
+  // تعبئة تلقائية بدون Reload — لا نمسح أي قيمة أخرى كتبها المستخدم في حقول مجاورة.
+  input.value = c.arabic_name || c.english_name || '';
+  input.dispatchEvent(new Event('change', {bubbles:true}));
+  bumpCommodityUsage(c.id);
+  csClose();
+}
+function attachCommodityAutocomplete(input){
+  input.addEventListener('input', function(){
+    const term = this.value;
+    const el = this;
+    clearTimeout(csDebounce);
+    csActiveInput = el;
+    csDebounce = setTimeout(()=>{
+      if(!term.trim()){ csClose(); return; }
+      csRender(el, searchCommodities(term, 8), term);
+    }, 250);
+  });
+  input.addEventListener('focus', function(){
+    if(this.value.trim()){ csActiveInput = this; csRender(this, searchCommodities(this.value, 8), this.value); }
+  });
+  input.addEventListener('keydown', function(e){
+    if(!commoditySuggestBox.classList.contains('open') || csActiveInput!==this) return;
+    const items = Array.from(commoditySuggestBox.querySelectorAll('.cs-item'));
+    if(e.key === 'ArrowDown'){
+      e.preventDefault();
+      csActiveIndex = Math.min(csActiveIndex+1, items.length-1);
+      items.forEach((el,i)=>el.classList.toggle('active', i===csActiveIndex));
+      if(items[csActiveIndex]) items[csActiveIndex].scrollIntoView({block:'nearest'});
+    }else if(e.key === 'ArrowUp'){
+      e.preventDefault();
+      csActiveIndex = Math.max(csActiveIndex-1, 0);
+      items.forEach((el,i)=>el.classList.toggle('active', i===csActiveIndex));
+      if(items[csActiveIndex]) items[csActiveIndex].scrollIntoView({block:'nearest'});
+    }else if(e.key === 'Enter'){
+      if(csActiveIndex>=0 && items[csActiveIndex]){ e.preventDefault(); items[csActiveIndex].click(); }
+    }else if(e.key === 'Escape'){ csClose(); }
+  });
+}
+document.querySelectorAll('.commodity-input').forEach(attachCommodityAutocomplete);
+commoditySuggestBox.addEventListener('mousedown', e=> e.preventDefault());
+commoditySuggestBox.addEventListener('click', e=>{
+  if(!csActiveInput) return;
+  if(e.target.closest('#csAddNew')){
+    const term = csActiveInput.value;
+    csInlineTargetInput = csActiveInput;
+    csClose();
+    openCommodityModal(null, term);
+    return;
+  }
+  const item = e.target.closest('.cs-item');
+  if(!item) return;
+  const results = searchCommodities(csActiveInput.value, 8);
+  const c = results[+item.dataset.i];
+  if(c) csSelect(csActiveInput, c);
+});
+document.addEventListener('click', e=>{
+  if(csActiveInput && e.target!==csActiveInput && !commoditySuggestBox.contains(e.target)) csClose();
+});
+window.addEventListener('resize', ()=>{ if(csActiveInput) csPositionBelow(csActiveInput); });
+window.addEventListener('scroll', ()=>{ if(csActiveInput) csPositionBelow(csActiveInput); }, true);
+
+// ---- نافذة إضافة/تعديل سلعة ----
+const commodityOverlay = document.getElementById('commodityOverlay');
+function openCommodityModal(id, prefillAr){
+  cmEditId = id || null;
+  const c = id ? commodities.find(x=>x.id===id) : null;
+  document.getElementById('cmModalTitle').textContent = c ? 'تعديل سلعة' : 'سلعة جديدة';
+  document.getElementById('cm_ar').value = c ? (c.arabic_name||'') : (prefillAr||'');
+  document.getElementById('cm_en').value = c ? (c.english_name||'') : '';
+  document.getElementById('cm_hs').value = c ? (c.hs_code||'') : '';
+  document.getElementById('cm_cat').value = c ? (c.category||'') : '';
+  document.getElementById('cm_subcat').value = c ? (c.subcategory||'') : '';
+  document.getElementById('cm_kwAr').value = c ? (c.arabic_keywords||'') : '';
+  document.getElementById('cm_kwEn').value = c ? (c.english_keywords||'') : '';
+  document.getElementById('cm_aliases').value = c ? (c.aliases||'') : '';
+  commodityOverlay.classList.add('open');
+  setTimeout(()=>document.getElementById('cm_ar').focus(), 80);
+}
+document.getElementById('cmAddBtn').addEventListener('click', ()=> openCommodityModal(null));
+document.getElementById('cmCloseX').addEventListener('click', ()=>{ commodityOverlay.classList.remove('open'); csInlineTargetInput=null; });
+document.getElementById('cmCancelBtn').addEventListener('click', ()=>{ commodityOverlay.classList.remove('open'); csInlineTargetInput=null; });
+commodityOverlay.addEventListener('click', e=>{ if(e.target===commodityOverlay){ commodityOverlay.classList.remove('open'); csInlineTargetInput=null; } });
+document.getElementById('cmSaveBtn').addEventListener('click', async ()=>{
+  const ar = document.getElementById('cm_ar').value.trim();
+  if(!ar){ alert('اكتب الاسم العربي للسلعة على الأقل.'); return; }
+  const row = {
+    arabic_name: ar,
+    english_name: document.getElementById('cm_en').value.trim(),
+    hs_code: document.getElementById('cm_hs').value.trim(),
+    category: document.getElementById('cm_cat').value.trim(),
+    subcategory: document.getElementById('cm_subcat').value.trim(),
+    arabic_keywords: document.getElementById('cm_kwAr').value.trim(),
+    english_keywords: document.getElementById('cm_kwEn').value.trim(),
+    aliases: document.getElementById('cm_aliases').value.trim(),
+    updated_at: new Date().toISOString()
+  };
+  let savedId = cmEditId;
+  try{
+    if(cmEditId){
+      const {error} = await sb.from('commodities').update(row).eq('id', cmEditId);
+      if(error) throw error;
+      Object.assign(commodities.find(x=>x.id===cmEditId), row);
+    }else{
+      const {data, error} = await sb.from('commodities').insert(row).select().single();
+      if(error) throw error;
+      commodities.unshift(data);
+      savedId = data.id;
+    }
+  }catch(e){ dbError(e, 'تعذّر حفظ السلعة'); return; }
+  toast('تم حفظ السلعة ✓');
+  addLog(cmEditId?'edit':'add', (cmEditId?'تعديل سلعة: ':'إضافة سلعة: ')+ar);
+  commodityOverlay.classList.remove('open');
+  renderCommodityAdmin();
+  if(csInlineTargetInput){
+    const c = commodities.find(x=>x.id===savedId);
+    if(c) csSelect(csInlineTargetInput, c);
+    csInlineTargetInput = null;
+  }
+});
+
+// ---- لوحة إدارة دليل السلع ----
+let cmSearchDebounce = null;
+function renderCommodityAdmin(){
+  const box = document.getElementById('cmItems');
+  if(!box) return;
+  document.getElementById('cmCount').textContent = `(${commodities.length})`;
+  const term = (document.getElementById('cmSearch').value||'').trim();
+  const list = term ? searchCommodities(term, 200) : commodities.slice(0, 200);
+  document.getElementById('cmVisibleCount').textContent = list.length + ' معروضة';
+  box.innerHTML = list.length ? list.map(c=>`
+    <div class="lk-row" data-id="${c.id}">
+      <div class="lk-txt">
+        <b>${escapeHtml(c.arabic_name||'')}</b>${c.english_name? ' — '+escapeHtml(c.english_name) : ''}
+        <small>${[c.hs_code?'HS: '+escapeHtml(c.hs_code):'', c.category?escapeHtml(c.category):'', 'استُخدمت '+(c.usage_count||0)+' مرة', c.is_active===false?'معطّلة':''].filter(Boolean).join(' · ')}</small>
+      </div>
+      <div class="lk-acts">
+        <select class="lookup-sel cm-addlist-sel" style="padding:6px 10px;font-size:12.5px;" data-id="${c.id}">
+          <option value="">+ أضف لقائمة</option>
+          ${LOOKUP_DEFS.map(d=>`<option value="${d.key}">${escapeHtml(d.label)}</option>`).join('')}
+        </select>
+        <button class="btn btn-ghost btn-small cm-edit">تعديل</button>
+        <button class="btn btn-ghost btn-small cm-toggle">${c.is_active===false?'تفعيل':'تعطيل'}</button>
+      </div>
+    </div>`).join('')
+    : '<div class="lk-empty">مفيش سلع مطابقة — اضغط "إضافة سلعة"</div>';
+}
+async function dbAddLookupWithCommodity(key, value, commodityId){
+  const {error} = await sb.from('lookups').insert({list_key:key, value, commodity_id: commodityId});
+  if(error) throw error;
+}
+document.getElementById('cmSearch').addEventListener('input', ()=>{
+  clearTimeout(cmSearchDebounce);
+  cmSearchDebounce = setTimeout(renderCommodityAdmin, 220);
+});
+document.getElementById('cmItems').addEventListener('change', async (e)=>{
+  const sel = e.target.closest('.cm-addlist-sel');
+  if(!sel || !sel.value) return;
+  const key = sel.value;
+  const c = commodities.find(x=>x.id===sel.dataset.id);
+  if(!c) return;
+  const val = c.arabic_name || c.english_name || '';
+  if(!val){ sel.value=''; return; }
+  if(!Array.isArray(lookups[key])) lookups[key] = [];
+  if(lookups[key].includes(val)){ toast('السلعة موجودة في القائمة بالفعل'); sel.value=''; return; }
+  try{ await dbAddLookupWithCommodity(key, val, c.id); }
+  catch(err){ dbError(err,'تعذّرت الإضافة للقائمة'); sel.value=''; return; }
+  lookups[key].push(val);
+  fillLookupSelects();
+  if(lkCurrentKey===key) renderLookupAdmin();
+  toast('تمت الإضافة إلى "'+LOOKUP_DEFS.find(d=>d.key===key).label+'" ✓');
+  addLog('add', 'إضافة سلعة "'+val+'" إلى قائمة '+LOOKUP_DEFS.find(d=>d.key===key).label);
+  sel.value = '';
+});
+document.getElementById('cmItems').addEventListener('click', async (e)=>{
+  const row = e.target.closest('.lk-row');
+  if(!row) return;
+  const c = commodities.find(x=>x.id===row.dataset.id);
+  if(!c) return;
+  if(e.target.closest('.cm-edit')) openCommodityModal(c.id);
+  else if(e.target.closest('.cm-toggle')){
+    const newActive = c.is_active===false;
+    try{
+      const {error} = await sb.from('commodities').update({is_active:newActive}).eq('id', c.id);
+      if(error) throw error;
+    }catch(e){ dbError(e,'تعذّر تحديث الحالة'); return; }
+    c.is_active = newActive;
+    renderCommodityAdmin();
+    addLog('edit', (newActive?'تفعيل سلعة: ':'تعطيل سلعة: ')+c.arabic_name);
   }
 });
 
