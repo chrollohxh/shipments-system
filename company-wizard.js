@@ -9,6 +9,8 @@
     ['التحقق والمراجعة', 'راجع البيانات قبل الحفظ']
   ];
   const storageKey = 'company_wizard_step';
+  const invoicePreviewSettingsKey = 'baharSwakenInvoicePreviewSettings';
+  let invoiceSettingsPanel = null;
 
   function valueOf(id) {
     const el = document.getElementById(id);
@@ -118,6 +120,7 @@
     const summary = document.createElement('div'); summary.className = 'cew-summary'; summary.id = 'cewSummary';
     append(panels[3], previewTitle);
     addLayoutEditor(panels[3]);
+    invoiceSettingsPanel = panels[3];
     append(panels[3], summary, previewBar, preview, actions);
     panels.forEach((panel, index) => {
       const nav = document.createElement('div'); nav.className = 'cew-actions';
@@ -156,11 +159,77 @@
     overlay.addEventListener('change', () => { updateSummary(); updateProgress([...panels].findIndex(p => p.classList.contains('active'))); });
     setStep(Number(sessionStorage.getItem(storageKey)) || 1);
   }
+
+  function isBaharSwaken() {
+    const ar = (document.getElementById('ce_nameAr')?.value || '').trim();
+    const en = (document.getElementById('ce_nameEn')?.value || '').trim();
+    return /بحر\s*سواكن|bahar\s*swaken/i.test(ar + ' ' + en);
+  }
+
+  function invoicePreviewDefaults() {
+    return { name:'Bahar Swaken — Commercial Invoice', accent:'#b72127', tableHeader:'#86191f', tableFont:'IBM Plex Sans', watermark:'', watermarkOpacity:7 };
+  }
+
+  function getInvoicePreviewSettings() {
+    try { return Object.assign({}, invoicePreviewDefaults(), JSON.parse(localStorage.getItem(invoicePreviewSettingsKey) || '{}')); }
+    catch (e) { return invoicePreviewDefaults(); }
+  }
+
+  function syncBaharInvoiceSettings() {
+    if (!invoiceSettingsPanel) return;
+    const existing = invoiceSettingsPanel.querySelector('.cew-bahar-invoice');
+    if (!isBaharSwaken()) { if (existing) existing.remove(); return; }
+    if (existing) return;
+    const settings = getInvoicePreviewSettings();
+    const section = document.createElement('section');
+    section.className = 'cew-bahar-invoice cew-upload-card';
+    section.innerHTML = `
+      <div class="section-title">جدول فاتورة Bahar Swaken</div>
+      <p style="margin:-4px 0 14px;color:#718096;font-size:12px;line-height:1.65;">إعدادات خاصة بمعاينة فاتورة بحر سواكن فقط، ولا تؤثر على الشركات الأخرى أو الفواتير الحالية.</p>
+      <div class="grid">
+        <div class="field"><label>اسم النموذج</label><input class="bi-name" dir="ltr"></div>
+        <div class="field"><label>خط جدول البنود</label><select class="bi-font"><option value="IBM Plex Sans">IBM Plex Sans</option></select></div>
+        <div class="field"><label>لون التصميم الرئيسي</label><input class="bi-accent" type="color"></div>
+        <div class="field"><label>لون رأس الجدول</label><input class="bi-header" type="color"></div>
+        <div class="field"><label>العلامة المائية</label><input class="bi-watermark" type="file" accept="image/*"><div class="bi-watermark-status"></div></div>
+        <div class="field"><label>شفافية العلامة المائية: <b class="bi-opacity-value"></b>%</label><input class="bi-opacity" type="range" min="0" max="25" step="1"></div>
+      </div>
+      <div class="cew-actions"><button type="button" class="btn btn-primary bi-save">حفظ إعدادات المعاينة</button><button type="button" class="btn btn-ghost bi-preview">فتح معاينة التصميم</button><button type="button" class="btn btn-ghost bi-reset">استرجاع المعتمد</button></div>`;
+    invoiceSettingsPanel.insertBefore(section, invoiceSettingsPanel.querySelector('.cew-summary'));
+    const one = selector => section.querySelector(selector);
+    one('.bi-name').value = settings.name;
+    one('.bi-font').value = settings.tableFont;
+    one('.bi-accent').value = settings.accent;
+    one('.bi-header').value = settings.tableHeader;
+    one('.bi-opacity').value = settings.watermarkOpacity;
+    one('.bi-opacity-value').textContent = settings.watermarkOpacity;
+    one('.bi-watermark-status').textContent = settings.watermark ? 'تم اختيار علامة مائية' : 'لا توجد صورة مرفوعة';
+    one('.bi-opacity').addEventListener('input', event => one('.bi-opacity-value').textContent = event.target.value);
+    one('.bi-watermark').addEventListener('change', event => {
+      const file = event.target.files && event.target.files[0]; if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => { one('.bi-watermark').dataset.value = reader.result; one('.bi-watermark-status').textContent = file.name; };
+      reader.readAsDataURL(file);
+    });
+    one('.bi-save').addEventListener('click', () => {
+      const current = getInvoicePreviewSettings();
+      localStorage.setItem(invoicePreviewSettingsKey, JSON.stringify({
+        name:one('.bi-name').value.trim() || invoicePreviewDefaults().name,
+        tableFont:one('.bi-font').value, accent:one('.bi-accent').value, tableHeader:one('.bi-header').value,
+        watermark:one('.bi-watermark').dataset.value || current.watermark || '', watermarkOpacity:Number(one('.bi-opacity').value)
+      }));
+      if (typeof toast === 'function') toast('تم حفظ إعدادات معاينة Bahar Swaken');
+    });
+    one('.bi-preview').addEventListener('click', () => window.open('/invoice-template-preview/bahar-swaken/', '_blank', 'noopener'));
+    one('.bi-reset').addEventListener('click', () => { localStorage.removeItem(invoicePreviewSettingsKey); section.remove(); syncBaharInvoiceSettings(); });
+  }
+
   new MutationObserver(() => {
     if (!overlay.classList.contains('open')) return;
     build();
     const legacyTemplateButton = document.getElementById('ceTplEditBtn');
     if (legacyTemplateButton) legacyTemplateButton.style.display = 'none';
+    setTimeout(syncBaharInvoiceSettings, 0);
   }).observe(overlay, { attributes: true, attributeFilter: ['class'] });
   if (overlay.classList.contains('open')) build();
 })();
