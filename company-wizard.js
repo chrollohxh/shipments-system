@@ -167,7 +167,7 @@
   }
 
   function invoicePreviewDefaults() {
-    return { name:'Bahar Swaken — Commercial Invoice', accent:'#b72127', tableHeader:'#86191f', tableFont:'IBM Plex Sans', watermark:'', watermarkOpacity:7 };
+    return { name:'Bahar Swaken — Commercial Invoice', accent:'#b72127', tableHeader:'#86191f', tableFont:'IBM Plex Sans', background:'', watermark:'', watermarkOpacity:7 };
   }
 
   function getInvoicePreviewSettings() {
@@ -191,6 +191,7 @@
         <div class="field"><label>خط جدول البنود</label><select class="bi-font"><option value="IBM Plex Sans">IBM Plex Sans</option></select></div>
         <div class="field"><label>لون التصميم الرئيسي</label><input class="bi-accent" type="color"></div>
         <div class="field"><label>لون رأس الجدول</label><input class="bi-header" type="color"></div>
+        <div class="field"><label>خلفية جدول الفاتورة (ترويسة وتذييل)</label><input class="bi-background" type="file" accept="image/png,image/jpeg,image/webp"><div class="bi-background-status"></div></div>
         <div class="field"><label>العلامة المائية</label><input class="bi-watermark" type="file" accept="image/*"><div class="bi-watermark-status"></div></div>
         <div class="field"><label>شفافية العلامة المائية: <b class="bi-opacity-value"></b>%</label><input class="bi-opacity" type="range" min="0" max="25" step="1"></div>
       </div>
@@ -202,9 +203,16 @@
     one('.bi-accent').value = settings.accent;
     one('.bi-header').value = settings.tableHeader;
     one('.bi-opacity').value = settings.watermarkOpacity;
+    one('.bi-background-status').textContent = settings.background ? 'تم اختيار خلفية الفاتورة' : 'لا توجد خلفية مرفوعة';
     one('.bi-opacity-value').textContent = settings.watermarkOpacity;
     one('.bi-watermark-status').textContent = settings.watermark ? 'تم اختيار علامة مائية' : 'لا توجد صورة مرفوعة';
     one('.bi-opacity').addEventListener('input', event => one('.bi-opacity-value').textContent = event.target.value);
+    one('.bi-background').addEventListener('change', event => {
+      const file = event.target.files && event.target.files[0]; if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => { one('.bi-background').dataset.value = reader.result; one('.bi-background-status').textContent = file.name; };
+      reader.readAsDataURL(file);
+    });
     one('.bi-watermark').addEventListener('change', event => {
       const file = event.target.files && event.target.files[0]; if (!file) return;
       const reader = new FileReader();
@@ -216,6 +224,7 @@
       localStorage.setItem(invoicePreviewSettingsKey, JSON.stringify({
         name:one('.bi-name').value.trim() || invoicePreviewDefaults().name,
         tableFont:one('.bi-font').value, accent:one('.bi-accent').value, tableHeader:one('.bi-header').value,
+        background:one('.bi-background').dataset.value || current.background || '',
         watermark:one('.bi-watermark').dataset.value || current.watermark || '', watermarkOpacity:Number(one('.bi-opacity').value)
       }));
       if (typeof toast === 'function') toast('تم حفظ إعدادات معاينة Bahar Swaken');
@@ -233,3 +242,4 @@
   }).observe(overlay, { attributes: true, attributeFilter: ['class'] });
   if (overlay.classList.contains('open')) build();
 })();
+
