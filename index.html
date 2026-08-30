@@ -13389,8 +13389,11 @@ function bolValues(r){
     billNo: r.billNo,
     billDate: fmtDate(r.billDate),
     shipper: r.exporter,
+    shipperAddress: r.exporterAddress,
     consignee: r.consignee,
+    consigneeAddress: r.consigneeAddress,
     notify: r.notifyParty,
+    notifyAddress: r.notifyAddress,
     portLoading: r.portLoading,
     portDischarge: r.portDischarge,
     marks: r.numberOfPackages,
@@ -14039,15 +14042,15 @@ function bolSheetCoded(r, lang){
   <div class="bol3-fields">
     <div class="bol3-field">
       <div class="bar bol3-bilingual">${bilingualBar('Shipper','الشاحن',lang)}</div>
-      <div class="box">${esc(v.shipper)}</div>
+      <div class="box">${esc(v.shipper)}${v.shipperAddress ? `<div class="bol3-addr">${esc(v.shipperAddress)}</div>` : ''}</div>
     </div>
     <div class="bol3-field">
       <div class="bar bol3-bilingual">${bilingualBar('Consignee','المرسل إليه',lang)}</div>
-      <div class="box">${esc(v.consignee)}</div>
+      <div class="box">${esc(v.consignee)}${v.consigneeAddress ? `<div class="bol3-addr">${esc(v.consigneeAddress)}</div>` : ''}</div>
     </div>
     <div class="bol3-field">
       <div class="bar bol3-bilingual">${bilingualBar('Notify Party','الطرف المخطر',lang)}</div>
-      <div class="box">${esc(v.notify)}</div>
+      <div class="box">${esc(v.notify)}${v.notifyAddress ? `<div class="bol3-addr">${esc(v.notifyAddress)}</div>` : ''}</div>
     </div>
     <div class="bol3-field">
       <div class="bar bol3-bilingual">${bilingualBar('Port Of Loading','ميناء التحميل',lang)}</div>
@@ -14948,6 +14951,7 @@ table.inv-items tr.blank td{height:var(--items-h,31px);}
 .bol3-field .bar.bol3-bilingual{direction:ltr;}
 .bol3-field .bar.bol3-bilingual .ar{direction:rtl;}
 .bol3-field .box{ min-height:var(--bol-field-h,40px); padding:var(--bol-field-pad,8px 12px); font-size:var(--bol-f-fields,12px); line-height:1.5; white-space:pre-line; }
+.bol3-field .bol3-addr{ font-size:0.85em; color:#6b6b6b; white-space:pre-line; margin-top:2px; }
 
 .bol3-logo-el img{ width:100%; display:block; object-fit:contain; }
 .bol3-logo-el,.sbl-logo-el{position:absolute;z-index:4;pointer-events:none;transform-origin:center;}
