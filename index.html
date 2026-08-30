@@ -4681,6 +4681,10 @@ body.role-staff #navWallet,body.role-staff #navAdmin{display:flex !important;}
           <label id="lkFieldLabel">القيمة</label>
           <textarea id="lk_value" rows="3"></textarea>
         </div>
+        <div class="field span2" id="lkAddressField" style="display:none;">
+          <label>العنوان (يتعبّى تلقائياً في الشحنة لما يُختار هذا الاسم)</label>
+          <textarea id="lk_address" rows="3"></textarea>
+        </div>
       </div>
       <div class="detail-actions">
         <button class="btn btn-primary" id="lkSaveBtn">حفظ</button>
@@ -5303,16 +5307,28 @@ function isUuid(v){ return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-
 async function saveRecords(){ /* لم تعد مستخدمة */ }
 
 // ===== القوائم الجاهزة =====
+// قوائم يُربط بعناصرها عنوان (المصدّر/المرسل إليه/الطرف المخطر) — لما يُختار
+// الاسم في نموذج الشحنة، عنوانه المرتبط يتعبّى تلقائياً في حقل العنوان المقابل.
+const LOOKUP_ADDRESS_PAIRS = {exporter:'f_exporterAddress', consignee:'f_consigneeAddress', notifyParty:'f_notifyAddress'};
+let lookupAddresses = {}; // { [list_key]: { [value]: address } }
 async function loadLookups(){
   lookups = {};
+  lookupAddresses = {};
   LOOKUP_DEFS.forEach(d=> lookups[d.key] = []);
   netStart();
   try{
-    const {data, error} = await sb.from('lookups').select('list_key,value').order('value');
+    // linked_address عمود جديد — لو ملف SQL الخاص به لسه ما اتشغّل، نرجع نجرّب
+    // بدونه بدل ما نكسر تحميل كل القوائم الجاهزة.
+    let sel = await sb.from('lookups').select('list_key,value,linked_address').order('value');
+    if(sel.error) sel = await sb.from('lookups').select('list_key,value').order('value');
+    const {data, error} = sel;
     if(error) throw error;
     (data||[]).forEach(r=>{
       if(!lookups[r.list_key]) lookups[r.list_key] = [];
       lookups[r.list_key].push(r.value);
+      if(r.linked_address){
+        (lookupAddresses[r.list_key] = lookupAddresses[r.list_key]||{})[r.value] = r.linked_address;
+      }
     });
     // القيم الافتراضية أول مرة (للمدير فقط)
     if(isAdmin()){
@@ -5328,12 +5344,16 @@ async function loadLookups(){
   }catch(e){ dbError(e, 'تعذّر تحميل القوائم'); }
   finally{ netEnd(); }
 }
-async function dbAddLookup(key, value){
-  const {error} = await sb.from('lookups').insert({list_key:key, value});
+async function dbAddLookup(key, value, address){
+  const row = {list_key:key, value};
+  if(address !== undefined) row.linked_address = address || null;
+  const {error} = await sb.from('lookups').insert(row);
   if(error) throw error;
 }
-async function dbUpdateLookup(key, oldVal, newVal){
-  const {error} = await sb.from('lookups').update({value:newVal})
+async function dbUpdateLookup(key, oldVal, newVal, address){
+  const row = {value:newVal};
+  if(address !== undefined) row.linked_address = address || null;
+  const {error} = await sb.from('lookups').update(row)
     .eq('list_key', key).eq('value', oldVal);
   if(error) throw error;
 }
@@ -5968,6 +5988,20 @@ document.getElementById('f_consignee').addEventListener('change', function(){
   const c = clientByName(this.value);
   if(c && c.address) setLookupValue(addrSel, c.address);
 });
+// تعبئة تلقائية للعنوان المرتبط بالاسم (مصدّر/مرسل إليه/طرف مخطر) من القوائم
+// الجاهزة — فقط إن كان حقل العنوان فارغاً، بدون استبدال أي قيمة كتبها المستخدم.
+Object.entries(LOOKUP_ADDRESS_PAIRS).forEach(([nameKey, addrFieldId])=>{
+  const def = LOOKUP_DEFS.find(d=>d.key===nameKey);
+  if(!def) return;
+  const nameEl = document.getElementById(def.fields[0]);
+  const addrEl = document.getElementById(addrFieldId);
+  if(!nameEl || !addrEl) return;
+  nameEl.addEventListener('change', function(){
+    if(addrEl.value) return;
+    const addr = (lookupAddresses[nameKey]||{})[this.value];
+    if(addr) setLookupValue(addrEl, addr);
+  });
+});
 
 // يجمع القيم الموجودة في الشحنات ويضيفها للقوائم (المدير فقط يكتب على السيرفر)
 async function harvestLookups(){
@@ -6467,7 +6501,17 @@ function openLkModal(idx){
   document.getElementById('lkFieldLabel').textContent = def.label;
   const ta = document.getElementById('lk_value');
   ta.rows = def.long ? 3 : 2;
-  ta.value = lkEditIndex===null ? '' : (lookups[lkCurrentKey][lkEditIndex]||'');
+  const curVal = lkEditIndex===null ? '' : (lookups[lkCurrentKey][lkEditIndex]||'');
+  ta.value = curVal;
+  const addrField = document.getElementById('lkAddressField');
+  const addrTa = document.getElementById('lk_address');
+  if(LOOKUP_ADDRESS_PAIRS[lkCurrentKey]){
+    addrField.style.display = '';
+    addrTa.value = ((lookupAddresses[lkCurrentKey]||{})[curVal]) || '';
+  }else{
+    addrField.style.display = 'none';
+    addrTa.value = '';
+  }
   lkOverlay.classList.add('open');
   setTimeout(()=>ta.focus(), 80);
 }
@@ -6484,6 +6528,7 @@ document.getElementById('lkItems').addEventListener('click', async (e)=>{
     if(!confirm('حذف "'+shortLabel(v,40)+'" من القائمة؟\n\nالشحنات المحفوظة مش هتتأثر.')) return;
     try{ await dbDeleteLookup(lkCurrentKey, v); }catch(e){ dbError(e,'تعذّر الحذف'); return; }
     lookups[lkCurrentKey].splice(i,1);
+    if(lookupAddresses[lkCurrentKey]) delete lookupAddresses[lkCurrentKey][v];
     fillLookupSelects(); renderLookupAdmin();
     addLog('del','حذف من قائمة '+LOOKUP_DEFS.find(d=>d.key===lkCurrentKey).label);
   }
@@ -6494,9 +6539,19 @@ document.getElementById('lkSaveBtn').addEventListener('click', async ()=>{
   const list = lookups[lkCurrentKey];
   const dup = list.findIndex(x=>x===v);
   if(dup>=0 && dup!==lkEditIndex){ alert('القيمة دي موجودة بالفعل في القائمة.'); return; }
+  const hasAddrField = !!LOOKUP_ADDRESS_PAIRS[lkCurrentKey];
+  const addr = hasAddrField ? document.getElementById('lk_address').value.trim() : undefined;
   try{
-    if(lkEditIndex===null){ await dbAddLookup(lkCurrentKey, v); list.push(v); }
-    else { await dbUpdateLookup(lkCurrentKey, list[lkEditIndex], v); list[lkEditIndex] = v; }
+    if(lkEditIndex===null){ await dbAddLookup(lkCurrentKey, v, addr); list.push(v); }
+    else {
+      const oldVal = list[lkEditIndex];
+      await dbUpdateLookup(lkCurrentKey, oldVal, v, addr);
+      list[lkEditIndex] = v;
+      if(hasAddrField && lookupAddresses[lkCurrentKey]) delete lookupAddresses[lkCurrentKey][oldVal];
+    }
+    if(hasAddrField && addr){
+      (lookupAddresses[lkCurrentKey] = lookupAddresses[lkCurrentKey]||{})[v] = addr;
+    }
   }catch(e){ dbError(e,'تعذّر الحفظ'); return; }
   fillLookupSelects(); renderLookupAdmin();
   addLog(lkEditIndex===null?'add':'edit', (lkEditIndex===null?'إضافة إلى ':'تعديل في ')+LOOKUP_DEFS.find(d=>d.key===lkCurrentKey).label);
