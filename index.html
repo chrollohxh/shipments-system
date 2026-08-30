@@ -13572,7 +13572,7 @@ let templatePositions = {cert:{}, bol:{}, certSea:{}, bolSea:{}, bolCodedFree:{}
 function fieldPos(docType, def){
   if(docType === 'certWordCoded') return certWordFieldPos(def);
   // أثناء تحرير نموذج بوليصة معيّن: مواضعه هو
-  if(activeBolTplId && (docType === 'bol' || docType === 'bolSea')){
+  if(activeBolTplId && (docType === 'bol' || docType === 'bolSea' || docType === 'cert' || docType === 'certSea')){
     const t = bolTplById(activeBolTplId);
     if(t){
       const c = (t.positions || {})[def.key];
@@ -16216,7 +16216,7 @@ function tplSetPosition(key, patch){
     return;
   }
   // نموذج بوليصة محدد: نحفظ في مواضعه هو
-  if(activeBolTplId && (tplCurrentDoc === 'bol' || tplCurrentDoc === 'bolSea')){
+  if(activeBolTplId && (tplCurrentDoc === 'bol' || tplCurrentDoc === 'bolSea' || tplCurrentDoc === 'cert' || tplCurrentDoc === 'certSea')){
     const t = bolTplById(activeBolTplId);
     if(t){
       t.positions = t.positions || {};
