@@ -14,7 +14,7 @@
     .preview-bar{position:sticky;top:0;z-index:5;align-items:center;justify-content:space-between;gap:16px;padding:14px clamp(16px,4vw,54px);background:rgba(255,255,255,.94);border-bottom:1px solid #e3e8ee;box-shadow:0 5px 19px rgba(20,30,43,.08);backdrop-filter:blur(12px);}
     .preview-brand{display:flex;align-items:center;gap:11px;font-weight:800}.preview-brand span{display:grid;place-items:center;width:34px;height:34px;border-radius:11px;background:linear-gradient(135deg,var(--red),#ef5350);color:#fff;font-size:15px;box-shadow:0 6px 12px rgba(183,33,39,.25)}
     .preview-copy small{display:block;color:#77818d;font-weight:600;margin-top:2px}.preview-actions{display:flex;flex-wrap:wrap;gap:8px}.preview-actions button{border:1px solid #d8dee6;background:#fff;color:#253444;border-radius:10px;padding:10px 14px;font:700 13px inherit;cursor:pointer;transition:.2s}.preview-actions button:hover{border-color:var(--red);color:var(--red);transform:translateY(-1px)}.preview-actions .primary{background:var(--red);border-color:var(--red);color:#fff;box-shadow:0 7px 15px rgba(183,33,39,.22)}
-    .work-area{padding:34px 18px 58px}.sheet-wrap{display:flex;justify-content:center}.a4-sheet{position:relative;width:210mm;min-height:297mm;padding:12mm;background:var(--paper);box-shadow:0 18px 46px rgba(20,30,43,.18);overflow:hidden}.a4-sheet:after{content:"EXPERIMENTAL PREVIEW";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) rotate(-32deg);z-index:0;color:rgba(183,33,39,.035);font-size:38px;font-weight:900;white-space:nowrap;pointer-events:none}
+    .work-area{padding:34px 18px 58px}.sheet-wrap{display:flex;justify-content:center}.a4-sheet{position:relative;width:210mm;min-height:297mm;padding:12mm;background:var(--paper) center/100% 100% no-repeat;box-shadow:0 18px 46px rgba(20,30,43,.18);overflow:hidden}.a4-sheet:after{content:"EXPERIMENTAL PREVIEW";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) rotate(-32deg);z-index:0;color:rgba(183,33,39,.035);font-size:38px;font-weight:900;white-space:nowrap;pointer-events:none}
     .invoice{position:relative;z-index:1}.title-band{margin-top:0;padding:10px 14px;background:var(--black);color:#fff;text-align:center;font-size:16px;font-weight:900;letter-spacing:1.2px;border-bottom:4px solid var(--red)}
     .meta-grid{display:grid;grid-template-columns:1fr 1.4fr;gap:0;border:1px solid var(--black);border-top:0}.meta-cell{min-height:48px;padding:8px 11px;border-bottom:1px solid var(--line)}.meta-cell:nth-child(odd){border-right:1px solid var(--line)}.meta-label{display:block;color:var(--red-deep);font-weight:800;font-size:8px;letter-spacing:.8px;text-transform:uppercase;margin-bottom:6px}.meta-value{font-size:10px;font-weight:700;line-height:1.35}.meta-wide{grid-column:1/-1;border-bottom:0}.meta-wide .meta-value{font-size:10px}
     .items{width:100%;margin-top:13px;border-collapse:collapse;font:500 9px/1.35 "IBM Plex Sans",Arial,sans-serif}.items th{padding:10px 7px;background:var(--red-deep);color:#fff;border:1px solid var(--red-deep);font:700 8px/1.25 "IBM Plex Sans",Arial,sans-serif;letter-spacing:.35px}.items th span{display:block;font-size:6px;color:rgba(255,255,255,.72);margin-top:2px}.items td{height:31px;padding:7px;border:1px solid #d7dce2;vertical-align:middle}.items td:first-child{text-align:left;font-weight:700}.items td:not(:first-child){text-align:center}.watermark{position:absolute;left:50%;top:52%;width:154px;height:154px;transform:translate(-50%,-50%) rotate(-18deg);border:8px solid rgba(183,33,39,.055);border-radius:50%;display:grid;place-items:center;color:rgba(183,33,39,.07);font-size:18px;font-weight:900;letter-spacing:1px}.watermark:before{content:"BS";font-size:54px}.watermark:after{content:"BAHAR SWAKEN";position:absolute;font-size:8px;letter-spacing:2px}
@@ -28,7 +28,6 @@
     <div class="preview-brand"><span>BS</span><div class="preview-copy">Bahar Swaken<div><small>Experimental Invoice Design · Preview only</small></div></div></div>
     <div class="preview-actions">
       <button type="button" onclick="history.length > 1 ? history.back() : location.assign('/')">Back</button>
-      <button type="button" onclick="location.assign('/invoice-template-preview/bahar-swaken/settings/')">Template Settings</button>
       <button type="button" onclick="window.print()">Print Preview</button>
       <button class="primary" type="button" onclick="window.print()">Export PDF</button>
     </div>
@@ -52,13 +51,14 @@
   </div></article></div></main>
   <script>
     (function(){
-      const defaults = {accent:'#b72127', tableHeader:'#86191f', tableFont:'IBM Plex Sans', watermark:'', watermarkOpacity:7};
+      const defaults = {accent:'#b72127', tableHeader:'#86191f', tableFont:'IBM Plex Sans', background:'', watermark:'', watermarkOpacity:7};
       let settings = defaults;
       try { settings = Object.assign({}, defaults, JSON.parse(localStorage.getItem('baharSwakenInvoicePreviewSettings') || '{}')); } catch(e) {}
       document.documentElement.style.setProperty('--red', settings.accent);
       document.documentElement.style.setProperty('--red-deep', settings.tableHeader);
       const table = document.querySelector('.items');
       if(table && settings.tableFont) table.style.fontFamily = '"' + settings.tableFont + '", Arial, sans-serif';
+      if(settings.background) document.querySelector('.a4-sheet').style.backgroundImage = 'url("' + settings.background + '")';
       if(settings.watermark){
         const mark = document.querySelector('.watermark');
         mark.style.backgroundImage = 'url("' + settings.watermark + '")';
@@ -72,3 +72,4 @@
   </script>
 </body>
 </html>
+
