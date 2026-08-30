@@ -8194,7 +8194,10 @@ async function loadBolTemplates(){
 }
 function bolTplById(id){ return bolTemplates.find(t=>t.id===id) || null; }
 function bolTplsFor(shipType){
-  return bolTemplates.filter(t=>t.active && (t.ship_type === shipType || t.ship_type === 'both'));
+  return bolTemplates.filter(t=>t.active && t.document_type!=='cert' && (t.ship_type === shipType || t.ship_type === 'both'));
+}
+function certTplsFor(shipType){
+  return bolTemplates.filter(t=>t.active && t.document_type==='cert' && (t.ship_type === shipType || t.ship_type === 'both'));
 }
 function defaultBolTpl(shipType){
   const list = bolTplsFor(shipType);
@@ -8225,17 +8228,20 @@ function fillCertPicker(selected, shipType){
   const wrap = document.getElementById('f_certTemplateWrap');
   if(!sel) return;
   const st = shipType || document.getElementById('f_shipType')?.value || 'land';
-  if(wrap) wrap.style.display = (st === 'sea') ? '' : 'none';
-  let opts = '<option value="">— صورة مرفوعة —</option>';
+  if(wrap) wrap.style.display = '';
+  const uploaded = certTplsFor(st);
+  let opts = '<option value="">— النموذج الافتراضي —</option>';
   if(docIdentity.certCoded){
     opts += '<option value="coded">شهادة منشأ مبنية بالكود — HTML</option>';
     if(certWordTemplate.active !== false) opts += '<option value="coded-word">شهادة منشأ - PDF قابل للتحرير</option>';
   }
   if(st === 'sea') opts += '<option value="dubai-pdf">منشأ دبي التجريبي ليس للتداول — PDF ثابت</option>';
+  opts += uploaded.map(t=>`<option value="${t.id}">${escapeHtml(t.name)} — صورة مرفوعة${t.is_default?' (افتراضي)':''}</option>`).join('');
   sel.innerHTML = opts;
   if(selected === 'coded' && docIdentity.certCoded) sel.value = selected;
   if(selected === 'coded-word' && docIdentity.certCoded && certWordTemplate.active !== false) sel.value = selected;
   if(selected === 'dubai-pdf' && st === 'sea') sel.value = selected;
+  if(selected && uploaded.find(t=>t.id===selected)) sel.value = selected;
 }
 
 // ---- لوحة الإدارة ----
@@ -8243,8 +8249,10 @@ function renderBolTplAdmin(){
   const el = document.getElementById('bolTplList');
   if(!el) return;
   // المجموعة تُبنى من النماذج المحفوظة بالفعل؛ لا نضيف أو نحذف أو نغيّر أي ID هنا.
+  // ملاحظة: kind يحمل الشكل (صورة/كود) دايماً وليس فاضياً أبداً، فلازم نفحص
+  // document_type مستقلاً بدل ما ندمجه معه بـ || (كان بيمنع فحص النوع الحقيقي نهائياً).
   const certKinds = new Set(['certificate','cert','origin']);
-  const certDb = bolTemplates.filter(t=>certKinds.has(String(t.kind||t.document_type||t.template_type||'').toLowerCase()));
+  const certDb = bolTemplates.filter(t=>certKinds.has(String(t.document_type||t.template_type||'').toLowerCase()));
   const landDb = bolTemplates.filter(t=>!certDb.includes(t) && (t.ship_type==='land' || t.ship_type==='both'));
   const seaDb = bolTemplates.filter(t=>!certDb.includes(t) && (t.ship_type==='sea' || t.ship_type==='both'));
   const rows = [
@@ -8283,7 +8291,9 @@ function renderBolTplAdmin(){
     if(row.template && row.template.kind!=='coded'){
       if(!row.template.image){ alert('ارفع ملف النموذج أولاً قبل فتح الاستوديو.'); return; }
       activeBolTplId = row.template.id;
-      tplCurrentDoc = row.template.ship_type === 'sea' ? 'bolSea' : 'bol';
+      tplCurrentDoc = row.group==='cert'
+        ? (row.template.ship_type === 'sea' ? 'certSea' : 'cert')
+        : (row.template.ship_type === 'sea' ? 'bolSea' : 'bol');
     }else{
       tplCurrentDoc = row.doc || (row.group==='sea'?'bolSeaCodedFree':row.group==='land'?'bolCodedFree':'certWordCoded');
     }
@@ -9593,7 +9603,10 @@ function openBolTplFields(id){
   if(!t.image){ alert('ارفع صورة النموذج الأول.'); return; }
   activeBolTplId = id;
   btPosDirty = false;
-  tplCurrentDoc = t.ship_type === 'sea' ? 'bolSea' : 'bol';
+  const isCert = t.document_type === 'cert';
+  tplCurrentDoc = isCert
+    ? (t.ship_type === 'sea' ? 'certSea' : 'cert')
+    : (t.ship_type === 'sea' ? 'bolSea' : 'bol');
   tplSelectedKey = null;
   tplOpenEditor();
   const ttl = document.getElementById('tplEditorTitle');
@@ -12497,6 +12510,7 @@ async function saveShipment(status, opts){
     bolTemplateId: (bolPick === 'coded' || bolPick === 'coded-sea') ? null : (bolPick || null),
     bolCoded: bolPick === 'coded',
     bolSeaCoded: bolPick === 'coded-sea',
+    certTemplateId: (certPick === 'coded' || certPick === 'coded-word' || certPick === 'dubai-pdf') ? null : (certPick || null),
     certCoded: certPick === 'coded' || certPick === 'coded-word',
     certWordCoded: certPick === 'coded-word',
     certDubaiPdf: certPick === 'dubai-pdf',
@@ -13720,7 +13734,13 @@ async function openSeaCertPdf(r){
 
 function certSheet(r){
   const doc = isSea(r) ? 'certSea' : 'cert';
-  return renderTemplateSheet(tplGetImg(doc), doc, doc==='certSea' ? certSeaValues(r) : certValues(r));
+  const v = doc==='certSea' ? certSeaValues(r) : certValues(r);
+  const tpl = (r && r.certTemplateId) ? bolTplById(r.certTemplateId)
+                                       : (certTplsFor(isSea(r)?'sea':'land').find(t=>t.is_default) || null);
+  if(tpl && tpl.image){
+    return renderTemplateSheet(tpl.image, doc, v, tpl.positions || null);
+  }
+  return renderTemplateSheet(tplGetImg(doc), doc, v);
 }
 function bolSheet(r){
   const doc = isSea(r) ? 'bolSea' : 'bol';
