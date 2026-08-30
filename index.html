@@ -3549,7 +3549,7 @@ body.role-staff #navWallet,body.role-staff #navAdmin{display:flex !important;}
     <!-- النماذج والمستندات -->
     <div class="admin-pane" id="apaneTemplates">
       <div class="templates-simple">
-        <header class="templates-simple-head"><div><span class="templates-kicker">مركز المستندات</span><h2>إدارة النماذج</h2><p>إدارة نماذج المستندات المستخدمة في النظام</p></div><div class="templates-head-mark" aria-hidden="true"></div></header>
+        <header class="templates-simple-head"><div><span class="templates-kicker">مركز المستندات</span><h2>إدارة النماذج</h2><p>إدارة نماذج المستندات المستخدمة في النظام</p></div><button class="btn btn-primary btn-small" id="addBolTplBtn" data-ic="plus">قالب جديد</button></header>
         <div id="bolTplList" class="templates-simple-list"></div>
       </div>
     </div>
@@ -3826,6 +3826,13 @@ body.role-staff #navWallet,body.role-staff #navAdmin{display:flex !important;}
         <div class="field span2">
           <label>اسم النموذج</label>
           <input type="text" id="bt_name" placeholder="مثال: بوليصة ميرسك البحرية">
+        </div>
+        <div class="field">
+          <label>نوع المستند</label>
+          <select id="bt_docType">
+            <option value="bol">بوليصة شحن</option>
+            <option value="cert">شهادة منشأ</option>
+          </select>
         </div>
         <div class="field">
           <label>نوع الشحن</label>
@@ -9447,11 +9454,14 @@ document.getElementById('bolSeaBadgeResetBtn').addEventListener('click', ()=>{
   syncBolSeaBadgeHandle();
 });
 
+const BT_CERT_KINDS = new Set(['certificate','cert','origin']);
 function openBolTplModal(id){
   btEditId = id || null;
   const t = id ? bolTplById(id) : null;
-  document.getElementById('btTitle').textContent = t ? ('تعديل: ' + t.name) : 'نموذج بوليصة جديد';
+  const isCert = t && BT_CERT_KINDS.has(String(t.document_type||t.template_type||''));
+  document.getElementById('btTitle').textContent = t ? ('تعديل: ' + t.name) : 'قالب مستند جديد';
   document.getElementById('bt_name').value = t ? t.name : '';
+  document.getElementById('bt_docType').value = isCert ? 'cert' : 'bol';
   document.getElementById('bt_type').value = t ? t.ship_type : 'land';
   document.getElementById('bt_default').checked = t ? !!t.is_default : false;
   document.getElementById('bt_kind').value = (t && t.kind === 'coded') ? 'coded' : 'image';
@@ -9459,6 +9469,7 @@ function openBolTplModal(id){
   document.getElementById('bt_carrierAr').value = p.carrierNameAr || '';
   document.getElementById('bt_carrierEn').value = p.carrierNameEn || '';
   document.getElementById('bt_routeLines').value = p.routeLines || '';
+  syncBtDocTypeWrap();
   syncBtKindWrap();
   btImage = t ? (t.image || '') : '';
   renderBtPreview();
@@ -9473,7 +9484,17 @@ function syncBtKindWrap(){
   if(coded){ typeSel.value = 'land'; typeSel.disabled = true; }
   else typeSel.disabled = false;
 }
+// شهادات المنشأ المبنية بالكود لها مسار مستقل بالفعل (docIdentity.certCoded) — هذه
+// النافذة لإضافة قوالب "صورة مرفوعة" فقط، فنمنع اختيار "مبني بالكود" لو المستند شهادة.
+function syncBtDocTypeWrap(){
+  const isCert = document.getElementById('bt_docType').value === 'cert';
+  const kindSel = document.getElementById('bt_kind');
+  const codedOpt = kindSel.querySelector('option[value="coded"]');
+  if(codedOpt) codedOpt.disabled = isCert;
+  if(isCert && kindSel.value === 'coded') kindSel.value = 'image';
+}
 document.getElementById('bt_kind').addEventListener('change', syncBtKindWrap);
+document.getElementById('bt_docType').addEventListener('change', ()=>{ syncBtDocTypeWrap(); syncBtKindWrap(); });
 function renderBtPreview(){
   document.getElementById('bt_imgPrev').innerHTML =
     btImage ? `<img src="${btImage}" style="max-width:100%;">` : '<span>لم تُرفع صورة</span>';
@@ -9513,6 +9534,7 @@ document.getElementById('btSaveBtn').addEventListener('click', async ()=>{
     ship_type: kind === 'coded' ? 'land' : document.getElementById('bt_type').value,
     is_default: document.getElementById('bt_default').checked,
     kind,
+    document_type: document.getElementById('bt_docType').value,
   };
   if(kind === 'coded'){
     row.positions = Object.assign({}, (existing && existing.positions) || {}, {
@@ -9526,14 +9548,24 @@ document.getElementById('btSaveBtn').addEventListener('click', async ()=>{
   netStart();
   try{
     if(btEditId){
-      const {error} = await sb.from('bol_templates').update(row).eq('id', btEditId);
+      let {error} = await sb.from('bol_templates').update(row).eq('id', btEditId);
+      // document_type عمود جديد — لو ملف SQL الخاص به لسه ما اتشغّل، نعيد المحاولة بدونه
+      // بدل ما يتعطّل حفظ النموذج بالكامل.
+      if(error && /document_type/i.test(error.message||'')){
+        const {document_type, ...rowNoDocType} = row;
+        ({error} = await sb.from('bol_templates').update(rowNoDocType).eq('id', btEditId));
+      }
       if(error) throw error;
-      addLog('edit','تعديل نموذج بوليصة: '+name);
+      addLog('edit','تعديل نموذج: '+name);
     }else{
       row.sort_order = bolTemplates.length;
-      const {error} = await sb.from('bol_templates').insert(row);
+      let {error} = await sb.from('bol_templates').insert(row);
+      if(error && /document_type/i.test(error.message||'')){
+        const {document_type, ...rowNoDocType} = row;
+        ({error} = await sb.from('bol_templates').insert(rowNoDocType));
+      }
       if(error) throw error;
-      addLog('add','إضافة نموذج بوليصة: '+name);
+      addLog('add','إضافة نموذج: '+name);
     }
     await loadBolTemplates();
     renderBolTplAdmin();
