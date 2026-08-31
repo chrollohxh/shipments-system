@@ -3710,7 +3710,17 @@ body.role-staff #navWallet,body.role-staff #navAdmin{display:flex !important;}
 
       <div class="section-title">مكان الختم والتوقيع</div>
       <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">
-        اسحب الختم بالماوس على المعاينة عشان تحدد مكانه على الفاتورة.
+        اسحب الختم بالماوس على المعاينة عشان تحدد مكانه. حدّد المستند تحت — مكان الختم في كشف التعبئة مستقل تماماً عن الفاتورة.
+      </div>
+      <div style="margin-bottom:10px;">
+        <label style="font-weight:400;color:var(--ink);cursor:pointer;display:inline-block;margin-left:20px;">
+          <input type="radio" name="ce_stampPreviewKind" id="ce_stampKindInvoice" value="proforma" checked style="width:auto;vertical-align:middle;">
+          الفاتورة
+        </label>
+        <label style="font-weight:400;color:var(--ink);cursor:pointer;display:inline-block;">
+          <input type="radio" name="ce_stampPreviewKind" id="ce_stampKindPacking" value="packing" style="width:auto;vertical-align:middle;">
+          كشف التعبئة (Packing List)
+        </label>
       </div>
       <div class="stamp-editor">
         <div class="stamp-stage" id="ceStampStage">
@@ -10187,6 +10197,8 @@ function openCompanyModal(id){
     ? Object.assign({}, DEFAULT_COMPANY, c.settings||{}, {nameAr:c.name_ar||'', nameEn:c.name_en||'', tagline:c.tagline||''})
     : Object.assign({}, DEFAULT_COMPANY);
   company.stampPos = Object.assign({}, DEFAULT_COMPANY.stampPos, company.stampPos||{});
+  cePreviewKind = 'proforma';
+  document.getElementById('ce_stampKindInvoice').checked = true;
   document.getElementById('ceTitle').textContent = c ? ('تعديل: ' + c.name_ar) : 'شركة جديدة';
   document.getElementById('ceTplEditBtn').style.display = id ? '' : 'none';
   companyEditOverlay.classList.add('open');
@@ -10212,7 +10224,7 @@ function fillCeForm(){
   document.getElementById('ce_wmOpacityVal').textContent = company.watermarkOpacity??7;
   document.getElementById('ce_showStamp').checked = !!company.showStampBox;
   document.getElementById('ce_showSigLine').checked = !!company.showSigLine;
-  const sp = company.stampPos;
+  const sp = ceActiveStampPos();
   document.getElementById('ce_stampW').value = sp.width; document.getElementById('ce_stampWVal').textContent = sp.width;
   document.getElementById('ce_stampT').value = sp.top;   document.getElementById('ce_stampTVal').textContent = sp.top;
   document.getElementById('ce_stampL').value = sp.left;  document.getElementById('ce_stampLVal').textContent = sp.left;
@@ -10279,16 +10291,28 @@ document.getElementById('ce_wmOpacity').addEventListener('input', function(){
 document.getElementById('ce_showStamp').addEventListener('change', function(){ company.showStampBox = this.checked; syncCeStampHandle(); });
 document.getElementById('ce_showSigLine').addEventListener('change', function(){ company.showSigLine = this.checked; });
 document.getElementById('ce_stampW').addEventListener('input', function(){
-  company.stampPos.width = parseFloat(this.value); document.getElementById('ce_stampWVal').textContent = this.value;
+  ceActiveStampPos().width = parseFloat(this.value); document.getElementById('ce_stampWVal').textContent = this.value;
   syncCeStampHandle();
 });
 document.getElementById('ce_stampT').addEventListener('input', function(){
-  company.stampPos.top = parseFloat(this.value); document.getElementById('ce_stampTVal').textContent = this.value;
+  ceActiveStampPos().top = parseFloat(this.value); document.getElementById('ce_stampTVal').textContent = this.value;
   syncCeStampHandle();
 });
 document.getElementById('ce_stampL').addEventListener('input', function(){
-  company.stampPos.left = parseFloat(this.value); document.getElementById('ce_stampLVal').textContent = this.value;
+  ceActiveStampPos().left = parseFloat(this.value); document.getElementById('ce_stampLVal').textContent = this.value;
   syncCeStampHandle();
+});
+document.querySelectorAll('input[name="ce_stampPreviewKind"]').forEach(radio=>{
+  radio.addEventListener('change', function(){
+    if(!this.checked) return;
+    cePreviewKind = this.value;
+    const sp = ceActiveStampPos();
+    document.getElementById('ce_stampW').value = sp.width; document.getElementById('ce_stampWVal').textContent = sp.width;
+    document.getElementById('ce_stampT').value = sp.top;   document.getElementById('ce_stampTVal').textContent = sp.top;
+    document.getElementById('ce_stampL').value = sp.left;  document.getElementById('ce_stampLVal').textContent = sp.left;
+    ceRefreshStampPreview();
+    ceRenderPreview();
+  });
 });
 function ceCloseRestoreActive(){
   if(compEditId !== activeCompanyId) applyActiveCompany();
@@ -10341,12 +10365,22 @@ function ceRenderPreview(){
   if(!companyEditOverlay.classList.contains('open')) return;
   readCeForm();
   try{
-    const html = invoiceSheet(ceSampleRecord(), 'proforma');
+    const html = invoiceSheet(ceSampleRecord(), cePreviewKind);
     box.innerHTML = `<div class="ce-scale"><style>${PRINT_STYLES}</style>${html}</div>`;
   }catch(e){
     box.innerHTML = '<span class="ce-hint">تعذّر بناء المعاينة: ' + escapeHtml(e.message||'') + '</span>';
     console.error('company preview', e);
   }
+}
+// مكان ختم كشف التعبئة (Packing List) مستقل تماماً عن مكان ختم الفاتورة — لتفادي
+// تداخله مع رأس صفحة كشف التعبئة لما يكون بارتفاع مختلف عن رأس الفاتورة.
+let cePreviewKind = 'proforma';
+function ceActiveStampPos(){
+  if(cePreviewKind === 'packing'){
+    company.packListStampPos = Object.assign({}, company.stampPos, company.packListStampPos||{});
+    return company.packListStampPos;
+  }
+  return company.stampPos;
 }
 document.getElementById('cePreviewBtn').addEventListener('click', ceRenderPreview);
 let ceLiveTimer = null;
@@ -10365,7 +10399,7 @@ function ceRefreshStampPreview(){
   const saved = company.showStampBox;
   company.showStampBox = false;
   let html = '';
-  try{ html = invoiceSheet(ceSampleRecord(), 'proforma'); }catch(e){}
+  try{ html = invoiceSheet(ceSampleRecord(), cePreviewKind); }catch(e){}
   company.showStampBox = saved;
   document.getElementById('ceStampPreview').srcdoc =
     `<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8">
@@ -10374,7 +10408,7 @@ function ceRefreshStampPreview(){
   syncCeStampHandle();
 }
 function syncCeStampHandle(){
-  const sp = company.stampPos;
+  const sp = ceActiveStampPos();
   const handle = document.getElementById('ceStampHandle');
   handle.classList.toggle('hidden', company.showStampBox === false);
   handle.style.top = sp.top + '%';
@@ -10407,12 +10441,13 @@ ceStampHandle.addEventListener('pointermove', e=>{
   let top  = (e.clientY - ceStampDrag.dy - ceStampDrag.sy) / ceStampDrag.sh * 100;
   const maxL = 100 - (ceStampDrag.bw / ceStampDrag.sw * 100);
   const maxT = 100 - (ceStampDrag.bh / ceStampDrag.sh * 100);
-  company.stampPos.left = Math.round(Math.max(0, Math.min(maxL, left))*2)/2;
-  company.stampPos.top  = Math.round(Math.max(0, Math.min(maxT, top))*2)/2;
-  document.getElementById('ce_stampT').value = company.stampPos.top;
-  document.getElementById('ce_stampL').value = company.stampPos.left;
-  document.getElementById('ce_stampTVal').textContent = company.stampPos.top;
-  document.getElementById('ce_stampLVal').textContent = company.stampPos.left;
+  const sp = ceActiveStampPos();
+  sp.left = Math.round(Math.max(0, Math.min(maxL, left))*2)/2;
+  sp.top  = Math.round(Math.max(0, Math.min(maxT, top))*2)/2;
+  document.getElementById('ce_stampT').value = sp.top;
+  document.getElementById('ce_stampL').value = sp.left;
+  document.getElementById('ce_stampTVal').textContent = sp.top;
+  document.getElementById('ce_stampLVal').textContent = sp.left;
   syncCeStampHandle();
 });
 ceStampHandle.addEventListener('pointerup', ()=>{ ceStampDrag = null; ceRenderPreview(); });
@@ -13948,7 +13983,7 @@ function invoiceSheet(r, kind, lang){
       ${logoHtml}
     </header>`;
 
-  const sp = c.stampPos || {top:66,left:10,width:20};
+  const sp = (isPack ? c.packListStampPos : null) || c.stampPos || {top:66,left:10,width:20};
   const stampInner = c.stamp
     ? `<img class="inv-stamp" src="${c.stamp}" alt="">`
     : `<div class="inv-stamp-ph">${t.stampPh}</div>`;
