@@ -493,6 +493,20 @@
     return line + ' ONLY';
   };
 
+  // The Bahar Swaken invoice's price/amount columns are hardcoded to AED, so an
+  // amount typed in USD (e.g. from the shipment's currency picker) is auto-converted
+  // at the fixed peg rate before it ever reaches the printed sheet.
+  const USD_TO_AED_RATE = 3.67;
+  const toAedText = amountText => {
+    const text = String(amountText || '').trim();
+    if (!text) return text;
+    const currency = (text.match(/[A-Za-z]{2,3}/) || [''])[0].toUpperCase();
+    if (currency !== 'USD') return text;
+    const numeric = parseFloat(text.replace(/[A-Za-z]/g, '').replace(/,/g, '').trim());
+    if (!Number.isFinite(numeric)) return text;
+    return 'AED ' + (numeric * USD_TO_AED_RATE).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+
   const baharSheet = (record, kind) => {
     const currentCompany = company;
     const settings = setting();
@@ -505,8 +519,8 @@
           quantity: record.qty || '',
           packaging: record.qtyUnit || '',
           hsCode: record.hsCode || '',
-          price: record.unitPrice || '',
-          amount: record.totalAmount || ''
+          price: toAedText(record.unitPrice || ''),
+          amount: toAedText(record.totalAmount || '')
         };
       }
       const suffix = String(index + 1);
@@ -515,8 +529,8 @@
         quantity: record[`item${suffix}Qty`] || '',
         packaging: record[`item${suffix}Unit`] || '',
         hsCode: record[`item${suffix}HsCode`] || '',
-        price: record[`item${suffix}Price`] || '',
-        amount: record[`item${suffix}Amount`] || ''
+        price: toAedText(record[`item${suffix}Price`] || ''),
+        amount: toAedText(record[`item${suffix}Amount`] || '')
       };
     }).filter((row, index) => index === 0 || row.description || row.quantity || row.packaging);
     const visibleRows = Array.from({ length: Math.max(5, rows.length) }, (_, index) => rows[index] || {});
@@ -567,8 +581,8 @@
           <div class="title">${isPack ? 'PACKING LIST' : (proforma ? 'PROFORMA INVOICE' : 'COMMERCIAL INVOICE')}</div>
           <section class="meta"><div><b>INVOICE NO &amp; DATE</b><span>${safe(proforma ? record.proformaNo : record.invoiceNo)} · ${safe(date)}</span></div><div><b>CONSIGNEE</b><span>${safe(record.consignee)}</span></div><div class="wide"><b>ADDRESS</b><span>${safe(record.consigneeAddress || record.portDischarge || '')}</span></div></section>
           <table><thead><tr><th>DESCRIPTION</th><th>QUANTITY</th><th>PACKAGING TYPE</th><th>HS CODE</th><th>WEIGHT</th>${isPack ? '' : '<th>AED U. PRICE</th><th>AED AMOUNT</th>'}</tr></thead><tbody>${itemRows}</tbody></table>
-          <section class="totals"><div><b>TOTAL PACKAGES</b><strong>${safe(record.totalQty || record.qty || '')} ${safe(record.qtyUnit || '')}</strong></div><div><b>TOTAL AMOUNT</b><strong>${safe(record.totalAmount || rows[0]?.amount || '')}</strong></div></section>
-          ${(!isPack && (record.amountInWords || amountInWordsLine(record.totalAmount || rows[0]?.amount))) ? `<div class="words">${safe(record.amountInWords || amountInWordsLine(record.totalAmount || rows[0]?.amount))}</div>` : ''}
+          <section class="totals"><div><b>TOTAL PACKAGES</b><strong>${safe(record.totalQty || record.qty || '')} ${safe(record.qtyUnit || '')}</strong></div><div><b>TOTAL AMOUNT</b><strong>${safe(toAedText(record.totalAmount) || rows[0]?.amount || '')}</strong></div></section>
+          ${(!isPack && (record.amountInWords || amountInWordsLine(toAedText(record.totalAmount) || rows[0]?.amount))) ? `<div class="words">${safe(record.amountInWords || amountInWordsLine(toAedText(record.totalAmount) || rows[0]?.amount))}</div>` : ''}
           ${isPack ? '' : `<section class="terms"><div><b>INCOTERM</b><span>${safe(record.incoterm || '')}</span></div><div><b>PORT OF DELIVERY</b><span>${safe(record.portDischarge || '')}</span></div><div><b>COUNTRY OF ORIGIN</b><span>${safe(record.countryOfOrigin || '')}</span></div><div><b>TERM OF PAYMENTS</b><span>${safe(record.paymentTerm || '')}</span></div></section>`}
           ${(!isPack && bankLines) ? `<div class="bank"><b>BANK DETAILS</b>${bankLines}</div>` : ''}
           ${settings.showSigLine === false ? '' : '<div class="line">Authorized Signature &amp; Company Stamp</div>'}
