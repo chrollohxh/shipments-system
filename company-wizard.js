@@ -442,6 +442,48 @@
   };
   const safe = value => typeof esc === 'function' ? esc(value ?? '') : String(value ?? '');
 
+  // Spells an amount like "AED 44,040.00" out as words, e.g. "AED FORTY-FOUR
+  // THOUSAND AND FORTY ONLY", for the invoice's amount-in-words line.
+  const numberToWords = (() => {
+    const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+    const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+    const scales = ['', 'Thousand', 'Million', 'Billion', 'Trillion'];
+    const threeDigits = n => {
+      let s = '';
+      if (n >= 100) { s += ones[Math.floor(n / 100)] + ' Hundred'; n %= 100; if (n) s += ' and '; }
+      if (n >= 20) { s += tens[Math.floor(n / 10)] + (n % 10 ? '-' + ones[n % 10] : ''); }
+      else if (n > 0) { s += ones[n]; }
+      return s;
+    };
+    return integer => {
+      if (integer === 0) return 'Zero';
+      const groups = [];
+      let n = integer;
+      while (n > 0) { groups.push(n % 1000); n = Math.floor(n / 1000); }
+      const parts = [];
+      for (let i = groups.length - 1; i >= 0; i--) {
+        if (groups[i] === 0) continue;
+        parts.push({ text: threeDigits(groups[i]) + (scales[i] ? ' ' + scales[i] : ''), value: groups[i] });
+      }
+      if (parts.length === 1) return parts[0].text;
+      const last = parts[parts.length - 1];
+      const head = parts.slice(0, -1).map(p => p.text).join(' ');
+      return last.value < 100 ? head + ' and ' + last.text : head + ' ' + last.text;
+    };
+  })();
+  const amountInWordsLine = amountText => {
+    const text = String(amountText || '').trim();
+    if (!text) return '';
+    const currency = (text.match(/[A-Za-z]{2,3}/) || [''])[0].toUpperCase();
+    const numeric = parseFloat(text.replace(/[A-Za-z]/g, '').replace(/,/g, '').trim());
+    if (!Number.isFinite(numeric)) return '';
+    const whole = Math.floor(numeric);
+    const cents = Math.round((numeric - whole) * 100);
+    let line = (currency ? currency + ' ' : '') + numberToWords(whole).toUpperCase();
+    if (cents > 0) line += ' AND ' + numberToWords(cents).toUpperCase() + ' CENTS';
+    return line + ' ONLY';
+  };
+
   const baharSheet = (record, kind) => {
     const currentCompany = company;
     const settings = setting();
@@ -498,8 +540,8 @@
           <section class="meta"><div><b>INVOICE NO &amp; DATE</b><span>${safe(proforma ? record.proformaNo : record.invoiceNo)} · ${safe(date)}</span></div><div><b>CONSIGNEE</b><span>${safe(record.consignee)}</span></div><div class="wide"><b>ADDRESS</b><span>${safe(record.consigneeAddress || record.portDischarge || '')}</span></div></section>
           <table><thead><tr><th>DESCRIPTION</th><th>QUANTITY</th><th>PACKAGING TYPE</th><th>HS CODE</th><th>WEIGHT</th>${isPack ? '' : '<th>AED U. PRICE</th><th>AED AMOUNT</th>'}</tr></thead><tbody>${itemRows}</tbody></table>
           <section class="totals"><div><b>TOTAL PACKAGES</b><strong>${safe(record.totalQty || record.qty || '')} ${safe(record.qtyUnit || '')}</strong></div><div><b>TOTAL AMOUNT</b><strong>${safe(record.totalAmount || rows[0]?.amount || '')}</strong></div></section>
-          ${record.amountInWords ? `<div class="words">${safe(record.amountInWords)}</div>` : ''}
-          <section class="terms"><div><b>INCOTERM</b><span>${safe(record.incoterm || '')}</span></div><div><b>PORT OF DELIVERY</b><span>${safe(record.portDischarge || '')}</span></div><div><b>COUNTRY OF ORIGIN</b><span>${safe(record.countryOfOrigin || '')}</span></div><div><b>TERM OF PAYMENTS</b><span>${safe(record.paymentTerm || '')}</span></div></section>
+          ${(!isPack && (record.amountInWords || amountInWordsLine(record.totalAmount || rows[0]?.amount))) ? `<div class="words">${safe(record.amountInWords || amountInWordsLine(record.totalAmount || rows[0]?.amount))}</div>` : ''}
+          ${isPack ? '' : `<section class="terms"><div><b>INCOTERM</b><span>${safe(record.incoterm || '')}</span></div><div><b>PORT OF DELIVERY</b><span>${safe(record.portDischarge || '')}</span></div><div><b>COUNTRY OF ORIGIN</b><span>${safe(record.countryOfOrigin || '')}</span></div><div><b>TERM OF PAYMENTS</b><span>${safe(record.paymentTerm || '')}</span></div></section>`}
           ${settings.showSigLine === false ? '' : '<div class="line">Authorized Signature &amp; Company Stamp</div>'}
         </main>
         ${stamp ? `<img class="stamp" src="${stamp}" alt="" style="left:${stampPos.xPercent}%;top:${stampPos.yPercent}%;width:${stampPos.widthPercent}%;transform:rotate(${stampPos.rotate}deg)">` : ''}
