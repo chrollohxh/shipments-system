@@ -445,14 +445,24 @@
     const settings = setting();
     const proforma = kind === 'proforma';
     const rows = Array.from({ length: 15 }, (_, index) => {
-      const suffix = index ? String(index + 1) : '';
+      if (index === 0) {
+        return {
+          description: record.itemDesc || '',
+          quantity: record.qty || '',
+          packaging: record.qtyUnit || '',
+          hsCode: record.hsCode || '',
+          price: record.unitPrice || '',
+          amount: record.totalAmount || ''
+        };
+      }
+      const suffix = String(index + 1);
       return {
-        description: record[`item${suffix}Desc`] || record.itemDesc || '',
-        quantity: record[`item${suffix}Qty`] || record.qty || '',
-        packaging: record[`item${suffix}Unit`] || record.qtyUnit || '',
-        hsCode: record[`item${suffix}HsCode`] || record.hsCode || '',
-        price: record[`item${suffix}Price`] || record.unitPrice || '',
-        amount: record[`item${suffix}Amount`] || record.totalAmount || ''
+        description: record[`item${suffix}Desc`] || '',
+        quantity: record[`item${suffix}Qty`] || '',
+        packaging: record[`item${suffix}Unit`] || '',
+        hsCode: record[`item${suffix}HsCode`] || '',
+        price: record[`item${suffix}Price`] || '',
+        amount: record[`item${suffix}Amount`] || ''
       };
     }).filter((row, index) => index === 0 || row.description || row.quantity || row.packaging);
     const visibleRows = Array.from({ length: Math.max(5, rows.length) }, (_, index) => rows[index] || {});
