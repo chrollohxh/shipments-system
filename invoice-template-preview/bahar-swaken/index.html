@@ -83,11 +83,13 @@
       }
       const signature = document.querySelector('.signature-image');
       const signLine = document.querySelector('.sign-line');
-      if (settings.showSigLine && settings.signature && signature) { signature.src = settings.signature; signature.style.display = 'block'; }
+      const signatureTransform = Object.assign({x:0,y:0,scale:100,rotate:0}, settings.signatureTransform || {});
+      if (settings.showSigLine && settings.signature && signature) { signature.src = settings.signature; signature.style.display = 'block'; signature.style.transform = `translate(${signatureTransform.x}px, ${signatureTransform.y}px) rotate(${signatureTransform.rotate}deg) scale(${signatureTransform.scale / 100})`; }
       if (signLine && !settings.showSigLine) signLine.style.display = 'none';
       const stamp = document.querySelector('.stamp-image');
       const qr = document.querySelector('.qr');
-      if (settings.showStamp && settings.stamp && stamp) { stamp.src = settings.stamp; stamp.style.display = 'block'; if (qr) qr.style.display = 'none'; }
+      const stampTransform = Object.assign({x:0,y:0,scale:100,rotate:0}, settings.stampTransform || {});
+      if (settings.showStamp && settings.stamp && stamp) { stamp.src = settings.stamp; stamp.style.display = 'block'; stamp.style.transform = `translate(${stampTransform.x}px, ${stampTransform.y}px) rotate(${stampTransform.rotate}deg) scale(${stampTransform.scale / 100})`; if (qr) qr.style.display = 'none'; }
     })();
   </script>
 </body>
