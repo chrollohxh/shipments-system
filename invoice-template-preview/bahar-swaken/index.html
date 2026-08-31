@@ -22,6 +22,7 @@
     /* Reserve the illustrated header and footer so the invoice stays centered in the clear page area. */
     .a4-sheet.has-template-background{padding:56mm 12mm 36mm}.a4-sheet.has-template-background .title-band{padding:7px 12px;font-size:14px}.a4-sheet.has-template-background .meta-cell{min-height:35px;padding:6px 10px}.a4-sheet.has-template-background .meta-label{margin-bottom:3px}.a4-sheet.has-template-background .items{margin-top:9px}.a4-sheet.has-template-background .items th{padding:7px 5px;font-size:7px}.a4-sheet.has-template-background .items td{height:22px;padding:4px 5px;font-size:8px}.a4-sheet.has-template-background .items td:first-child{font-size:9px}.a4-sheet.has-template-background .totals{grid-template-columns:1fr 180px;gap:8px;margin-top:6px}.a4-sheet.has-template-background .cartons,.a4-sheet.has-template-background .amount{padding:6px 10px}.a4-sheet.has-template-background .cartons,.a4-sheet.has-template-background .amount span{font-size:8px}.a4-sheet.has-template-background .cartons b{font-size:11px}.a4-sheet.has-template-background .amount b{font-size:12px}.a4-sheet.has-template-background .amount-note{margin-top:5px;padding:6px 10px;font-size:8px}.a4-sheet.has-template-background .terms{margin-top:8px}.a4-sheet.has-template-background .term{min-height:51px;padding:7px}.a4-sheet.has-template-background .term label{margin-bottom:5px}.a4-sheet.has-template-background .signatures{margin-top:15px;min-height:52px}.a4-sheet.has-template-background .qr{width:48px;height:48px}
     @media(max-width:760px){.preview-bar{align-items:flex-start;flex-direction:column}.work-area{padding:18px 0 36px;overflow:auto}.sheet-wrap{justify-content:flex-start;padding:0 8px}.a4-sheet{transform-origin:top left}.preview-actions{width:100%}.preview-actions button{flex:1}.a4-sheet{box-shadow:none}.work-area{background:#dfe4e9}}
+    body.embed{background:#fff;overflow:hidden}body.embed .preview-bar{display:none}body.embed .work-area{padding:0}body.embed .a4-sheet{box-shadow:none}
     @media print{@page{size:A4;margin:0}html,body{width:210mm;height:297mm;overflow:hidden}.no-print{display:none!important}body{background:#fff}.work-area,.sheet-wrap{display:block;width:210mm;height:297mm;padding:0;margin:0;overflow:hidden}.a4-sheet{box-shadow:none;width:210mm;height:297mm;min-height:0;margin:0;overflow:hidden;break-inside:avoid;page-break-inside:avoid;break-after:avoid-page;page-break-after:avoid}.template-background{display:block!important;print-color-adjust:exact;-webkit-print-color-adjust:exact}.sheet-wrap{display:block}}
   </style>
 </head>
@@ -53,6 +54,7 @@
   </div></article></div></main>
   <script>
     (function(){
+      if (new URLSearchParams(location.search).has('embed')) document.body.classList.add('embed');
       const defaults = {accent:'#b72127', tableHeader:'#86191f', tableFont:'IBM Plex Sans', background:'', watermark:'', watermarkOpacity:7};
       let settings = defaults;
       try { settings = Object.assign({}, defaults, JSON.parse(localStorage.getItem('baharSwakenInvoicePreviewSettings') || '{}')); } catch(e) {}
