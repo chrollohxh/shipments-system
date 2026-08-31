@@ -2215,6 +2215,7 @@ body.role-staff #navWallet,body.role-staff #navAdmin{display:flex !important;}
     <button class="navtab" data-view="tasks" id="navTasks" data-ic="clipboard">جدول المهام <span class="nav-badge tasks" id="tasksBadge">0</span></button>
     <button class="navtab" data-view="createShip" id="navCreateShip" data-ic="plus">انشاء عملية</button>
     <button class="navtab" data-view="records" id="navOperations" data-ic="list">العمليات</button>
+    <button class="navtab" data-view="bsgt" id="navBsgt" data-ic="ship">شحنات BSGT</button>
     <button class="navtab" data-view="activityLog" id="navActivityLog" data-ic="history">سجل العمليات</button>
     <button class="navtab" data-view="review" id="navReview" data-ic="checkCircle" style="display:none;">الاعتمادات <span class="nav-badge review" id="reviewBadge">0</span></button>
     <button class="navtab" data-view="money" id="navMoney" data-ic="bank" style="display:none;">التحصيل <span class="nav-badge money" id="moneyBadge">0</span></button>
@@ -7125,6 +7126,12 @@ document.getElementById('importFile').addEventListener('change', function(){
 // ===== الحالة والمسودات وترقيم الصفحات =====
 let currentPage = 1;
 let draftsPage = 1;
+// 'general' = كل الشحنات ما عدا بحر سواكن، 'bsgt' = شحنات بحر سواكن فقط (بوابة شحنات BSGT)
+let currentCompanyScope = 'general';
+function inCompanyScope(r){
+  const isBahar = isBaharSwakenCompany(companyDataFor(r));
+  return currentCompanyScope==='bsgt' ? isBahar : !isBahar;
+}
 
 function recStatus(r){
   const s = r.status;
@@ -7186,7 +7193,7 @@ let seaPage = 1;
 
 function renderSea(){
   const q = (document.getElementById('seaSearch').value||'').trim().toLowerCase();
-  let list = records.filter(r=>isSea(r));
+  let list = records.filter(r=>isSea(r) && inCompanyScope(r));
   const total = list.length;
   if(q){
     list = list.filter(r=>[r.itemDesc,r.consignee,r.exporter,r.invoiceNo,r.proformaNo,
@@ -7246,7 +7253,7 @@ document.getElementById('seaSearch').addEventListener('input', ()=>{ seaPage=1; 
 
 function renderIssued(){
   const q = (document.getElementById('issuedSearch').value||'').trim().toLowerCase();
-  let list = records.filter(r=>recStatus(r)==='sent');
+  let list = records.filter(r=>recStatus(r)==='sent' && inCompanyScope(r));
   const total = list.length;
   if(q){
     list = list.filter(r=>[r.itemDesc,r.consignee,r.exporter,r.invoiceNo,r.proformaNo,
@@ -7302,7 +7309,7 @@ function renderIssued(){
 document.getElementById('issuedSearch').addEventListener('input', ()=>{ issuedPage=1; renderIssued(); });
 
 function renderDrafts(){
-  const drafts = records.filter(r=>recStatus(r)==='draft')
+  const drafts = records.filter(r=>recStatus(r)==='draft' && inCompanyScope(r))
     .sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
   const badge = document.getElementById('draftsBadge');
   badge.textContent = drafts.length;
@@ -7599,8 +7606,11 @@ window.addEventListener('hashchange', restoreFromHash);
 
 function switchView(v){
   closeAllOverlays();
+  const navKey = v; // قبل تحويلات التوافقية تحت، عشان تظليل القائمة الجانبية والعنوان يفضلوا صح
+  currentCompanyScope = (v==='bsgt') ? 'bsgt' : 'general';
   // توافقية: الشاشات القديمة أصبحت تبويبات داخل شاشة الشحنات
   if(v==='sea' || v==='issued' || v==='drafts'){ switchShipTab(v); v = 'records'; }
+  if(v==='bsgt') v = 'records'; // بوابة BSGT هي نفس شاشة الشحنات، مفلترة بشركة بحر سواكن فقط
   if(v==='admin' && !isAdmin()) v = 'dashboard';
   if(v==='review' && !isAdmin()) v = 'dashboard';
   if(v==='money' && !isEditor()) v = 'dashboard';
@@ -7610,7 +7620,7 @@ function switchView(v){
   // الموظف: المهام هي شاشته الوحيدة، وشاشة الشحنات تُفتح من المهمة فقط
   if(isStaffRole() && v !== 'tasks' && v !== 'records' && v !== 'shipForm') v = 'tasks';
   if(isStaffRole() && v === 'records' && !allowStaffRecords) v = 'tasks';
-  document.querySelectorAll('.navtab').forEach(t=>t.classList.toggle('active', t.dataset.view===v));
+  document.querySelectorAll('.navtab').forEach(t=>t.classList.toggle('active', t.dataset.view===navKey));
   document.getElementById('viewDashboard').classList.toggle('active', v==='dashboard');
   document.getElementById('viewRecords').classList.toggle('active', v==='records');
   document.getElementById('viewCreateShip').classList.toggle('active', v==='createShip');
@@ -7621,8 +7631,8 @@ function switchView(v){
   document.getElementById('viewMoney').classList.toggle('active', v==='money');
   document.getElementById('viewWallet').classList.toggle('active', v==='wallet');
   document.getElementById('viewActivityLog').classList.toggle('active', v==='activityLog');
-  const names = {dashboard:'لوحة المعلومات', records:'الشحنات', createShip:'إنشاء شحنة', shipForm:'إدخال بيانات الشحنة', tasks:'المهام', review:'الاعتماد', money:'التحصيل والمستحقات', wallet:'محفظة العملاء', admin:'لوحة التحكم', activityLog:'سجل العمليات'};
-  document.getElementById('crumbCurrent').textContent = names[v]||'';
+  const names = {dashboard:'لوحة المعلومات', records:'الشحنات', bsgt:'شحنات BSGT', createShip:'إنشاء شحنة', shipForm:'إدخال بيانات الشحنة', tasks:'المهام', review:'الاعتماد', money:'التحصيل والمستحقات', wallet:'محفظة العملاء', admin:'لوحة التحكم', activityLog:'سجل العمليات'};
+  document.getElementById('crumbCurrent').textContent = names[navKey] || names[v] || '';
   document.getElementById('cpSearch').style.display = v==='records' ? 'flex' : 'none';
   if(v==='dashboard'){ renderDashboard(); renderReport(); }
   if(v==='records'){ render(); renderSea(); renderIssued(); renderDrafts(); renderReview(); }
@@ -12258,6 +12268,7 @@ function escapeHtml(s){
 function render(){
   const search = document.getElementById('searchInput').value.trim().toLowerCase();
   let filtered = records.filter(r=>{
+    if(!inCompanyScope(r)) return false; // بوابة BSGT: بحر سواكن فقط، وإلا: كل شركة عدا بحر سواكن
     if(isSea(r)) return false;          // البحري له تبويبه الخاص
     if(!search) return true;
     const hay = [r.proformaNo,r.invoiceNo,r.certNo,r.billNo,r.exporter,r.consignee,
@@ -12267,12 +12278,13 @@ function render(){
   });
   filtered = applyFilters(filtered);
 
-  document.getElementById('totalCount').textContent = records.length;
+  const scopedRecords = records.filter(inCompanyScope);
+  document.getElementById('totalCount').textContent = scopedRecords.length;
   const allB = document.getElementById('allBadge');
-  if(allB){ allB.textContent = records.length; allB.classList.toggle('zero', !records.length); }
+  if(allB){ allB.textContent = scopedRecords.length; allB.classList.toggle('zero', !scopedRecords.length); }
   const landB = document.getElementById('landBadge');
-  if(landB){ const c = records.filter(r=>!isSea(r)).length; landB.textContent = c; landB.classList.toggle('zero', !c); }
-  refreshFilterUi(filtered.length, records.length);
+  if(landB){ const c = scopedRecords.filter(r=>!isSea(r)).length; landB.textContent = c; landB.classList.toggle('zero', !c); }
+  refreshFilterUi(filtered.length, scopedRecords.length);
 
   const body = document.getElementById('listBody');
   const pagerEl = document.getElementById('pager');
