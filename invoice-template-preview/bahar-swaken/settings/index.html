@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>نماذج جداول الفواتير | Bahar Swaken</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{--ink:#18212d;--muted:#718096;--blue:#1877ee;--line:#e2e8f0;--canvas:#f3f6fa}*{box-sizing:border-box}body{margin:0;background:var(--canvas);color:var(--ink);font-family:Tajawal,Arial,sans-serif}.bar{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:16px clamp(18px,5vw,72px);background:#fff;border-bottom:1px solid var(--line)}.brand b{display:block;font-size:17px}.brand small{color:var(--muted)}button,.link{border:1px solid #c9d8ec;background:#fff;border-radius:10px;padding:10px 14px;color:#1e5fae;font:700 13px Tajawal,Arial;cursor:pointer;text-decoration:none}.primary{background:var(--blue);border-color:var(--blue);color:#fff}.page{max-width:1220px;margin:30px auto;padding:0 20px}.head{margin-bottom:18px}.head h1{margin:0 0 5px;font-size:23px}.head p{margin:0;color:var(--muted);font-size:13px}.grid{display:grid;grid-template-columns:minmax(310px,.75fr) minmax(0,1.25fr);gap:20px}.card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:0 10px 30px rgba(31,51,73,.06)}.card h2{margin:0 0 6px;font-size:17px}.card p{margin:0 0 18px;color:var(--muted);font-size:12px;line-height:1.7}.field{margin:0 0 15px}.field label{display:block;margin-bottom:7px;font-weight:700;font-size:12px}.field input,.field select{width:100%;border:1px solid #d6e0ec;border-radius:9px;padding:10px;background:#fff;font:500 13px 'IBM Plex Sans',Arial}.pair{display:grid;grid-template-columns:1fr 1fr;gap:12px}.range-label{display:flex;justify-content:space-between}.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:20px}.note{padding:11px 13px;border-radius:10px;background:#edf7ff;color:#2c658f;font-size:12px;line-height:1.65}.preview{padding:0;overflow:hidden}.preview iframe{display:block;width:100%;height:760px;border:0;background:#eef1f4}@media(max-width:900px){.grid{grid-template-columns:1fr}.preview iframe{height:650px}}@media(max-width:600px){.pair{grid-template-columns:1fr}.bar{align-items:flex-start;flex-direction:column}.page{padding:0 12px}}
+  </style>
+</head>
+<body>
+  <header class="bar"><div class="brand"><b>نماذج جداول الفواتير</b><small>Bahar Swaken · مساحة تجريبية مستقلة</small></div><a class="link" href="/invoice-template-preview/bahar-swaken/">فتح المعاينة كاملة</a></header>
+  <main class="page"><div class="head"><h1>إعدادات نموذج الفاتورة</h1><p>نفس منطق إعدادات الشركة ولكن للمعاينة فقط. لا يتم إرسال أو تخزين أي بيانات في قاعدة النظام.</p></div><div class="grid">
+    <section class="card"><h2>هوية التصميم</h2><p>تحكم في الألوان والخط والعلامة المائية قبل اعتماد التصميم.</p>
+      <div class="field"><label for="name">اسم النموذج</label><input id="name" value="Bahar Swaken — Commercial Invoice" dir="ltr"></div>
+      <div class="field"><label for="font">خط جدول البنود</label><select id="font"><option value="IBM Plex Sans">IBM Plex Sans</option></select></div>
+      <div class="pair"><div class="field"><label for="accent">اللون الرئيسي</label><input id="accent" type="color" value="#b72127"></div><div class="field"><label for="header">لون رأس الجدول</label><input id="header" type="color" value="#86191f"></div></div>
+      <div class="field"><label for="watermark">العلامة المائية</label><input id="watermark" type="file" accept="image/*"></div>
+      <div class="field"><div class="range-label"><label for="opacity">شفافية العلامة المائية</label><b id="opacityValue">7%</b></div><input id="opacity" type="range" min="0" max="25" value="7"></div>
+      <div class="note">الرأس والتذييل اللذان طلبت حذفهما غير موجودين في المعاينة الحالية.</div>
+      <div class="actions"><button class="primary" id="save">حفظ إعدادات المعاينة</button><button id="reset">استرجاع المعتمد</button></div>
+    </section>
+    <section class="card preview"><iframe id="preview" title="معاينة التصميم" src="/invoice-template-preview/bahar-swaken/"></iframe></section>
+  </div></main>
+  <script>
+    const key='baharSwakenInvoicePreviewSettings';
+    const defaults={name:'Bahar Swaken — Commercial Invoice',accent:'#b72127',tableHeader:'#86191f',tableFont:'IBM Plex Sans',watermark:'',watermarkOpacity:7};
+    const byId=id=>document.getElementById(id);
+    function read(){try{return Object.assign({},defaults,JSON.parse(localStorage.getItem(key)||'{}'))}catch(e){return {...defaults}}}
+    function fill(){const s=read();byId('name').value=s.name;byId('accent').value=s.accent;byId('header').value=s.tableHeader;byId('font').value=s.tableFont;byId('opacity').value=s.watermarkOpacity;byId('opacityValue').textContent=s.watermarkOpacity+'%'}
+    function reload(){byId('preview').src='/invoice-template-preview/bahar-swaken/?t='+Date.now()}
+    byId('opacity').addEventListener('input',e=>byId('opacityValue').textContent=e.target.value+'%');
+    byId('watermark').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;const reader=new FileReader();reader.onload=()=>byId('watermark').dataset.value=reader.result;reader.readAsDataURL(f)});
+    byId('save').addEventListener('click',()=>{const previous=read();localStorage.setItem(key,JSON.stringify({name:byId('name').value.trim()||defaults.name,accent:byId('accent').value,tableHeader:byId('header').value,tableFont:byId('font').value,watermark:byId('watermark').dataset.value||previous.watermark||'',watermarkOpacity:Number(byId('opacity').value)}));reload()});
+    byId('reset').addEventListener('click',()=>{localStorage.removeItem(key);fill();reload()});fill();
+  </script>
+</body>
+</html>
