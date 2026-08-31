@@ -58,7 +58,7 @@
       const isEditor = params.get('embed') === 'editor';
       if (params.has('embed')) document.body.classList.add('embed');
       if (isEditor) document.body.classList.add('editor');
-      const defaults = {accent:'#b72127', tableHeader:'#86191f', tableFont:'IBM Plex Sans', background:'', watermark:'', watermarkOpacity:7, signature:'', stamp:'', showStamp:true, showSigLine:true, stampPosition:{xPercent:78,yPercent:78,widthPercent:13,rotate:0}, signaturePosition:{xPercent:10,yPercent:81,widthPercent:23,rotate:0}};
+      const defaults = {accent:'#b72127', tableHeader:'#86191f', tableFont:'IBM Plex Sans', background:'', watermark:'', watermarkOpacity:7, showWatermark:false, signature:'', stamp:'', showStamp:true, showSigLine:true, stampPosition:{xPercent:78,yPercent:78,widthPercent:13,rotate:0}, signaturePosition:{xPercent:10,yPercent:81,widthPercent:23,rotate:0}};
       const read = key => { try { return JSON.parse(localStorage.getItem(key) || '{}'); } catch(e) { return {}; } };
       let settings = defaults;
       const sheet = document.querySelector('.a4-sheet');
@@ -89,7 +89,7 @@
         let template = sheet.querySelector('.template-background');
         if (settings.background) { if (!template) { template = document.createElement('img'); template.className = 'template-background'; template.alt = ''; sheet.prepend(template); } template.src = settings.background; sheet.classList.add('has-template-background'); }
         else { template?.remove(); sheet.classList.remove('has-template-background'); }
-        if (settings.watermark) { mark.style.backgroundImage = 'url("' + settings.watermark + '")'; mark.style.backgroundSize = 'contain'; mark.style.backgroundRepeat = 'no-repeat'; mark.style.border = '0'; mark.style.opacity = Math.max(0, Math.min(1, Number(settings.watermarkOpacity) / 100)); mark.style.color = 'transparent'; }
+        if (settings.showWatermark && settings.watermark) { mark.style.backgroundImage = 'url("' + settings.watermark + '")'; mark.style.backgroundSize = 'contain'; mark.style.backgroundRepeat = 'no-repeat'; mark.style.border = '0'; mark.style.opacity = Math.max(0, Math.min(1, Number(settings.watermarkOpacity) / 100)); mark.style.color = 'transparent'; }
         else { mark.style.backgroundImage = ''; mark.style.opacity = ''; mark.style.border = ''; mark.style.color = ''; }
         if (signLine) signLine.style.display = settings.showSigLine ? '' : 'none';
         setFloat(signature, settings.signaturePosition, settings.signature, settings.showSigLine);
