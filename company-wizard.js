@@ -170,7 +170,7 @@
   }
 
   function invoicePreviewDefaults() {
-    return { name:'Bahar Swaken — Commercial Invoice', accent:'#86191f', tableHeader:'#86191f', tableFont:'IBM Plex Sans', background:'', watermark:'', watermarkOpacity:7, signature:'', stamp:'', showStamp:true, showSigLine:true };
+    return { name:'Bahar Swaken — Commercial Invoice', accent:'#86191f', tableHeader:'#86191f', tableFont:'IBM Plex Sans', background:'', watermark:'', watermarkOpacity:7, signature:'', stamp:'', showStamp:true, showSigLine:true, stampTransform:{x:0,y:0,scale:100,rotate:0}, signatureTransform:{x:0,y:0,scale:100,rotate:0} };
   }
 
   function getInvoicePreviewSettings() {
@@ -199,12 +199,15 @@
     settings.stamp = company.stamp || settings.stamp || '';
     settings.showStamp = document.getElementById('ce_showStamp')?.checked ?? settings.showStamp;
     settings.showSigLine = document.getElementById('ce_showSigLine')?.checked ?? settings.showSigLine;
-    const fileControl = (key, title, accept, value, help) => `<div class="bs-file" data-key="${key}"><label>${title}</label><small>${help}</small><div class="bs-file-row"><button type="button" class="btn btn-ghost btn-small bs-pick">رفع / استبدال</button><button type="button" class="btn btn-ghost btn-small bs-remove">إزالة</button><input type="file" accept="${accept}" hidden></div><div class="bs-thumb">${value ? `<img src="${value}" alt="${title}">` : '<span>لا توجد صورة مرفوعة</span>'}</div></div>`;
+    const fileControl = (key, title, accept, value, help) => `<div class="bs-file" data-key="${key}"><label>${title}</label><small>${help}</small><div class="bs-file-row"><button type="button" class="btn btn-ghost btn-small bs-pick">إضافة / استبدال</button><button type="button" class="btn btn-ghost btn-small bs-remove">إزالة</button><input type="file" accept="${accept}" hidden></div><div class="bs-thumb">${value ? `<img src="${value}" alt="${title}">` : '<span>لا توجد صورة مرفوعة</span>'}</div></div>`;
+    const transformControls = (key, title, values) => `<div class="bs-transform" data-transform="${key}"><strong>${title}</strong><div class="bs-transform-grid"><label>أفقي <b data-value="x">${values.x}</b><input data-prop="x" type="range" min="-80" max="80" step="1" value="${values.x}"></label><label>عمودي <b data-value="y">${values.y}</b><input data-prop="y" type="range" min="-80" max="80" step="1" value="${values.y}"></label><label>الحجم <b data-value="scale">${values.scale}</b>%<input data-prop="scale" type="range" min="30" max="200" step="1" value="${values.scale}"></label><label>التدوير <b data-value="rotate">${values.rotate}</b>°<input data-prop="rotate" type="range" min="-180" max="180" step="1" value="${values.rotate}"></label></div></div>`;
+    const stampTransform = Object.assign({x:0,y:0,scale:100,rotate:0}, settings.stampTransform || {});
+    const signatureTransform = Object.assign({x:0,y:0,scale:100,rotate:0}, settings.signatureTransform || {});
     simple.innerHTML = `
       <style>
         #baharSimpleSettings .bs-card{max-width:980px;margin:auto;border:1px solid #dbe4ee;border-radius:16px;padding:24px;background:#fff;box-shadow:0 10px 26px rgba(20,38,60,.06)}
         #baharSimpleSettings .bs-top{display:flex;gap:24px;align-items:center;margin-bottom:20px;padding-bottom:18px;border-bottom:1px solid #e8eef5}#baharSimpleSettings .bs-toggle{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;cursor:pointer}#baharSimpleSettings .bs-toggle input{width:auto}
-        #baharSimpleSettings .bs-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}#baharSimpleSettings .bs-file{margin-top:18px;border-top:1px solid #edf1f5;padding-top:18px}#baharSimpleSettings .bs-file label{display:block;font-weight:800;margin-bottom:4px}#baharSimpleSettings .bs-file small{color:#748194;font-size:12px}#baharSimpleSettings .bs-file-row{display:flex;gap:8px;margin:10px 0}.bs-thumb{height:120px;border:1px dashed #cdd9e6;border-radius:10px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#fbfcfe;color:#94a0af;font-size:12px}.bs-thumb img{max-width:100%;max-height:100%;object-fit:contain}.bs-actions{display:flex;gap:10px;margin-top:22px}.bs-card h3{margin:0 0 5px}.bs-card p{margin:0;color:#718096;font-size:13px;line-height:1.65}@media(max-width:700px){#baharSimpleSettings{padding:14px!important}#baharSimpleSettings .bs-grid{grid-template-columns:1fr}#baharSimpleSettings .bs-top{align-items:flex-start;flex-direction:column;gap:12px}}
+        #baharSimpleSettings .bs-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}#baharSimpleSettings .bs-file{margin-top:18px;border-top:1px solid #edf1f5;padding-top:18px}#baharSimpleSettings .bs-file label{display:block;font-weight:800;margin-bottom:4px}#baharSimpleSettings .bs-file small{color:#748194;font-size:12px}#baharSimpleSettings .bs-file-row{display:flex;gap:8px;margin:10px 0}.bs-thumb{height:120px;border:1px dashed #cdd9e6;border-radius:10px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#fbfcfe;color:#94a0af;font-size:12px}.bs-thumb img{max-width:100%;max-height:100%;object-fit:contain}.bs-transform{margin-top:12px;padding:14px;border:1px solid #e7edf4;border-radius:10px;background:#fbfcfe}.bs-transform-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:10px}.bs-transform label{font-size:12px;font-weight:700}.bs-transform input{display:block;width:100%;margin-top:6px}.bs-actions{display:flex;gap:10px;margin-top:22px}.bs-card h3{margin:0 0 5px}.bs-card p{margin:0;color:#718096;font-size:13px;line-height:1.65}@media(max-width:700px){#baharSimpleSettings{padding:14px!important}#baharSimpleSettings .bs-grid,#baharSimpleSettings .bs-transform-grid{grid-template-columns:1fr}#baharSimpleSettings .bs-top{align-items:flex-start;flex-direction:column;gap:12px}}
       </style>
       <div class="bs-card">
         <div class="bs-top"><label class="bs-toggle"><input class="bs-show-stamp" type="checkbox"> إظهار الختم على الفاتورة</label><label class="bs-toggle"><input class="bs-show-signature" type="checkbox"> إظهار خط التوقيع</label></div>
@@ -213,7 +216,10 @@
         ${fileControl('background', 'خلفية جدول الفاتورة', 'image/png,image/jpeg,image/webp', settings.background, 'PNG أو JPG. تستخدم الصورة الأصلية عند الطباعة وPDF.')}
         ${fileControl('watermark', 'العلامة المائية', 'image/png,image/jpeg,image/webp', settings.watermark, 'PNG أو JPG. تظهر في فاتورة بحر سواكن فقط.')}
         <div class="field" style="margin-top:10px"><label>شفافية العلامة المائية: <b class="bs-opacity-value"></b>%</label><input class="bs-opacity" type="range" min="0" max="100" step="1"></div>
+        ${fileControl('stamp', 'صورة الختم', 'image/png,image/jpeg,image/webp', settings.stamp, 'PNG أو JPG. يمكن استخدام الختم الموجود أو رفع ختم خاص بهذا القالب.')}
+        ${transformControls('stamp', 'تحريك وتعديل الختم', stampTransform)}
         ${fileControl('signature', 'صورة التوقيع', 'image/png,image/jpeg,image/webp', settings.signature, 'يفضل PNG بخلفية شفافة. الصورة اختيارية.')}
+        ${transformControls('signature', 'تحريك وتعديل التوقيع', signatureTransform)}
         <div class="bs-actions"><button type="button" class="btn btn-primary bs-save">حفظ إعدادات المعاينة</button><button type="button" class="btn btn-ghost bs-preview">معاينة الفاتورة</button></div>
       </div>`;
     const one = selector => simple.querySelector(selector);
@@ -235,10 +241,14 @@
       });
       card.querySelector('.bs-remove').addEventListener('click', () => { card.dataset.value = ''; input.value = ''; card.querySelector('.bs-thumb').innerHTML = '<span>لا توجد صورة مرفوعة</span>'; });
     });
+    simple.querySelectorAll('.bs-transform').forEach(group => group.querySelectorAll('input').forEach(input => input.addEventListener('input', () => {
+      group.querySelector(`[data-value="${input.dataset.prop}"]`).textContent = input.value;
+    })));
+    const transformValue = key => Object.fromEntries([...simple.querySelectorAll(`[data-transform="${key}"] input`)].map(input => [input.dataset.prop, Number(input.value)]));
     const collect = () => ({
       name:one('.bs-name').value.trim() || invoicePreviewDefaults().name, tableFont:one('.bs-font').value, accent:one('.bs-accent').value, tableHeader:one('.bs-header').value,
       background:simple.querySelector('[data-key="background"]').dataset.value || settings.background || '', watermark:simple.querySelector('[data-key="watermark"]').dataset.value || settings.watermark || '',
-      signature:simple.querySelector('[data-key="signature"]').dataset.value || settings.signature || '', watermarkOpacity:Number(one('.bs-opacity').value), stamp:company.stamp || settings.stamp || '', showStamp:one('.bs-show-stamp').checked, showSigLine:one('.bs-show-signature').checked
+      signature:simple.querySelector('[data-key="signature"]').dataset.value || settings.signature || '', watermarkOpacity:Number(one('.bs-opacity').value), stamp:simple.querySelector('[data-key="stamp"]').dataset.value || settings.stamp || company.stamp || '', showStamp:one('.bs-show-stamp').checked, showSigLine:one('.bs-show-signature').checked, stampTransform:transformValue('stamp'), signatureTransform:transformValue('signature')
     });
     const store = () => {
       const next = collect(); localStorage.setItem(invoicePreviewSettingsKey, JSON.stringify(next));
