@@ -28,6 +28,80 @@
   const actions = panel.querySelector('.form-actions');
   const advToggle = document.getElementById('advToggle');
   const adv = document.getElementById('advWrap');
+
+  // Currency is selected once per shipment and applied to the saved amount text.
+  const qtyUnitField = document.getElementById('f_qtyUnit')?.closest('.field');
+  if (qtyUnitField && !document.getElementById('f_currency')) {
+    const currencyField = document.createElement('div');
+    currencyField.className = 'field';
+    currencyField.innerHTML = `<label>عملة الفاتورة</label><select id="f_currency" class="lookup-sel" dir="ltr"><option value="USD">USD - دولار أمريكي</option><option value="AED">AED - درهم إماراتي</option><option value="SAR">SAR - ريال سعودي</option></select>`;
+    qtyUnitField.insertAdjacentElement('afterend', currencyField);
+  }
+  const currencyInput = document.getElementById('f_currency');
+  const currencyCode = () => currencyInput?.value || 'USD';
+  const numericValue = value => {
+    const parsed = parseFloat(String(value || '').replace(/[^\d.,]/g, '').replace(/,/g, ''));
+    return Number.isFinite(parsed) ? parsed : NaN;
+  };
+  const hasCurrencyCode = value => /\b[A-Za-z]{3}\b/.test(String(value || ''));
+  const formatCurrency = value => {
+    const number = numericValue(value);
+    return Number.isFinite(number) ? `${currencyCode()} ${number.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : String(value || '');
+  };
+  const detectCurrency = () => {
+    const source = [document.getElementById('f_totalAmount')?.value, document.getElementById('f_unitPrice')?.value].join(' ');
+    const match = source.match(/\b(USD|AED|SAR)\b/i);
+    return match ? match[1].toUpperCase() : 'USD';
+  };
+  const refreshPrimaryPrice = () => {
+    const total = numericValue(document.getElementById('f_totalAmount')?.value);
+    const quantity = numericValue(document.getElementById('f_totalQty')?.value || document.getElementById('f_qty')?.value);
+    const price = document.getElementById('f_unitPrice');
+    if (!price || price.dataset.manual === '1' || !Number.isFinite(total) || !Number.isFinite(quantity) || !quantity) return;
+    price.value = formatCurrency(total / quantity);
+  };
+  const refreshItemAmount = number => {
+    const price = document.getElementById(`f_item${number}Price`);
+    const quantity = document.getElementById(`f_item${number}Qty`);
+    const amount = document.getElementById(`f_item${number}Amount`);
+    if (!price || !quantity || !amount || amount.dataset.manual === '1') return;
+    const unitPrice = numericValue(price.value), qty = numericValue(quantity.value);
+    if (Number.isFinite(unitPrice) && Number.isFinite(qty)) amount.value = formatCurrency(unitPrice * qty);
+  };
+  const normalizeCurrencyInputs = () => {
+    ['f_unitPrice', 'f_totalAmount'].forEach(id => {
+      const input = document.getElementById(id);
+      if (input && input.value.trim() && !hasCurrencyCode(input.value)) input.value = formatCurrency(input.value);
+    });
+    for (let number = 2; number <= 15; number++) {
+      [`f_item${number}Price`, `f_item${number}Amount`].forEach(id => {
+        const input = document.getElementById(id);
+        if (input && input.value.trim() && !hasCurrencyCode(input.value)) input.value = formatCurrency(input.value);
+      });
+    }
+  };
+  currencyInput?.addEventListener('change', () => {
+    refreshPrimaryPrice();
+    for (let number = 2; number <= 15; number++) refreshItemAmount(number);
+  });
+  document.getElementById('f_totalAmount')?.addEventListener('input', refreshPrimaryPrice);
+  document.getElementById('f_qty')?.addEventListener('input', refreshPrimaryPrice);
+  document.getElementById('f_totalQty')?.addEventListener('input', refreshPrimaryPrice);
+  for (let number = 2; number <= 15; number++) {
+    document.getElementById(`f_item${number}Price`)?.addEventListener('input', () => refreshItemAmount(number));
+    document.getElementById(`f_item${number}Qty`)?.addEventListener('input', () => refreshItemAmount(number));
+  }
+  panel.addEventListener('focusout', event => {
+    if (!event.target.matches('#f_unitPrice,#f_totalAmount,[id^="f_item"][id$="Price"],[id^="f_item"][id$="Amount"]')) return;
+    if (event.target.value.trim() && !hasCurrencyCode(event.target.value)) event.target.value = formatCurrency(event.target.value);
+  });
+  panel.addEventListener('click', event => {
+    if (event.target.closest('#saveBtn,#saveDraftBtn')) normalizeCurrencyInputs();
+  }, true);
+  new MutationObserver(() => {
+    if (!panel.classList.contains('open') || !currencyInput) return;
+    currencyInput.value = detectCurrency();
+  }).observe(panel, { attributes: true, attributeFilter: ['class'] });
   const shell = document.createElement('div');
   shell.className = 'shipment-wizard';
   shell.innerHTML = `<aside class="wizard-sidebar"><div class="wizard-progress"><b>0%</b></div><div class="wizard-progress-label">تقدم تعبئة البيانات</div><div class="wizard-steps"></div></aside><section class="wizard-content"><div class="wizard-top"><div class="wizard-top-row"><div><h3>إدخال الشحنة خطوة بخطوة</h3><p>أكمل البيانات المطلوبة ثم تابع للمرحلة التالية.</p></div><b class="wizard-step-count">الخطوة 1 من 5</b></div><div class="wizard-bar"><span></span></div></div></section>`;
@@ -106,7 +180,7 @@
   };
   const validate = step => {
     const missing = required[step - 1].map(id => document.getElementById(id)).filter(el => el && !String(el.value || '').trim());
-    steps[step - 1].querySelectorAll('.wizard-invalid').forEach(el => el.classList.remove('wizard-invalid'));
+    steps[step -1].querySelectorAll('.wizard-invalid').forEach(el => el.classList.remove('wizard-invalid'));
     const error = steps[step - 1].querySelector('.wizard-error');
     if (!missing.length) { if (error) error.classList.remove('show'); return true; }
     missing.forEach(el => el.classList.add('wizard-invalid'));
