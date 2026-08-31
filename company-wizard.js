@@ -120,7 +120,8 @@
     const summary = document.createElement('div'); summary.className = 'cew-summary'; summary.id = 'cewSummary';
     append(panels[3], previewTitle);
     addLayoutEditor(panels[3]);
-    invoiceSettingsPanel = panels[3];
+    // Bahar Swaken's invoice controls belong at the start of its company setup.
+    invoiceSettingsPanel = panels[0];
     append(panels[3], summary, previewBar, preview, actions);
     panels.forEach((panel, index) => {
       const nav = document.createElement('div'); nav.className = 'cew-actions';
@@ -154,10 +155,12 @@
       [...stepLinks.children].forEach((link, i) => link.classList.toggle('active', i === index));
       updateSummary(); updateProgress(index); sessionStorage.setItem(storageKey, String(index + 1));
     }
+    // Opening Bahar Swaken always starts from its invoice-template settings.
+    overlay.showBaharInvoiceSettings = () => setStep(1);
     [...stepLinks.children].forEach((link, index) => link.addEventListener('click', () => setStep(index + 1)));
     overlay.addEventListener('input', () => { updateSummary(); updateProgress([...panels].findIndex(p => p.classList.contains('active'))); });
     overlay.addEventListener('change', () => { updateSummary(); updateProgress([...panels].findIndex(p => p.classList.contains('active'))); });
-    setStep(Number(sessionStorage.getItem(storageKey)) || 1);
+    setStep(isBaharSwaken() ? 1 : (Number(sessionStorage.getItem(storageKey)) || 1));
   }
 
   function isBaharSwaken() {
@@ -178,9 +181,26 @@
   function syncBaharInvoiceSettings() {
     if (!invoiceSettingsPanel) return;
     const existing = invoiceSettingsPanel.querySelector('.cew-bahar-invoice');
-    if (!isBaharSwaken()) { if (existing) existing.remove(); return; }
+    const legacyPreviewTitle = [...overlay.querySelectorAll('.section-title')]
+      .find(el => el.textContent.trim() === 'معاينة المستند');
+    if (!isBaharSwaken()) {
+      if (existing) existing.remove();
+      if (legacyPreviewTitle) {
+        legacyPreviewTitle.style.display = '';
+        if (legacyPreviewTitle.nextElementSibling) legacyPreviewTitle.nextElementSibling.style.display = '';
+        if (legacyPreviewTitle.nextElementSibling?.nextElementSibling) legacyPreviewTitle.nextElementSibling.nextElementSibling.style.display = '';
+      }
+      return;
+    }
     if (existing) return;
     const settings = getInvoicePreviewSettings();
+    // The standard company preview renders the legacy invoice. Keep it for all
+    // other companies, but do not show it while configuring Bahar Swaken.
+    if (legacyPreviewTitle) {
+      legacyPreviewTitle.style.display = 'none';
+      if (legacyPreviewTitle.nextElementSibling) legacyPreviewTitle.nextElementSibling.style.display = 'none';
+      if (legacyPreviewTitle.nextElementSibling?.nextElementSibling) legacyPreviewTitle.nextElementSibling.nextElementSibling.style.display = 'none';
+    }
     const section = document.createElement('section');
     section.className = 'cew-bahar-invoice cew-upload-card';
     section.innerHTML = `
@@ -238,7 +258,10 @@
     build();
     const legacyTemplateButton = document.getElementById('ceTplEditBtn');
     if (legacyTemplateButton) legacyTemplateButton.style.display = 'none';
-    setTimeout(syncBaharInvoiceSettings, 0);
+    setTimeout(() => {
+      syncBaharInvoiceSettings();
+      if (isBaharSwaken()) overlay.showBaharInvoiceSettings?.();
+    }, 0);
   }).observe(overlay, { attributes: true, attributeFilter: ['class'] });
   if (overlay.classList.contains('open')) build();
 })();
