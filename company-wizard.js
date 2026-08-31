@@ -170,7 +170,7 @@
   }
 
   function invoicePreviewDefaults() {
-    return { name:'Bahar Swaken — Commercial Invoice', accent:'#86191f', tableHeader:'#86191f', tableFont:'IBM Plex Sans', background:'', watermark:'', watermarkOpacity:7 };
+    return { name:'Bahar Swaken — Commercial Invoice', accent:'#86191f', tableHeader:'#86191f', tableFont:'IBM Plex Sans', background:'', watermark:'', watermarkOpacity:7, signature:'', stamp:'', showStamp:true, showSigLine:true };
   }
 
   function getInvoicePreviewSettings() {
@@ -178,11 +178,85 @@
     catch (e) { return invoicePreviewDefaults(); }
   }
 
+  function renderBaharSimpleSettings() {
+    const host = overlay.querySelector('.cew-host');
+    if (!host) return;
+    let simple = document.getElementById('baharSimpleSettings');
+    if (!isBaharSwaken()) {
+      host.style.display = '';
+      if (simple) simple.style.display = 'none';
+      return;
+    }
+    host.style.display = 'none';
+    if (!simple) {
+      simple = document.createElement('section');
+      simple.id = 'baharSimpleSettings';
+      simple.style.cssText = 'margin:0;padding:24px 28px 30px;background:#fff;direction:rtl;';
+      host.insertAdjacentElement('afterend', simple);
+    }
+    simple.style.display = '';
+    const settings = getInvoicePreviewSettings();
+    settings.stamp = company.stamp || settings.stamp || '';
+    settings.showStamp = document.getElementById('ce_showStamp')?.checked ?? settings.showStamp;
+    settings.showSigLine = document.getElementById('ce_showSigLine')?.checked ?? settings.showSigLine;
+    const fileControl = (key, title, accept, value, help) => `<div class="bs-file" data-key="${key}"><label>${title}</label><small>${help}</small><div class="bs-file-row"><button type="button" class="btn btn-ghost btn-small bs-pick">رفع / استبدال</button><button type="button" class="btn btn-ghost btn-small bs-remove">إزالة</button><input type="file" accept="${accept}" hidden></div><div class="bs-thumb">${value ? `<img src="${value}" alt="${title}">` : '<span>لا توجد صورة مرفوعة</span>'}</div></div>`;
+    simple.innerHTML = `
+      <style>
+        #baharSimpleSettings .bs-card{max-width:980px;margin:auto;border:1px solid #dbe4ee;border-radius:16px;padding:24px;background:#fff;box-shadow:0 10px 26px rgba(20,38,60,.06)}
+        #baharSimpleSettings .bs-top{display:flex;gap:24px;align-items:center;margin-bottom:20px;padding-bottom:18px;border-bottom:1px solid #e8eef5}#baharSimpleSettings .bs-toggle{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;cursor:pointer}#baharSimpleSettings .bs-toggle input{width:auto}
+        #baharSimpleSettings .bs-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}#baharSimpleSettings .bs-file{margin-top:18px;border-top:1px solid #edf1f5;padding-top:18px}#baharSimpleSettings .bs-file label{display:block;font-weight:800;margin-bottom:4px}#baharSimpleSettings .bs-file small{color:#748194;font-size:12px}#baharSimpleSettings .bs-file-row{display:flex;gap:8px;margin:10px 0}.bs-thumb{height:120px;border:1px dashed #cdd9e6;border-radius:10px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#fbfcfe;color:#94a0af;font-size:12px}.bs-thumb img{max-width:100%;max-height:100%;object-fit:contain}.bs-actions{display:flex;gap:10px;margin-top:22px}.bs-card h3{margin:0 0 5px}.bs-card p{margin:0;color:#718096;font-size:13px;line-height:1.65}@media(max-width:700px){#baharSimpleSettings{padding:14px!important}#baharSimpleSettings .bs-grid{grid-template-columns:1fr}#baharSimpleSettings .bs-top{align-items:flex-start;flex-direction:column;gap:12px}}
+      </style>
+      <div class="bs-card">
+        <div class="bs-top"><label class="bs-toggle"><input class="bs-show-stamp" type="checkbox"> إظهار الختم على الفاتورة</label><label class="bs-toggle"><input class="bs-show-signature" type="checkbox"> إظهار خط التوقيع</label></div>
+        <h3>جدول فاتورة Bahar Swaken</h3><p>إعدادات خاصة بمعاينة فاتورة بحر سواكن فقط، ولا تؤثر على الشركات الأخرى أو الفواتير الحالية.</p>
+        <div class="bs-grid" style="margin-top:18px"><div class="field"><label>اسم النموذج</label><input class="bs-name" dir="ltr"></div><div class="field"><label>خط جدول البنود</label><select class="bs-font"><option value="IBM Plex Sans">IBM Plex Sans</option></select></div><div class="field"><label>لون التصميم الرئيسي</label><input class="bs-accent" type="color"></div><div class="field"><label>لون رأس الجدول</label><input class="bs-header" type="color"></div></div>
+        ${fileControl('background', 'خلفية جدول الفاتورة', 'image/png,image/jpeg,image/webp', settings.background, 'PNG أو JPG. تستخدم الصورة الأصلية عند الطباعة وPDF.')}
+        ${fileControl('watermark', 'العلامة المائية', 'image/png,image/jpeg,image/webp', settings.watermark, 'PNG أو JPG. تظهر في فاتورة بحر سواكن فقط.')}
+        <div class="field" style="margin-top:10px"><label>شفافية العلامة المائية: <b class="bs-opacity-value"></b>%</label><input class="bs-opacity" type="range" min="0" max="100" step="1"></div>
+        ${fileControl('signature', 'صورة التوقيع', 'image/png,image/jpeg,image/webp', settings.signature, 'يفضل PNG بخلفية شفافة. الصورة اختيارية.')}
+        <div class="bs-actions"><button type="button" class="btn btn-primary bs-save">حفظ إعدادات المعاينة</button><button type="button" class="btn btn-ghost bs-preview">معاينة الفاتورة</button></div>
+      </div>`;
+    const one = selector => simple.querySelector(selector);
+    one('.bs-name').value = settings.name;
+    one('.bs-font').value = settings.tableFont;
+    one('.bs-accent').value = settings.accent;
+    one('.bs-header').value = settings.tableHeader;
+    one('.bs-opacity').value = settings.watermarkOpacity;
+    one('.bs-opacity-value').textContent = settings.watermarkOpacity;
+    one('.bs-show-stamp').checked = !!settings.showStamp;
+    one('.bs-show-signature').checked = !!settings.showSigLine;
+    one('.bs-opacity').addEventListener('input', event => one('.bs-opacity-value').textContent = event.target.value);
+    simple.querySelectorAll('.bs-file').forEach(card => {
+      const key = card.dataset.key, input = card.querySelector('input');
+      card.querySelector('.bs-pick').addEventListener('click', () => input.click());
+      input.addEventListener('change', () => {
+        const file = input.files?.[0]; if (!file) return;
+        const reader = new FileReader(); reader.onload = () => { card.dataset.value = reader.result; card.querySelector('.bs-thumb').innerHTML = `<img src="${reader.result}" alt="${key}">`; }; reader.readAsDataURL(file);
+      });
+      card.querySelector('.bs-remove').addEventListener('click', () => { card.dataset.value = ''; input.value = ''; card.querySelector('.bs-thumb').innerHTML = '<span>لا توجد صورة مرفوعة</span>'; });
+    });
+    const collect = () => ({
+      name:one('.bs-name').value.trim() || invoicePreviewDefaults().name, tableFont:one('.bs-font').value, accent:one('.bs-accent').value, tableHeader:one('.bs-header').value,
+      background:simple.querySelector('[data-key="background"]').dataset.value || settings.background || '', watermark:simple.querySelector('[data-key="watermark"]').dataset.value || settings.watermark || '',
+      signature:simple.querySelector('[data-key="signature"]').dataset.value || settings.signature || '', watermarkOpacity:Number(one('.bs-opacity').value), stamp:company.stamp || settings.stamp || '', showStamp:one('.bs-show-stamp').checked, showSigLine:one('.bs-show-signature').checked
+    });
+    const store = () => {
+      const next = collect(); localStorage.setItem(invoicePreviewSettingsKey, JSON.stringify(next));
+      const stampToggle = document.getElementById('ce_showStamp'), signatureToggle = document.getElementById('ce_showSigLine');
+      if (stampToggle) { stampToggle.checked = next.showStamp; stampToggle.dispatchEvent(new Event('change', { bubbles:true })); }
+      if (signatureToggle) { signatureToggle.checked = next.showSigLine; signatureToggle.dispatchEvent(new Event('change', { bubbles:true })); }
+    };
+    one('.bs-save').addEventListener('click', () => { store(); if (typeof toast === 'function') toast('تم حفظ إعدادات معاينة Bahar Swaken'); });
+    one('.bs-preview').addEventListener('click', () => { store(); window.open('/invoice-template-preview/bahar-swaken/', '_blank', 'noopener'); });
+  }
+
   function syncBaharInvoiceSettings() {
     if (!invoiceSettingsPanel) return;
     const existing = invoiceSettingsPanel.querySelector('.cew-bahar-invoice');
     const legacyPreviewTitle = [...overlay.querySelectorAll('.section-title')]
       .find(el => el.textContent.trim() === 'معاينة المستند');
+    renderBaharSimpleSettings();
+    if (isBaharSwaken()) return;
     if (!isBaharSwaken()) {
       if (existing) existing.remove();
       const previewBox = document.getElementById('cePreview');
