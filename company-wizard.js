@@ -10,6 +10,7 @@
   ];
   const storageKey = 'company_wizard_step';
   const invoicePreviewSettingsKey = 'baharSwakenInvoicePreviewSettings';
+  const invoicePreviewDraftKey = 'baharSwakenInvoicePreviewDraft';
   let invoiceSettingsPanel = null;
 
   function valueOf(id) {
@@ -170,7 +171,7 @@
   }
 
   function invoicePreviewDefaults() {
-    return { name:'Bahar Swaken — Commercial Invoice', accent:'#86191f', tableHeader:'#86191f', tableFont:'IBM Plex Sans', background:'', watermark:'', watermarkOpacity:7, signature:'', stamp:'', showStamp:true, showSigLine:true, stampTransform:{x:0,y:0,scale:100,rotate:0}, signatureTransform:{x:0,y:0,scale:100,rotate:0} };
+    return { name:'Bahar Swaken — Commercial Invoice', accent:'#86191f', tableHeader:'#86191f', tableFont:'IBM Plex Sans', background:'', watermark:'', watermarkOpacity:7, signature:'', stamp:'', showStamp:true, showSigLine:true, stampPosition:{xPercent:78,yPercent:78,widthPercent:13,rotate:0}, signaturePosition:{xPercent:10,yPercent:81,widthPercent:23,rotate:0} };
   }
 
   function getInvoicePreviewSettings() {
@@ -184,10 +185,22 @@
     let simple = document.getElementById('baharSimpleSettings');
     if (!isBaharSwaken()) {
       host.style.display = '';
+      const modal = overlay.querySelector('.detail-card');
+      if (modal?.dataset.baharOriginalStyle !== undefined) {
+        modal.setAttribute('style', modal.dataset.baharOriginalStyle);
+        modal.classList.remove('bahar-wide-editor');
+        delete modal.dataset.baharOriginalStyle;
+      }
       if (simple) simple.style.display = 'none';
       return;
     }
     host.style.display = 'none';
+    const modal = overlay.querySelector('.detail-card');
+    if (modal) {
+      if (modal.dataset.baharOriginalStyle === undefined) modal.dataset.baharOriginalStyle = modal.getAttribute('style') || '';
+      modal.classList.add('bahar-wide-editor');
+      modal.style.cssText = modal.dataset.baharOriginalStyle + ';width:96vw;max-width:none;height:92vh;max-height:none;display:flex;flex-direction:column;overflow:hidden;';
+    }
     if (!simple) {
       simple = document.createElement('section');
       simple.id = 'baharSimpleSettings';
@@ -200,16 +213,16 @@
     settings.showStamp = document.getElementById('ce_showStamp')?.checked ?? settings.showStamp;
     settings.showSigLine = document.getElementById('ce_showSigLine')?.checked ?? settings.showSigLine;
     const fileControl = (key, title, accept, value, help) => `<div class="bs-file" data-key="${key}"><label>${title}</label><small>${help}</small><div class="bs-file-row"><button type="button" class="btn btn-ghost btn-small bs-pick">إضافة / استبدال</button><button type="button" class="btn btn-ghost btn-small bs-remove">إزالة</button><input type="file" accept="${accept}" hidden></div><div class="bs-thumb">${value ? `<img src="${value}" alt="${title}">` : '<span>لا توجد صورة مرفوعة</span>'}</div></div>`;
-    const transformControls = (key, title, values) => `<div class="bs-transform" data-transform="${key}"><strong>${title}</strong><div class="bs-transform-grid"><label>أفقي <b data-value="x">${values.x}</b><input data-prop="x" type="range" min="-80" max="80" step="1" value="${values.x}"></label><label>عمودي <b data-value="y">${values.y}</b><input data-prop="y" type="range" min="-80" max="80" step="1" value="${values.y}"></label><label>الحجم <b data-value="scale">${values.scale}</b>%<input data-prop="scale" type="range" min="30" max="200" step="1" value="${values.scale}"></label><label>التدوير <b data-value="rotate">${values.rotate}</b>°<input data-prop="rotate" type="range" min="-180" max="180" step="1" value="${values.rotate}"></label></div></div>`;
-    const stampTransform = Object.assign({x:0,y:0,scale:100,rotate:0}, settings.stampTransform || {});
-    const signatureTransform = Object.assign({x:0,y:0,scale:100,rotate:0}, settings.signatureTransform || {});
+    const transformControls = (key, title, values) => `<div class="bs-transform" data-transform="${key}"><strong>${title}</strong><div class="bs-transform-grid"><label>أفقي <b data-value="xPercent">${values.xPercent}</b>%<input data-prop="xPercent" type="range" min="0" max="100" step="0.5" value="${values.xPercent}"></label><label>عمودي <b data-value="yPercent">${values.yPercent}</b>%<input data-prop="yPercent" type="range" min="0" max="100" step="0.5" value="${values.yPercent}"></label><label>الحجم <b data-value="widthPercent">${values.widthPercent}</b>%<input data-prop="widthPercent" type="range" min="4" max="42" step="0.5" value="${values.widthPercent}"></label><label>التدوير <b data-value="rotate">${values.rotate}</b>°<input data-prop="rotate" type="range" min="-180" max="180" step="1" value="${values.rotate}"></label></div></div>`;
+    const stampPosition = Object.assign({xPercent:78,yPercent:78,widthPercent:13,rotate:0}, settings.stampPosition || {});
+    const signaturePosition = Object.assign({xPercent:10,yPercent:81,widthPercent:23,rotate:0}, settings.signaturePosition || {});
     simple.innerHTML = `
       <style>
-        #baharSimpleSettings .bs-card{max-width:980px;margin:auto;border:1px solid #dbe4ee;border-radius:16px;padding:24px;background:#fff;box-shadow:0 10px 26px rgba(20,38,60,.06)}
+        #baharSimpleSettings{flex:1;min-height:0;overflow:hidden!important;padding:0!important}#baharSimpleSettings .bs-workspace{height:100%;display:grid;grid-template-columns:minmax(340px,39%) minmax(0,61%);background:#f7f9fc}#baharSimpleSettings .bs-card{min-height:0;overflow:auto;border-left:1px solid #dbe4ee;padding:24px;background:#fff;box-shadow:none}
         #baharSimpleSettings .bs-top{display:flex;gap:24px;align-items:center;margin-bottom:20px;padding-bottom:18px;border-bottom:1px solid #e8eef5}#baharSimpleSettings .bs-toggle{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;cursor:pointer}#baharSimpleSettings .bs-toggle input{width:auto}
-        #baharSimpleSettings .bs-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}#baharSimpleSettings .bs-file{margin-top:18px;border-top:1px solid #edf1f5;padding-top:18px}#baharSimpleSettings .bs-file label{display:block;font-weight:800;margin-bottom:4px}#baharSimpleSettings .bs-file small{color:#748194;font-size:12px}#baharSimpleSettings .bs-file-row{display:flex;gap:8px;margin:10px 0}.bs-thumb{height:120px;border:1px dashed #cdd9e6;border-radius:10px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#fbfcfe;color:#94a0af;font-size:12px}.bs-thumb img{max-width:100%;max-height:100%;object-fit:contain}.bs-transform{margin-top:12px;padding:14px;border:1px solid #e7edf4;border-radius:10px;background:#fbfcfe}.bs-transform-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:10px}.bs-transform label{font-size:12px;font-weight:700}.bs-transform input{display:block;width:100%;margin-top:6px}.bs-actions{display:flex;gap:10px;margin-top:22px}.bs-card h3{margin:0 0 5px}.bs-card p{margin:0;color:#718096;font-size:13px;line-height:1.65}@media(max-width:700px){#baharSimpleSettings{padding:14px!important}#baharSimpleSettings .bs-grid,#baharSimpleSettings .bs-transform-grid{grid-template-columns:1fr}#baharSimpleSettings .bs-top{align-items:flex-start;flex-direction:column;gap:12px}}
+        #baharSimpleSettings .bs-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}#baharSimpleSettings .bs-file{margin-top:18px;border-top:1px solid #edf1f5;padding-top:18px}#baharSimpleSettings .bs-file label{display:block;font-weight:800;margin-bottom:4px}#baharSimpleSettings .bs-file small{color:#748194;font-size:12px}#baharSimpleSettings .bs-file-row{display:flex;gap:8px;margin:10px 0}.bs-thumb{height:120px;border:1px dashed #cdd9e6;border-radius:10px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#fbfcfe;color:#94a0af;font-size:12px}.bs-thumb img{max-width:100%;max-height:100%;object-fit:contain}.bs-transform{margin-top:12px;padding:14px;border:1px solid #e7edf4;border-radius:10px;background:#fbfcfe}.bs-transform-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:10px}.bs-transform label{font-size:12px;font-weight:700}.bs-transform input{display:block;width:100%;margin-top:6px}.bs-actions{display:flex;gap:10px;margin-top:22px}.bs-card h3{margin:0 0 5px}.bs-card p{margin:0;color:#718096;font-size:13px;line-height:1.65}.bs-live{min-width:0;min-height:0;padding:20px;display:flex;flex-direction:column;overflow:hidden}.bs-live-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}.bs-live-head strong,.bs-live-head small{display:block}.bs-live-head small{font-size:12px;color:#7a8795;margin-top:3px}.bs-zoom{display:flex;gap:6px}.bs-zoom button{border:1px solid #d3dfeb;background:#fff;border-radius:7px;padding:6px 9px;font-weight:700;cursor:pointer}.bs-zoom button.active{background:#1677ff;color:#fff;border-color:#1677ff}.bs-page-stage{position:relative;flex:1;min-height:0;overflow:auto;display:flex;justify-content:center;align-items:flex-start;padding:12px;background:#e8eef4;border:1px solid #d4e0eb;border-radius:12px}.bs-live-frame{width:210mm;height:297mm;border:0;flex:0 0 auto;transform:scale(.62);transform-origin:top center;box-shadow:0 12px 26px rgba(28,42,56,.22)}@media(max-width:900px){#baharSimpleSettings .bs-workspace{grid-template-columns:1fr;height:auto;overflow:auto}#baharSimpleSettings{overflow:auto!important}#baharSimpleSettings .bs-card{overflow:visible;border-left:0;border-bottom:1px solid #dbe4ee}.bs-live{min-height:650px}}@media(max-width:700px){#baharSimpleSettings .bs-grid,#baharSimpleSettings .bs-transform-grid{grid-template-columns:1fr}#baharSimpleSettings .bs-top{align-items:flex-start;flex-direction:column;gap:12px}}
       </style>
-      <div class="bs-card">
+      <div class="bs-workspace"><div class="bs-card">
         <div class="bs-top"><label class="bs-toggle"><input class="bs-show-stamp" type="checkbox"> إظهار الختم على الفاتورة</label><label class="bs-toggle"><input class="bs-show-signature" type="checkbox"> إظهار خط التوقيع</label></div>
         <h3>جدول فاتورة Bahar Swaken</h3><p>إعدادات خاصة بمعاينة فاتورة بحر سواكن فقط، ولا تؤثر على الشركات الأخرى أو الفواتير الحالية.</p>
         <div class="bs-grid" style="margin-top:18px"><div class="field"><label>اسم النموذج</label><input class="bs-name" dir="ltr"></div><div class="field"><label>خط جدول البنود</label><select class="bs-font"><option value="IBM Plex Sans">IBM Plex Sans</option></select></div><div class="field"><label>لون التصميم الرئيسي</label><input class="bs-accent" type="color"></div><div class="field"><label>لون رأس الجدول</label><input class="bs-header" type="color"></div></div>
@@ -217,11 +230,11 @@
         ${fileControl('watermark', 'العلامة المائية', 'image/png,image/jpeg,image/webp', settings.watermark, 'PNG أو JPG. تظهر في فاتورة بحر سواكن فقط.')}
         <div class="field" style="margin-top:10px"><label>شفافية العلامة المائية: <b class="bs-opacity-value"></b>%</label><input class="bs-opacity" type="range" min="0" max="100" step="1"></div>
         ${fileControl('stamp', 'صورة الختم', 'image/png,image/jpeg,image/webp', settings.stamp, 'PNG أو JPG. يمكن استخدام الختم الموجود أو رفع ختم خاص بهذا القالب.')}
-        ${transformControls('stamp', 'تحريك وتعديل الختم', stampTransform)}
+        ${transformControls('stamp', 'تحريك وتعديل الختم', stampPosition)}
         ${fileControl('signature', 'صورة التوقيع', 'image/png,image/jpeg,image/webp', settings.signature, 'يفضل PNG بخلفية شفافة. الصورة اختيارية.')}
-        ${transformControls('signature', 'تحريك وتعديل التوقيع', signatureTransform)}
-        <div class="bs-actions"><button type="button" class="btn btn-primary bs-save">حفظ إعدادات المعاينة</button><button type="button" class="btn btn-ghost bs-preview">معاينة الفاتورة</button></div>
-      </div>`;
+        ${transformControls('signature', 'تحريك وتعديل التوقيع', signaturePosition)}
+        <div class="bs-actions"><button type="button" class="btn btn-primary bs-save">حفظ إعدادات المعاينة</button><button type="button" class="btn btn-ghost bs-preview">معاينة الطباعة</button></div>
+      </div><aside class="bs-live"><div class="bs-live-head"><div><strong>المعاينة الحية</strong><small>نموذج A4 حقيقي</small></div><div class="bs-zoom"><button type="button" data-zoom=".62">Fit</button><button type="button" data-zoom=".75">75%</button><button type="button" data-zoom="1">100%</button></div></div><div class="bs-page-stage"><iframe class="bs-live-frame" title="المعاينة الحية لفاتورة بحر سواكن" src="/invoice-template-preview/bahar-swaken/?embed=editor"></iframe></div></aside></div>`;
     const one = selector => simple.querySelector(selector);
     one('.bs-name').value = settings.name;
     one('.bs-font').value = settings.tableFont;
@@ -237,9 +250,9 @@
       card.querySelector('.bs-pick').addEventListener('click', () => input.click());
       input.addEventListener('change', () => {
         const file = input.files?.[0]; if (!file) return;
-        const reader = new FileReader(); reader.onload = () => { card.dataset.value = reader.result; card.querySelector('.bs-thumb').innerHTML = `<img src="${reader.result}" alt="${key}">`; }; reader.readAsDataURL(file);
+        const reader = new FileReader(); reader.onload = () => { card.dataset.value = reader.result; card.querySelector('.bs-thumb').innerHTML = `<img src="${reader.result}" alt="${key}">`; scheduleLivePreview(); }; reader.readAsDataURL(file);
       });
-      card.querySelector('.bs-remove').addEventListener('click', () => { card.dataset.value = ''; input.value = ''; card.querySelector('.bs-thumb').innerHTML = '<span>لا توجد صورة مرفوعة</span>'; });
+      card.querySelector('.bs-remove').addEventListener('click', () => { card.dataset.value = ''; input.value = ''; card.querySelector('.bs-thumb').innerHTML = '<span>لا توجد صورة مرفوعة</span>'; scheduleLivePreview(); });
     });
     simple.querySelectorAll('.bs-transform').forEach(group => group.querySelectorAll('input').forEach(input => input.addEventListener('input', () => {
       group.querySelector(`[data-value="${input.dataset.prop}"]`).textContent = input.value;
@@ -248,10 +261,39 @@
     const collect = () => ({
       name:one('.bs-name').value.trim() || invoicePreviewDefaults().name, tableFont:one('.bs-font').value, accent:one('.bs-accent').value, tableHeader:one('.bs-header').value,
       background:simple.querySelector('[data-key="background"]').dataset.value || settings.background || '', watermark:simple.querySelector('[data-key="watermark"]').dataset.value || settings.watermark || '',
-      signature:simple.querySelector('[data-key="signature"]').dataset.value || settings.signature || '', watermarkOpacity:Number(one('.bs-opacity').value), stamp:simple.querySelector('[data-key="stamp"]').dataset.value || settings.stamp || company.stamp || '', showStamp:one('.bs-show-stamp').checked, showSigLine:one('.bs-show-signature').checked, stampTransform:transformValue('stamp'), signatureTransform:transformValue('signature')
+      signature:simple.querySelector('[data-key="signature"]').dataset.value || settings.signature || '', watermarkOpacity:Number(one('.bs-opacity').value), stamp:simple.querySelector('[data-key="stamp"]').dataset.value || settings.stamp || company.stamp || '', showStamp:one('.bs-show-stamp').checked, showSigLine:one('.bs-show-signature').checked, stampPosition:transformValue('stamp'), signaturePosition:transformValue('signature')
     });
+    const liveFrame = one('.bs-live-frame');
+    let liveTimer;
+    const sendLivePreview = () => {
+      const draft = collect();
+      localStorage.setItem(invoicePreviewDraftKey, JSON.stringify(draft));
+      liveFrame.contentWindow?.postMessage({ type:'bahar-live-settings', settings:draft }, location.origin);
+    };
+    const scheduleLivePreview = () => { clearTimeout(liveTimer); liveTimer = setTimeout(sendLivePreview, 60); };
+    liveFrame.addEventListener('load', sendLivePreview);
+    simple.addEventListener('input', scheduleLivePreview);
+    simple.addEventListener('change', scheduleLivePreview);
+    one('.bs-zoom').addEventListener('click', event => {
+      const button = event.target.closest('[data-zoom]'); if (!button) return;
+      const zoom = Number(button.dataset.zoom);
+      liveFrame.style.transform = `scale(${zoom})`;
+      simple.querySelectorAll('[data-zoom]').forEach(item => item.classList.toggle('active', item === button));
+    });
+    one('[data-zoom=".62"]').classList.add('active');
+    if (overlay._baharLiveMessageHandler) window.removeEventListener('message', overlay._baharLiveMessageHandler);
+    overlay._baharLiveMessageHandler = event => {
+      if (event.origin !== location.origin || event.data?.type !== 'bahar-live-position') return;
+      const group = simple.querySelector(`[data-transform="${event.data.key}"]`); if (!group) return;
+      Object.entries(event.data.position || {}).forEach(([prop, value]) => {
+        const input = group.querySelector(`[data-prop="${prop}"]`); if (!input) return;
+        input.value = value; group.querySelector(`[data-value="${prop}"]`).textContent = value;
+      });
+      scheduleLivePreview();
+    };
+    window.addEventListener('message', overlay._baharLiveMessageHandler);
     const store = () => {
-      const next = collect(); localStorage.setItem(invoicePreviewSettingsKey, JSON.stringify(next));
+      const next = collect(); localStorage.setItem(invoicePreviewSettingsKey, JSON.stringify(next)); localStorage.removeItem(invoicePreviewDraftKey);
       const stampToggle = document.getElementById('ce_showStamp'), signatureToggle = document.getElementById('ce_showSigLine');
       if (stampToggle) { stampToggle.checked = next.showStamp; stampToggle.dispatchEvent(new Event('change', { bubbles:true })); }
       if (signatureToggle) { signatureToggle.checked = next.showSigLine; signatureToggle.dispatchEvent(new Event('change', { bubbles:true })); }
@@ -383,4 +425,3 @@
   }).observe(overlay, { attributes: true, attributeFilter: ['class'] });
   if (overlay.classList.contains('open')) build();
 })();
-
