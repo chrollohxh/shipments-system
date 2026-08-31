@@ -7760,7 +7760,7 @@ async function loadShipmentFiles(id){
   }catch(e){ shipmentFilesCache[id] = []; }
   renderShipmentFiles(id);
 }
-async function uploadShipmentFiles(id, files){
+async function uploadShipmentFiles(id, files, label){
   if(!files || !files.length) return;
   const MAX = 10 * 1024 * 1024;
   netStart();
@@ -7772,13 +7772,39 @@ async function uploadShipmentFiles(id, files){
       const {error: upErr} = await sb.storage.from('shipment-files').upload(path, f, {upsert:false});
       if(upErr) throw upErr;
       const {error} = await sb.from('shipment_files').insert({
-        shipment_id:id, name:f.name, path, mime:f.type||null, size_bytes:f.size
+        shipment_id:id, name:f.name, path, mime:f.type||null, size_bytes:f.size, label:label||null
       });
       if(error) throw error;
     }catch(e){ dbError(e, `تعذّر رفع "${f.name}"`); }
   }
   await loadShipmentFiles(id);
   netEnd();
+}
+
+// ===== شهادة المنشأ/البوليصة المرفوعة يدوياً (بحر سواكن فقط) — تُخزَّن في نفس أرشيف
+// المستندات (shipment_files) بتصنيف ثابت، بدل توليدهما بالكود لهذه الشركة تحديداً.
+const BAHAR_DOC_LABELS = {cert:'شهادة المنشأ (بحر سواكن)', bol:'بوليصة الشحن (بحر سواكن)'};
+function baharUploadedDoc(r, key){
+  const label = BAHAR_DOC_LABELS[key];
+  const list = shipmentFilesCache[r.id] || [];
+  return list.find(f=>f.label===label) || null;
+}
+function triggerBaharDocUpload(r, key){
+  const input = document.createElement('input');
+  input.type = 'file'; input.accept = 'application/pdf,image/*'; input.style.display = 'none';
+  input.addEventListener('change', async function(){
+    const files = Array.from(this.files||[]);
+    if(files.length){ await uploadShipmentFiles(r.id, files, BAHAR_DOC_LABELS[key]); refreshDocActionsGrid(r); }
+    input.remove();
+  });
+  document.body.append(input);
+  input.click();
+}
+function refreshDocActionsGrid(r){
+  const el = document.getElementById('docActionsGrid');
+  if(!el) return;
+  el.innerHTML = renderDocActionsGrid(r);
+  wireDocActionButtons(r);
 }
 async function openShipmentFile(path, name){
   try{
@@ -12805,8 +12831,20 @@ function renderDocOrderList(r){
 }
 function renderDocActionsGrid(r){
   const order = docOrderOf(r);
+  const baharOverride = isBaharSwakenCompany(companyDataFor(r));
   return order.map(k=>{
     const m = DOC_META[k];
+    if(baharOverride && (k==='cert' || k==='bol')){
+      const uploaded = baharUploadedDoc(r, k);
+      return `<div class="doc-action-btn" id="${m.btnId}Wrap">
+          <span class="t">${icon(m.icon)} ${m.label}</span>
+          <span class="s">${uploaded ? ('مرفوع: '+escapeHtml(uploaded.name)) : 'لم يُرفع بعد — يُضاف يدوياً'}</span>
+          <div style="display:flex;gap:6px;margin-top:6px">
+            ${uploaded ? `<button type="button" class="btn btn-ghost btn-small" id="${m.btnId}Open">${icon('download',13)} فتح</button>` : ''}
+            <button type="button" class="btn btn-ghost btn-small" id="${m.btnId}Upload">${icon('upload',13)} ${uploaded? 'استبدال' : 'رفع الملف'}</button>
+          </div>
+        </div>`;
+    }
     const isReady = m.ready(r);
     return `<button class="doc-action-btn" id="${m.btnId}" ${!isReady?'disabled':''}>
         <span class="t">${icon(m.icon)} ${m.label}</span>
@@ -12815,18 +12853,28 @@ function renderDocActionsGrid(r){
   }).join('');
 }
 function wireDocActionButtons(r){
+  const baharOverride = isBaharSwakenCompany(companyDataFor(r));
+  if(baharOverride){
+    ['cert','bol'].forEach(k=>{
+      const m = DOC_META[k];
+      const uploaded = baharUploadedDoc(r, k);
+      document.getElementById(m.btnId+'Upload')?.addEventListener('click', ()=> triggerBaharDocUpload(r, k));
+      if(uploaded) document.getElementById(m.btnId+'Open')?.addEventListener('click', ()=> openShipmentFile(uploaded.path, uploaded.name));
+    });
+  } else {
+    document.getElementById('btnCert').addEventListener('click', ()=>{
+      if(isSea(r) && (r.certDubaiPdf || r.certDubaiWordOnline)) printSingle(r,'cert');
+      else if(isSea(r)) openSeaCertPdf(r);   // بحري افتراضي: يُكتب على PDF الأصلي
+      else if(r.certCoded) chooseDocLang(r, lang=> printSingle(r,'cert',lang)); // مبنية بالكود: تدعم اختيار اللغة
+      else printSingle(r,'cert');            // نموذج صورة قديم: عربي دائماً
+    });
+    document.getElementById('btnBol').addEventListener('click', ()=>{
+      if(r.bolCoded || r.bolSeaCoded) chooseDocLang(r, lang=> printSingle(r,'bol',lang)); // مبنية بالكود: تدعم اختيار اللغة
+      else printSingle(r,'bol');             // نموذج صورة قديم: عربي دائماً
+    });
+  }
   document.getElementById('btnProforma').addEventListener('click', ()=> chooseDocLang(r, lang=> printSingle(r,'proforma',lang)));
   document.getElementById('btnInvoice').addEventListener('click', ()=> chooseDocLang(r, lang=> printSingle(r,'invoice',lang)));
-  document.getElementById('btnCert').addEventListener('click', ()=>{
-    if(isSea(r) && (r.certDubaiPdf || r.certDubaiWordOnline)) printSingle(r,'cert');
-    else if(isSea(r)) openSeaCertPdf(r);   // بحري افتراضي: يُكتب على PDF الأصلي
-    else if(r.certCoded) chooseDocLang(r, lang=> printSingle(r,'cert',lang)); // مبنية بالكود: تدعم اختيار اللغة
-    else printSingle(r,'cert');            // نموذج صورة قديم: عربي دائماً
-  });
-  document.getElementById('btnBol').addEventListener('click', ()=>{
-    if(r.bolCoded || r.bolSeaCoded) chooseDocLang(r, lang=> printSingle(r,'bol',lang)); // مبنية بالكود: تدعم اختيار اللغة
-    else printSingle(r,'bol');             // نموذج صورة قديم: عربي دائماً
-  });
   document.getElementById('btnPacking').addEventListener('click', ()=> chooseDocLang(r, lang=> printSingle(r,'packing',lang)));
 }
 async function moveDocOrder(r, key, dir){
@@ -12941,7 +12989,7 @@ function openDetail(id){
     fillFormForEdit(r);
   });
   loadShipmentTimeline(r);
-  loadShipmentFiles(id);
+  loadShipmentFiles(id).then(()=>{ if(isBaharSwakenCompany(companyDataFor(r))) refreshDocActionsGrid(r); });
   const sfInput = document.getElementById('sf_files');
   if(sfInput) sfInput.addEventListener('change', function(){
     uploadShipmentFiles(id, Array.from(this.files||[]));
