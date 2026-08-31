@@ -185,6 +185,14 @@
       .find(el => el.textContent.trim() === 'معاينة المستند');
     if (!isBaharSwaken()) {
       if (existing) existing.remove();
+      const previewBox = document.getElementById('cePreview');
+      const previewButton = document.getElementById('cePreviewBtn');
+      if (previewBox?.dataset.baharPreview) {
+        delete previewBox.dataset.baharPreview;
+        previewBox.classList.remove('cew-bahar-preview');
+        previewBox.innerHTML = '<span class="ce-hint">اضغط "تحديث المعاينة" لعرض شكل الفاتورة</span>';
+      }
+      if (previewButton) previewButton.textContent = 'تحديث المعاينة';
       if (legacyPreviewTitle) {
         legacyPreviewTitle.style.display = '';
         if (legacyPreviewTitle.nextElementSibling) legacyPreviewTitle.nextElementSibling.style.display = '';
@@ -215,7 +223,11 @@
         <div class="field"><label>العلامة المائية</label><input class="bi-watermark" type="file" accept="image/*"><div class="bi-watermark-status"></div></div>
         <div class="field"><label>شفافية العلامة المائية: <b class="bi-opacity-value"></b>%</label><input class="bi-opacity" type="range" min="0" max="25" step="1"></div>
       </div>
-      <div class="cew-actions"><button type="button" class="btn btn-primary bi-save">حفظ إعدادات المعاينة</button><button type="button" class="btn btn-ghost bi-preview">فتح معاينة التصميم</button><button type="button" class="btn btn-ghost bi-reset">استرجاع المعتمد</button></div>`;
+      <div class="cew-actions"><button type="button" class="btn btn-primary bi-save">حفظ إعدادات المعاينة</button><button type="button" class="btn btn-ghost bi-preview">فتح معاينة التصميم</button><button type="button" class="btn btn-ghost bi-reset">استرجاع المعتمد</button></div>
+      <div class="section-title" style="margin-top:18px">معاينة جدول بحر سواكن</div>
+      <div class="bi-inline-preview" style="width:100%;height:360px;overflow:hidden;border:1px solid #d8e3f0;border-radius:12px;background:#eef3f8;padding:10px;display:flex;justify-content:center;align-items:flex-start">
+        <iframe title="معاينة فاتورة بحر سواكن" src="/invoice-template-preview/bahar-swaken/?embed=1" style="width:210mm;height:297mm;border:0;transform:scale(.36);transform-origin:top center;pointer-events:none"></iframe>
+      </div>`;
     // Put the Bahar invoice controls first, before the ordinary company fields.
     invoiceSettingsPanel.insertBefore(section, invoiceSettingsPanel.querySelector('.cew-panel-head')?.nextElementSibling || null);
     const one = selector => section.querySelector(selector);
@@ -249,9 +261,30 @@
         watermark:one('.bi-watermark').dataset.value || current.watermark || '', watermarkOpacity:Number(one('.bi-opacity').value)
       }));
       if (typeof toast === 'function') toast('تم حفظ إعدادات معاينة Bahar Swaken');
+      refreshBaharPreview();
     });
     one('.bi-preview').addEventListener('click', () => window.open('/invoice-template-preview/bahar-swaken/', '_blank', 'noopener'));
     one('.bi-reset').addEventListener('click', () => { localStorage.removeItem(invoicePreviewSettingsKey); section.remove(); syncBaharInvoiceSettings(); });
+    const refreshBaharPreview = () => {
+      const box = document.getElementById('cePreview');
+      if (!box) return;
+      box.dataset.baharPreview = '1';
+      box.classList.add('cew-bahar-preview');
+      box.innerHTML = '<iframe title="معاينة فاتورة بحر سواكن" src="/invoice-template-preview/bahar-swaken/?embed=1&v=' + Date.now() + '" style="width:210mm;height:297mm;border:0;transform:scale(.36);transform-origin:top center;pointer-events:none"></iframe>';
+      const button = document.getElementById('cePreviewBtn');
+      if (button) button.textContent = 'تحديث معاينة قالب بحر سواكن';
+    };
+    const previewButton = document.getElementById('cePreviewBtn');
+    if (previewButton && !previewButton.dataset.baharPreviewBound) {
+      previewButton.dataset.baharPreviewBound = '1';
+      previewButton.addEventListener('click', event => {
+        if (!isBaharSwaken()) return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        refreshBaharPreview();
+      }, true);
+    }
+    refreshBaharPreview();
   }
 
   new MutationObserver(() => {
