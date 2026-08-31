@@ -350,6 +350,17 @@ body{padding-right:230px;}
 .btn:disabled{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none;}
 .btn:disabled:hover{transform:none;}
 
+.bsgt-new-btn{
+  font-family:inherit;font-weight:800;font-size:14.5px;padding:12px 24px;border-radius:999px;
+  border:none;cursor:pointer;line-height:1.4;background:#86191f;color:#fff;
+  display:inline-flex;align-items:center;gap:9px;letter-spacing:.2px;
+  box-shadow:0 4px 14px rgba(134,25,31,.32);
+  transition:background-color .2s var(--ease),box-shadow .22s var(--ease),transform .12s var(--ease);
+}
+.bsgt-new-btn:before{content:'';width:8px;height:8px;border-radius:50%;background:#fff;opacity:.9;}
+.bsgt-new-btn:hover{background:#6e1319;box-shadow:0 10px 24px rgba(134,25,31,.42);transform:translateY(-2px);}
+.bsgt-new-btn:active{transform:translateY(0) scale(.97);}
+
 /* ===== شارات ===== */
 .docpills{display:flex;gap:6px;flex-wrap:wrap;}
 .pill{
@@ -2256,6 +2267,7 @@ body.role-staff #navWallet,body.role-staff #navAdmin{display:flex !important;}
   </div>
   <div class="o-cp-actions" id="cpActions">
     <button class="btn btn-primary" id="newBtn" style="display:none;" data-ic="plus">جديد</button>
+    <button class="bsgt-new-btn" id="bsgtNewBtn" style="display:none;" data-ic="plus">إنشاء شحنة BSGT</button>
   </div>
   <div class="o-cp-search" id="cpSearch" style="display:none;">
     <div class="o-searchbox">
@@ -4743,6 +4755,57 @@ SWIFT: NBEGEGCX"></textarea>
   </div>
 </div>
 
+<div class="overlay" id="bsgtShipOverlay">
+  <div class="detail-card" style="max-width:780px;">
+    <div class="dh">
+      <div><h2 id="bsgtShipTitle">شحنة جديدة — بحر سواكن</h2>
+        <div style="font-size:12px;color:var(--muted);margin-top:3px;">قائمة إدخال مختصرة خاصة بشحنات بحر سواكن فقط</div>
+      </div>
+      <button class="close-x" id="bsgtShipCloseX" data-ic="close"></button>
+    </div>
+    <div style="padding:0 26px;">
+      <div class="section-title">الصنف والسعر</div>
+      <div class="grid">
+        <div class="field span2"><label>وصف الصنف</label><input type="text" id="bsgt_itemDesc" placeholder="مثال: Ceramic"></div>
+        <div class="field"><label>الكمية</label><input type="text" id="bsgt_qty" placeholder="مثال: 1053"></div>
+        <div class="field"><label>نوع التعبئة</label><select class="lookup-sel" id="bsgt_qtyUnit"></select></div>
+        <div class="field"><label>عملة الفاتورة</label><select class="lookup-sel" id="bsgt_currency" dir="ltr">
+          <option value="USD">USD - دولار أمريكي</option><option value="AED">AED - درهم إماراتي</option><option value="SAR">SAR - ريال سعودي</option>
+        </select></div>
+        <div class="field"><label>سعر الوحدة</label><input type="text" id="bsgt_unitPrice" placeholder="مثال: 41.82"></div>
+        <div class="field"><label>المبلغ الإجمالي</label><input type="text" id="bsgt_totalAmount" placeholder="مثال: 44040.00"></div>
+      </div>
+      <div class="section-title">جهة الوصول والمرسل إليه</div>
+      <div class="grid">
+        <div class="field"><label>جهة الوصول (تظهر في الفاتورة المبدئية والنهائية)</label><select class="lookup-sel" id="bsgt_portDischarge"></select></div>
+        <div class="field"><label>المرسل إليه (Consignee)</label><select class="lookup-sel" id="bsgt_consignee"></select></div>
+        <div class="field span2"><label>عنوان المرسل إليه</label><select class="lookup-sel" id="bsgt_consigneeAddress"></select></div>
+      </div>
+      <div class="section-title">الفواتير</div>
+      <div class="grid">
+        <div class="field"><label>رقم الفاتورة المبدئية (Proforma)</label><input type="text" id="bsgt_proformaNo"></div>
+        <div class="field"><label>تاريخ الفاتورة المبدئية <small style="font-weight:400;color:var(--muted);">(تلقائي: قبل أسبوع من النهائية)</small></label><input type="date" id="bsgt_proformaDate"></div>
+        <div class="field"><label>رقم الفاتورة النهائية</label><input type="text" id="bsgt_invoiceNo"></div>
+        <div class="field"><label>تاريخ الفاتورة النهائية</label><input type="date" id="bsgt_invoiceDate"></div>
+      </div>
+      <div class="section-title">شروط الشحن والدفع</div>
+      <div class="grid">
+        <div class="field"><label>نوع التأمين (Incoterm)</label><select class="lookup-sel" id="bsgt_incoterm"></select></div>
+        <div class="field"><label>شروط الدفع</label><select class="lookup-sel" id="bsgt_paymentTerm"></select></div>
+        <div class="field"><label>البنك المرسل إليه (للفرز والترتيب)</label><select class="lookup-sel" id="bsgt_destBank"></select></div>
+        <div class="field"><label>العنوان البنكي</label><select class="lookup-sel" id="bsgt_bankPick"></select></div>
+      </div>
+      <div class="grid">
+        <div class="field span2"><label>ملاحظات</label><textarea id="bsgt_notes" rows="3"></textarea></div>
+      </div>
+    </div>
+    <div class="detail-actions">
+      <button class="btn btn-primary" id="bsgtShipSaveBtn">حفظ الشحنة</button>
+      <button class="btn btn-ghost" id="bsgtShipCancelBtn">إلغاء</button>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="profileOverlay">
   <div class="detail-card" style="max-width:560px;">
     <div class="dh">
@@ -5949,24 +6012,26 @@ function subscribeRealtime(){
 // ===== القوائم الجاهزة (تُدار من لوحة التحكم فقط) =====
 const LOOKUP_DEFS = [
   {key:'itemDesc',        label:'وصف البضاعة',        fields:["f_itemDesc","f_item2Desc","f_item3Desc","f_item4Desc","f_item5Desc","f_item6Desc","f_item7Desc","f_item8Desc","f_item9Desc","f_item10Desc","f_item11Desc","f_item12Desc","f_item13Desc","f_item14Desc","f_item15Desc"], long:true},
-  {key:'qtyUnit',         label:'نوع التعبئة',        fields:["f_qtyUnit","f_item2Unit","f_item3Unit","f_item4Unit","f_item5Unit","f_item6Unit","f_item7Unit","f_item8Unit","f_item9Unit","f_item10Unit","f_item11Unit","f_item12Unit","f_item13Unit","f_item14Unit","f_item15Unit"]},
+  {key:'qtyUnit',         label:'نوع التعبئة',        fields:["f_qtyUnit","f_item2Unit","f_item3Unit","f_item4Unit","f_item5Unit","f_item6Unit","f_item7Unit","f_item8Unit","f_item9Unit","f_item10Unit","f_item11Unit","f_item12Unit","f_item13Unit","f_item14Unit","f_item15Unit","bsgt_qtyUnit"]},
   {key:'exporter',        label:'المصدّر',            fields:['f_exporter']},
   {key:'exporterAddress', label:'عنوان المصدّر',      fields:['f_exporterAddress'], long:true},
-  {key:'consignee',       label:'المرسل إليه',        fields:['f_consignee']},
-  {key:'consigneeAddress',label:'عنوان المرسل إليه',  fields:['f_consigneeAddress'], long:true},
+  {key:'consignee',       label:'المرسل إليه',        fields:['f_consignee','bsgt_consignee']},
+  {key:'consigneeAddress',label:'عنوان المرسل إليه',  fields:['f_consigneeAddress','bsgt_consigneeAddress'], long:true},
   {key:'notifyParty',     label:'جهة الإخطار',        fields:['f_notifyParty']},
   {key:'notifyAddress',   label:'عنوان جهة الإخطار',  fields:['f_notifyAddress'], long:true},
   {key:'countryOrigin',   label:'بلد المنشأ',         fields:['f_countryOrigin']},
   {key:'portLoading',     label:'ميناء الشحن',        fields:['f_portLoading']},
-  {key:'portDischarge',   label:'ميناء التفريغ / جهة الوصول', fields:['f_portDischarge']},
-  {key:'paymentTerm',     label:'شروط الدفع',         fields:['f_paymentTerm'], long:true},
-  {key:'destBank',        label:'البنك المرسل إليه',  fields:['f_destBank']},
+  {key:'portDischarge',   label:'ميناء التفريغ / جهة الوصول', fields:['f_portDischarge','bsgt_portDischarge']},
+  {key:'paymentTerm',     label:'شروط الدفع',         fields:['f_paymentTerm','bsgt_paymentTerm'], long:true},
+  {key:'destBank',        label:'البنك المرسل إليه',  fields:['f_destBank','bsgt_destBank']},
+  {key:'incoterm',        label:'نوع التأمين (Incoterm)', fields:['bsgt_incoterm']},
 ];
 const DEFAULT_LOOKUPS = {
   qtyUnit:['طن','كيلو','كرتونة','طرد','قالب','وحدة','شيكارة','صندوق','بالتة','حبة'],
   countryOrigin:['جمهورية مصر العربية'],
   notifyParty:['نفس المرسل إليه'],
   paymentTerm:['DA (180) DAYS FROM B/L DATE','CAD','TT IN ADVANCE','LC AT SIGHT'],
+  incoterm:['CFR','FOB'],
 };
 let lookups = {};
 
@@ -7634,6 +7699,7 @@ function switchView(v){
   const names = {dashboard:'لوحة المعلومات', records:'الشحنات', bsgt:'شحنات BSGT', createShip:'إنشاء شحنة', shipForm:'إدخال بيانات الشحنة', tasks:'المهام', review:'الاعتماد', money:'التحصيل والمستحقات', wallet:'محفظة العملاء', admin:'لوحة التحكم', activityLog:'سجل العمليات'};
   document.getElementById('crumbCurrent').textContent = names[navKey] || names[v] || '';
   document.getElementById('cpSearch').style.display = v==='records' ? 'flex' : 'none';
+  document.getElementById('bsgtNewBtn').style.display = (v==='records' && currentCompanyScope==='bsgt' && canEdit()) ? 'inline-flex' : 'none';
   if(v==='dashboard'){ renderDashboard(); renderReport(); }
   if(v==='records'){ render(); renderSea(); renderIssued(); renderDrafts(); renderReview(); }
   if(v==='tasks') renderTasks();
@@ -12444,6 +12510,111 @@ document.getElementById('cscSeaBtn').addEventListener('click', ()=>{
 });
 let pendingShipType = 'land';
 
+// ===== قائمة إدخال مختصرة لشحنات بحر سواكن (بوابة "شحنات BSGT") =====
+function baharCompanyEntry(){
+  return companies.find(c => isBaharSwakenCompany(companyDataFor({companyId:c.id})));
+}
+function fillBsgtProformaDate(){
+  const invStr = document.getElementById('bsgt_invoiceDate').value;
+  if(!invStr) return;
+  const proforma = new Date(invStr+'T00:00:00');
+  proforma.setDate(proforma.getDate()-7);
+  // toISODate() (toISOString) shifts a day in UTC+ zones like the Gulf — build the
+  // date string from local getFullYear/getMonth/getDate instead.
+  const y = proforma.getFullYear(), m = String(proforma.getMonth()+1).padStart(2,'0'), d = String(proforma.getDate()).padStart(2,'0');
+  document.getElementById('bsgt_proformaDate').value = `${y}-${m}-${d}`;
+}
+document.getElementById('bsgt_invoiceDate').addEventListener('change', fillBsgtProformaDate);
+
+document.getElementById('bsgt_consignee').addEventListener('change', function(){
+  const addrSel = document.getElementById('bsgt_consigneeAddress');
+  if(addrSel.value) return;
+  const addr = (lookupAddresses.consignee||{})[this.value];
+  if(addr){ setLookupValue(addrSel, addr); return; }
+  const c = clientByName(this.value);
+  if(c && c.address) setLookupValue(addrSel, c.address);
+});
+
+function renderBsgtBankOptions(selectedId){
+  const sel = document.getElementById('bsgt_bankPick');
+  const cur = selectedId !== undefined ? selectedId : sel.value;
+  sel.innerHTML = '<option value="">— بدون عنوان بنكي —</option>' +
+    bankBook.map(b=>`<option value="${b.id}">${escapeHtml(b.nick)}</option>`).join('');
+  sel.value = cur || '';
+}
+
+let bsgtShipEditId = null;
+function openBsgtShipForm(id){
+  bsgtShipEditId = id || null;
+  const r = id ? records.find(x=>x.id===id) : null;
+  document.getElementById('bsgtShipTitle').textContent = r ? 'تعديل شحنة — بحر سواكن' : 'شحنة جديدة — بحر سواكن';
+  fillLookupSelects();
+  renderBsgtBankOptions(r ? r.bankId : '');
+  document.getElementById('bsgt_itemDesc').value = r?.itemDesc || '';
+  document.getElementById('bsgt_qty').value = r?.qty || '';
+  setLookupValue(document.getElementById('bsgt_qtyUnit'), r?.qtyUnit || '');
+  document.getElementById('bsgt_currency').value = 'USD';
+  document.getElementById('bsgt_unitPrice').value = r?.unitPrice || '';
+  document.getElementById('bsgt_totalAmount').value = r?.totalAmount || '';
+  setLookupValue(document.getElementById('bsgt_portDischarge'), r?.portDischarge || '');
+  setLookupValue(document.getElementById('bsgt_consignee'), r?.consignee || '');
+  setLookupValue(document.getElementById('bsgt_consigneeAddress'), r?.consigneeAddress || '');
+  document.getElementById('bsgt_proformaNo').value = r?.proformaNo || '';
+  document.getElementById('bsgt_proformaDate').value = r?.proformaDate || '';
+  document.getElementById('bsgt_invoiceNo').value = r?.invoiceNo || '';
+  document.getElementById('bsgt_invoiceDate').value = r?.invoiceDate || '';
+  setLookupValue(document.getElementById('bsgt_incoterm'), r?.incoterm || '');
+  setLookupValue(document.getElementById('bsgt_paymentTerm'), r?.paymentTerm || '');
+  setLookupValue(document.getElementById('bsgt_destBank'), r?.destBank || '');
+  document.getElementById('bsgt_notes').value = r?.notes || '';
+  document.getElementById('bsgtShipOverlay').classList.add('open');
+}
+document.getElementById('bsgtNewBtn').addEventListener('click', ()=> openBsgtShipForm(null));
+document.getElementById('bsgtShipCloseX').addEventListener('click', ()=> document.getElementById('bsgtShipOverlay').classList.remove('open'));
+document.getElementById('bsgtShipCancelBtn').addEventListener('click', ()=> document.getElementById('bsgtShipOverlay').classList.remove('open'));
+
+async function saveBsgtShipment(){
+  if(!canEdit()){ toast('مالكش صلاحية لإضافة أو تعديل الشحنات','err'); return; }
+  const entry = baharCompanyEntry();
+  if(!entry){ alert('شركة بحر سواكن مش موجودة في قائمة الشركات بعد — أضفها من لوحة التحكم أولاً.'); return; }
+  const id = bsgtShipEditId || ('r'+Date.now());
+  const prev = records.find(r=>r.id===id) || {};
+  const bankSel = document.getElementById('bsgt_bankPick');
+  const bankEntry = bankBook.find(b=>b.id===bankSel.value);
+  const currency = document.getElementById('bsgt_currency').value;
+  const withCurrency = v => { v = (v||'').trim(); if(!v) return ''; return /^[A-Za-z]{2,3}\s/.test(v) ? v : (currency+' '+v); };
+  const isNew = !bsgtShipEditId;
+  const rec = Object.assign({}, prev, {
+    id, shipType: prev.shipType || 'land', companyId: entry.id,
+    itemDesc: document.getElementById('bsgt_itemDesc').value,
+    qty: document.getElementById('bsgt_qty').value,
+    qtyUnit: document.getElementById('bsgt_qtyUnit').value,
+    unitPrice: withCurrency(document.getElementById('bsgt_unitPrice').value),
+    totalAmount: withCurrency(document.getElementById('bsgt_totalAmount').value),
+    portDischarge: document.getElementById('bsgt_portDischarge').value,
+    consignee: document.getElementById('bsgt_consignee').value,
+    consigneeAddress: document.getElementById('bsgt_consigneeAddress').value,
+    proformaNo: document.getElementById('bsgt_proformaNo').value,
+    proformaDate: document.getElementById('bsgt_proformaDate').value,
+    invoiceNo: document.getElementById('bsgt_invoiceNo').value,
+    invoiceDate: document.getElementById('bsgt_invoiceDate').value,
+    incoterm: document.getElementById('bsgt_incoterm').value,
+    paymentTerm: document.getElementById('bsgt_paymentTerm').value,
+    destBank: document.getElementById('bsgt_destBank').value,
+    bankId: bankSel.value || '',
+    bankDetails: bankEntry ? bankEntry.body : '',
+    notes: document.getElementById('bsgt_notes').value,
+    status: prev.status || 'sent',
+  });
+  const savedRec = await dbSaveRecord(rec);
+  if(!savedRec) return;
+  const label = (rec.itemDesc||'شحنة بحر سواكن').slice(0,40) + (rec.invoiceNo? ` — فاتورة ${rec.invoiceNo}` : '');
+  addLog(isNew ? 'add' : 'edit', (isNew ? 'إضافة شحنة: ' : 'تعديل شحنة: ') + label);
+  document.getElementById('bsgtShipOverlay').classList.remove('open');
+  render(); renderSea(); renderIssued(); renderDrafts(); renderDashboard();
+}
+document.getElementById('bsgtShipSaveBtn').addEventListener('click', saveBsgtShipment);
+
 document.getElementById('newBtn').addEventListener('click', ()=>{
   // الموظف لازم يبدأ من مهمة
   if(isStaffRole() && !pendingTaskRef){
@@ -12998,7 +13169,8 @@ function openDetail(id){
   document.getElementById('mergeAllBtn').addEventListener('click', ()=> chooseDocLang(r, lang=> mergeFullPackage(r, lang)));
   document.getElementById('editBtn').addEventListener('click', ()=>{
     overlay.classList.remove('open');
-    fillFormForEdit(r);
+    if(isBaharSwakenCompany(companyDataFor(r))) openBsgtShipForm(r.id);
+    else fillFormForEdit(r);
   });
   loadShipmentTimeline(r);
   loadShipmentFiles(id).then(()=>{ if(isBaharSwakenCompany(companyDataFor(r))) refreshDocActionsGrid(r); });
