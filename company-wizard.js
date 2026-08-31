@@ -216,7 +216,8 @@
         <div class="field"><label>شفافية العلامة المائية: <b class="bi-opacity-value"></b>%</label><input class="bi-opacity" type="range" min="0" max="25" step="1"></div>
       </div>
       <div class="cew-actions"><button type="button" class="btn btn-primary bi-save">حفظ إعدادات المعاينة</button><button type="button" class="btn btn-ghost bi-preview">فتح معاينة التصميم</button><button type="button" class="btn btn-ghost bi-reset">استرجاع المعتمد</button></div>`;
-    invoiceSettingsPanel.insertBefore(section, invoiceSettingsPanel.querySelector('.cew-summary'));
+    // Put the Bahar invoice controls first, before the ordinary company fields.
+    invoiceSettingsPanel.insertBefore(section, invoiceSettingsPanel.querySelector('.cew-panel-head')?.nextElementSibling || null);
     const one = selector => section.querySelector(selector);
     one('.bi-name').value = settings.name;
     one('.bi-font').value = settings.tableFont;
