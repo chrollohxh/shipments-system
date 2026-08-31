@@ -4769,9 +4769,16 @@ SWIFT: NBEGEGCX"></textarea>
         <div class="field span2"><label>وصف الصنف</label><input type="text" id="bsgt_itemDesc" placeholder="مثال: Ceramic"></div>
         <div class="field"><label>الكمية</label><input type="text" id="bsgt_qty" placeholder="مثال: 1053"></div>
         <div class="field"><label>نوع التعبئة</label><select class="lookup-sel" id="bsgt_qtyUnit"></select></div>
-        <div class="field"><label>عملة الفاتورة</label><select class="lookup-sel" id="bsgt_currency" dir="ltr">
-          <option value="USD">USD - دولار أمريكي</option><option value="AED">AED - درهم إماراتي</option><option value="SAR">SAR - ريال سعودي</option>
-        </select></div>
+        <div class="field">
+          <label>عملة الفاتورة</label>
+          <div style="display:flex;gap:8px;align-items:center">
+            <select class="lookup-sel" id="bsgt_currency" dir="ltr" style="flex:1">
+              <option value="USD">USD - دولار أمريكي</option><option value="AED">AED - درهم إماراتي</option><option value="SAR">SAR - ريال سعودي</option>
+            </select>
+            <button type="button" class="btn btn-ghost btn-small" id="bsgt_aedToggle" title="تحويل السعر تلقائياً لدرهم إماراتي (3.67) في الفاتورة" style="white-space:nowrap;padding:8px 12px;">⇄ AED</button>
+          </div>
+          <small style="color:var(--muted);" id="bsgt_aedToggleHint">التحويل التلقائي لدرهم: مفعّل</small>
+        </div>
         <div class="field"><label>سعر الوحدة</label><input type="text" id="bsgt_unitPrice" placeholder="مثال: 41.82"></div>
         <div class="field"><label>المبلغ الإجمالي</label><input type="text" id="bsgt_totalAmount" placeholder="مثال: 44040.00"></div>
       </div>
@@ -4791,6 +4798,7 @@ SWIFT: NBEGEGCX"></textarea>
       <div class="section-title">شروط الشحن والدفع</div>
       <div class="grid">
         <div class="field"><label>نوع التأمين (Incoterm)</label><select class="lookup-sel" id="bsgt_incoterm"></select></div>
+        <div class="field"><label>بلد المنشأ (Country of Origin)</label><select class="lookup-sel" id="bsgt_countryOrigin"></select></div>
         <div class="field"><label>شروط الدفع</label><select class="lookup-sel" id="bsgt_paymentTerm"></select></div>
         <div class="field"><label>البنك المرسل إليه (للفرز والترتيب)</label><select class="lookup-sel" id="bsgt_destBank"></select></div>
         <div class="field"><label>العنوان البنكي</label><select class="lookup-sel" id="bsgt_bankPick"></select></div>
@@ -6019,7 +6027,7 @@ const LOOKUP_DEFS = [
   {key:'consigneeAddress',label:'عنوان المرسل إليه',  fields:['f_consigneeAddress','bsgt_consigneeAddress'], long:true},
   {key:'notifyParty',     label:'جهة الإخطار',        fields:['f_notifyParty']},
   {key:'notifyAddress',   label:'عنوان جهة الإخطار',  fields:['f_notifyAddress'], long:true},
-  {key:'countryOrigin',   label:'بلد المنشأ',         fields:['f_countryOrigin']},
+  {key:'countryOrigin',   label:'بلد المنشأ',         fields:['f_countryOrigin','bsgt_countryOrigin']},
   {key:'portLoading',     label:'ميناء الشحن',        fields:['f_portLoading']},
   {key:'portDischarge',   label:'ميناء التفريغ / جهة الوصول', fields:['f_portDischarge','bsgt_portDischarge']},
   {key:'paymentTerm',     label:'شروط الدفع',         fields:['f_paymentTerm','bsgt_paymentTerm'], long:true},
@@ -12544,6 +12552,17 @@ function renderBsgtBankOptions(selectedId){
 }
 
 let bsgtShipEditId = null;
+// تحويل السعر تلقائياً لدرهم (3.67) في فاتورة بحر سواكن — مفعّل افتراضياً،
+// وقابل للإيقاف لكل شحنة على حدة عبر زر "⇄ AED" جنب اختيار العملة.
+let bsgtAutoAed = true;
+function setBsgtAedToggle(on){
+  bsgtAutoAed = on;
+  document.getElementById('bsgt_aedToggle').classList.toggle('btn-primary', on);
+  document.getElementById('bsgt_aedToggle').classList.toggle('btn-ghost', !on);
+  document.getElementById('bsgt_aedToggleHint').textContent = 'التحويل التلقائي لدرهم: ' + (on ? 'مفعّل' : 'متوقف — تظهر بالعملة كما هي');
+}
+document.getElementById('bsgt_aedToggle').addEventListener('click', ()=> setBsgtAedToggle(!bsgtAutoAed));
+
 function openBsgtShipForm(id){
   bsgtShipEditId = id || null;
   const r = id ? records.find(x=>x.id===id) : null;
@@ -12554,6 +12573,7 @@ function openBsgtShipForm(id){
   document.getElementById('bsgt_qty').value = r?.qty || '';
   setLookupValue(document.getElementById('bsgt_qtyUnit'), r?.qtyUnit || '');
   document.getElementById('bsgt_currency').value = 'USD';
+  setBsgtAedToggle(r ? r.bsgtAutoAed !== false : true);
   document.getElementById('bsgt_unitPrice').value = r?.unitPrice || '';
   document.getElementById('bsgt_totalAmount').value = r?.totalAmount || '';
   setLookupValue(document.getElementById('bsgt_portDischarge'), r?.portDischarge || '');
@@ -12564,6 +12584,7 @@ function openBsgtShipForm(id){
   document.getElementById('bsgt_invoiceNo').value = r?.invoiceNo || '';
   document.getElementById('bsgt_invoiceDate').value = r?.invoiceDate || '';
   setLookupValue(document.getElementById('bsgt_incoterm'), r?.incoterm || '');
+  setLookupValue(document.getElementById('bsgt_countryOrigin'), r?.countryOrigin || '');
   setLookupValue(document.getElementById('bsgt_paymentTerm'), r?.paymentTerm || '');
   setLookupValue(document.getElementById('bsgt_destBank'), r?.destBank || '');
   document.getElementById('bsgt_notes').value = r?.notes || '';
@@ -12599,11 +12620,13 @@ async function saveBsgtShipment(){
     invoiceNo: document.getElementById('bsgt_invoiceNo').value,
     invoiceDate: document.getElementById('bsgt_invoiceDate').value,
     incoterm: document.getElementById('bsgt_incoterm').value,
+    countryOrigin: document.getElementById('bsgt_countryOrigin').value,
     paymentTerm: document.getElementById('bsgt_paymentTerm').value,
     destBank: document.getElementById('bsgt_destBank').value,
     bankId: bankSel.value || '',
     bankDetails: bankEntry ? bankEntry.body : '',
     notes: document.getElementById('bsgt_notes').value,
+    bsgtAutoAed: bsgtAutoAed,
     status: prev.status || 'sent',
   });
   const savedRec = await dbSaveRecord(rec);
