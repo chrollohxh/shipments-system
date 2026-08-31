@@ -425,3 +425,71 @@
   }).observe(overlay, { attributes: true, attributeFilter: ['class'] });
   if (overlay.classList.contains('open')) build();
 })();
+
+// Bahar Swaken uses a dedicated shipment invoice sheet. Keeping this override
+// here lets the company settings load it without changing other templates.
+(() => {
+  if (window.__baharShipmentInvoicePatch || typeof window.invoiceSheet !== 'function') return;
+  window.__baharShipmentInvoicePatch = true;
+
+  const legacyInvoiceSheet = window.invoiceSheet;
+  const isBaharSwaken = value => /بحر\s*سواكن|bahar\s*swaken/i.test(`${value?.nameAr || ''} ${value?.nameEn || ''}`);
+  const setting = () => {
+    try { return JSON.parse(localStorage.getItem('baharSwakenInvoicePreviewSettings') || '{}'); }
+    catch (_) { return {}; }
+  };
+  const safe = value => typeof esc === 'function' ? esc(value ?? '') : String(value ?? '');
+
+  const baharSheet = (record, kind) => {
+    const currentCompany = company;
+    const settings = setting();
+    const proforma = kind === 'proforma';
+    const rows = Array.from({ length: 15 }, (_, index) => {
+      const suffix = index ? String(index + 1) : '';
+      return {
+        description: record[`item${suffix}Desc`] || record.itemDesc || '',
+        quantity: record[`item${suffix}Qty`] || record.qty || '',
+        packaging: record[`item${suffix}Unit`] || record.qtyUnit || '',
+        hsCode: record[`item${suffix}HsCode`] || record.hsCode || '',
+        price: record[`item${suffix}Price`] || record.unitPrice || '',
+        amount: record[`item${suffix}Amount`] || record.totalAmount || ''
+      };
+    }).filter((row, index) => index === 0 || row.description || row.quantity || row.packaging);
+    const visibleRows = Array.from({ length: Math.max(5, rows.length) }, (_, index) => rows[index] || {});
+    const accent = settings.tableHeader || settings.accent || currentCompany.accent || '#86191f';
+    const background = settings.background || '';
+    const watermark = settings.watermark || currentCompany.watermark || currentCompany.logo || '';
+    const stamp = settings.showStamp === false ? '' : (settings.stamp || currentCompany.stamp || '');
+    const sign = settings.signature || '';
+    const stampPos = Object.assign({ xPercent: 78, yPercent: 78, widthPercent: 13, rotate: 0 }, settings.stampPosition || {});
+    const signPos = Object.assign({ xPercent: 10, yPercent: 81, widthPercent: 23, rotate: 0 }, settings.signaturePosition || {});
+    const date = typeof fmtDateByLang === 'function' ? fmtDateByLang(proforma ? record.proformaDate : record.invoiceDate, 'en') : (proforma ? record.proformaDate : record.invoiceDate);
+    const itemRows = visibleRows.map(row => `<tr><td class="desc">${safe(row.description)}</td><td>${safe(row.quantity)}</td><td>${safe(row.packaging)}</td><td>${safe(row.hsCode)}</td><td>${safe(record.grossWeight || '—')}</td><td>${safe(row.price)}</td><td>${safe(row.amount)}</td></tr>`).join('');
+    const body = `
+      <style>
+        .bahar-shipment-sheet{position:relative;width:210mm;height:297mm;margin:0 auto;overflow:hidden;background:#fff;color:#17202b;font-family:'IBM Plex Sans',Arial,sans-serif;page-break-after:always;break-after:page}.bahar-shipment-sheet *{box-sizing:border-box}.bahar-shipment-sheet .bg{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;z-index:0}.bahar-shipment-sheet main{position:relative;z-index:2;padding:${background ? '56mm 14mm 37mm' : '18mm 14mm'}}.bahar-shipment-sheet .wm{position:absolute;z-index:1;top:25%;left:22%;width:56%;max-height:52%;object-fit:contain;opacity:.06}.bahar-shipment-sheet .brand{height:24mm;display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid var(--red);margin-bottom:8mm}.bahar-shipment-sheet .brand b{font-size:17px;letter-spacing:1.5px}.bahar-shipment-sheet .brand small{display:block;font-size:10px}.bahar-shipment-sheet .brand img{max-width:34mm;max-height:20mm;object-fit:contain}.bahar-shipment-sheet .title{background:var(--red);color:#fff;text-align:center;padding:3.2mm;font-size:15px;font-weight:800;letter-spacing:1px}.bahar-shipment-sheet .meta{display:grid;grid-template-columns:1fr 1.2fr;border:1px solid var(--red);border-top:0}.bahar-shipment-sheet .meta>div{min-height:15mm;padding:3mm;border-inline-end:1px solid #dfc9ca;display:flex;flex-direction:column;gap:2mm}.bahar-shipment-sheet .meta .wide{grid-column:1/-1;border-top:1px solid #dfc9ca;border-inline-end:0;min-height:13mm}.bahar-shipment-sheet b{font-size:7px;letter-spacing:.5px}.bahar-shipment-sheet .meta b,.bahar-shipment-sheet .terms b{color:var(--red)}.bahar-shipment-sheet .meta span,.bahar-shipment-sheet .terms span{font-size:9px;font-weight:700;line-height:1.35}.bahar-shipment-sheet table{width:100%;border-collapse:collapse;margin-top:4mm;font-size:8.4px}.bahar-shipment-sheet th{background:var(--red);color:#fff;border:1px solid var(--red);padding:2.4mm 1.5mm;font-size:7.2px;white-space:nowrap}.bahar-shipment-sheet td{height:8.2mm;border:1px solid #d8dce0;padding:1.5mm;text-align:center;background:rgba(255,255,255,.82)}.bahar-shipment-sheet .desc{text-align:left;font-weight:700}.bahar-shipment-sheet .totals{display:grid;grid-template-columns:1fr 1fr;gap:3mm;margin-top:3mm}.bahar-shipment-sheet .totals>div{background:rgba(255,255,255,.9);border:1px solid #d8dce0;padding:3mm 4mm;display:flex;justify-content:space-between}.bahar-shipment-sheet .totals>div:last-child{background:var(--red);color:#fff;border-color:var(--red)}.bahar-shipment-sheet .totals strong{font-size:12px;color:var(--red)}.bahar-shipment-sheet .totals>div:last-child strong{color:#fff}.bahar-shipment-sheet .words{background:var(--red);color:#fff;text-align:center;font-size:8px;font-weight:800;padding:2.8mm;margin-top:3mm}.bahar-shipment-sheet .terms{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--red);margin-top:3mm;background:rgba(255,255,255,.9)}.bahar-shipment-sheet .terms>div{min-height:18mm;padding:3mm;border-inline-end:1px solid #dfc9ca;display:flex;flex-direction:column;gap:2mm}.bahar-shipment-sheet .line{position:absolute;left:14mm;bottom:${background ? '37mm' : '18mm'};width:80mm;border-bottom:1px solid #7c8490;padding-bottom:2mm;font-size:8px;color:#59616a;font-weight:700}.bahar-shipment-sheet .stamp,.bahar-shipment-sheet .signature{position:absolute;z-index:3;object-fit:contain;transform-origin:center}@media print{.bahar-shipment-sheet{page-break-after:auto;break-after:auto}}
+      </style>
+      <div class="bahar-shipment-sheet" style="--red:${safe(accent)}">
+        ${background ? `<img class="bg" src="${background}" alt="">` : ''}
+        ${watermark ? `<img class="wm" src="${watermark}" alt="">` : ''}
+        <main>
+          ${background ? '' : `<header class="brand"><div><b>${safe(currentCompany.nameEn || 'BAHAR SWAKEN GENERAL TRADING L.L.C')}</b><small>${safe(currentCompany.nameAr || '')}</small></div>${currentCompany.logo ? `<img src="${currentCompany.logo}" alt="">` : ''}</header>`}
+          <div class="title">${proforma ? 'PROFORMA INVOICE' : 'COMMERCIAL INVOICE'}</div>
+          <section class="meta"><div><b>INVOICE NO &amp; DATE</b><span>${safe(proforma ? record.proformaNo : record.invoiceNo)} · ${safe(date)}</span></div><div><b>CONSIGNEE</b><span>${safe(record.consignee)}</span></div><div class="wide"><b>ADDRESS</b><span>${safe(record.consigneeAddress || record.portDischarge || '')}</span></div></section>
+          <table><thead><tr><th>DESCRIPTION</th><th>QUANTITY</th><th>PACKAGING TYPE</th><th>HS CODE</th><th>WEIGHT</th><th>AED U. PRICE</th><th>AED AMOUNT</th></tr></thead><tbody>${itemRows}</tbody></table>
+          <section class="totals"><div><b>TOTAL PACKAGES</b><strong>${safe(record.totalQty || record.qty || '')} ${safe(record.qtyUnit || '')}</strong></div><div><b>TOTAL AMOUNT</b><strong>${safe(record.totalAmount || rows[0]?.amount || '')}</strong></div></section>
+          ${record.amountInWords ? `<div class="words">${safe(record.amountInWords)}</div>` : ''}
+          <section class="terms"><div><b>INCOTERM</b><span>${safe(record.incoterm || '')}</span></div><div><b>PORT OF DELIVERY</b><span>${safe(record.portDischarge || '')}</span></div><div><b>COUNTRY OF ORIGIN</b><span>${safe(record.countryOfOrigin || '')}</span></div><div><b>TERM OF PAYMENTS</b><span>${safe(record.paymentTerm || '')}</span></div></section>
+          ${settings.showSigLine === false ? '' : '<div class="line">Authorized Signature &amp; Company Stamp</div>'}
+        </main>
+        ${stamp ? `<img class="stamp" src="${stamp}" alt="" style="left:${stampPos.xPercent}%;top:${stampPos.yPercent}%;width:${stampPos.widthPercent}%;transform:rotate(${stampPos.rotate}deg)">` : ''}
+        ${sign ? `<img class="signature" src="${sign}" alt="" style="left:${signPos.xPercent}%;top:${signPos.yPercent}%;width:${signPos.widthPercent}%;transform:rotate(${signPos.rotate}deg)">` : ''}
+      </div>`;
+    return body;
+  };
+
+  window.invoiceSheet = function baharAwareInvoiceSheet(record, kind, lang) {
+    if (isBaharSwaken(company) && (kind === 'proforma' || kind === 'invoice')) return baharSheet(record, kind);
+    return legacyInvoiceSheet(record, kind, lang);
+  };
+})();
