@@ -171,7 +171,7 @@
   }
 
   function invoicePreviewDefaults() {
-    return { name:'Bahar Swaken — Commercial Invoice', accent:'#86191f', tableHeader:'#86191f', tableFont:'IBM Plex Sans', background:'', watermark:'', watermarkOpacity:7, showWatermark:false, signature:'', stamp:'', showStamp:true, showSigLine:true, stampPosition:{xPercent:78,yPercent:78,widthPercent:13,rotate:0}, signaturePosition:{xPercent:10,yPercent:81,widthPercent:23,rotate:0} };
+    return { name:'Bahar Swaken — Commercial Invoice', accent:'#86191f', tableHeader:'#86191f', tableFont:'IBM Plex Sans', tableHeaderScale:100, background:'', watermark:'', watermarkOpacity:7, showWatermark:false, signature:'', stamp:'', showStamp:true, showSigLine:true, stampPosition:{xPercent:78,yPercent:78,widthPercent:13,rotate:0}, signaturePosition:{xPercent:10,yPercent:81,widthPercent:23,rotate:0} };
   }
 
   function getInvoicePreviewSettings() {
@@ -226,6 +226,7 @@
         <div class="bs-top"><label class="bs-toggle"><input class="bs-show-stamp" type="checkbox"> إظهار الختم على الفاتورة</label><label class="bs-toggle"><input class="bs-show-signature" type="checkbox"> إظهار خط التوقيع</label></div>
         <h3>جدول فاتورة Bahar Swaken</h3><p>إعدادات خاصة بمعاينة فاتورة بحر سواكن فقط، ولا تؤثر على الشركات الأخرى أو الفواتير الحالية.</p>
         <div class="bs-grid" style="margin-top:18px"><div class="field"><label>اسم النموذج</label><input class="bs-name" dir="ltr"></div><div class="field"><label>خط جدول البنود</label><select class="bs-font"><option value="IBM Plex Sans">IBM Plex Sans</option></select></div><div class="field"><label>لون التصميم الرئيسي</label><input class="bs-accent" type="color"></div><div class="field"><label>لون رأس الجدول</label><input class="bs-header" type="color"></div></div>
+        <div class="field" style="margin-top:10px"><label>حجم عناوين الجدول (DESCRIPTION, QUANTITY...): <b class="bs-headfs-value"></b>%</label><input class="bs-headfs" type="range" min="60" max="200" step="5"></div>
         ${fileControl('background', 'خلفية جدول الفاتورة', 'image/png,image/jpeg,image/webp', settings.background, 'PNG أو JPG. تستخدم الصورة الأصلية عند الطباعة وPDF.')}
         <label class="bs-toggle" style="margin-top:10px"><input class="bs-show-watermark" type="checkbox"> إظهار العلامة المائية</label>
         ${fileControl('watermark', 'العلامة المائية', 'image/png,image/jpeg,image/webp', settings.watermark, 'PNG أو JPG. تظهر في فاتورة بحر سواكن فقط، وفقط لو "إظهار العلامة المائية" مفعّل.')}
@@ -243,6 +244,9 @@
     one('.bs-header').value = settings.tableHeader;
     one('.bs-opacity').value = settings.watermarkOpacity;
     one('.bs-opacity-value').textContent = settings.watermarkOpacity;
+    one('.bs-headfs').value = settings.tableHeaderScale || 100;
+    one('.bs-headfs-value').textContent = settings.tableHeaderScale || 100;
+    one('.bs-headfs').addEventListener('input', event => one('.bs-headfs-value').textContent = event.target.value);
     one('.bs-show-stamp').checked = !!settings.showStamp;
     one('.bs-show-signature').checked = !!settings.showSigLine;
     one('.bs-show-watermark').checked = !!settings.showWatermark;
@@ -261,7 +265,7 @@
     })));
     const transformValue = key => Object.fromEntries([...simple.querySelectorAll(`[data-transform="${key}"] input`)].map(input => [input.dataset.prop, Number(input.value)]));
     const collect = () => ({
-      name:one('.bs-name').value.trim() || invoicePreviewDefaults().name, tableFont:one('.bs-font').value, accent:one('.bs-accent').value, tableHeader:one('.bs-header').value,
+      name:one('.bs-name').value.trim() || invoicePreviewDefaults().name, tableFont:one('.bs-font').value, accent:one('.bs-accent').value, tableHeader:one('.bs-header').value, tableHeaderScale:Number(one('.bs-headfs').value),
       background:simple.querySelector('[data-key="background"]').dataset.value || settings.background || '', watermark:simple.querySelector('[data-key="watermark"]').dataset.value || settings.watermark || '',
       signature:simple.querySelector('[data-key="signature"]').dataset.value || settings.signature || '', watermarkOpacity:Number(one('.bs-opacity').value), stamp:simple.querySelector('[data-key="stamp"]').dataset.value || settings.stamp || company.stamp || '', showStamp:one('.bs-show-stamp').checked, showSigLine:one('.bs-show-signature').checked, showWatermark:one('.bs-show-watermark').checked, stampPosition:transformValue('stamp'), signaturePosition:transformValue('signature')
     });
@@ -518,6 +522,10 @@
     if (rowCount >= 13) { itemsFs = '6px'; thFs = '5.6px'; thPad = '1mm 1mm'; tdH = '4.4mm'; tdPad = '0.6mm'; }
     else if (rowCount >= 10) { itemsFs = '6.8px'; thFs = '6.2px'; thPad = '1.4mm 1.2mm'; tdH = '5.4mm'; tdPad = '0.9mm'; }
     else if (rowCount >= 7) { itemsFs = '7.5px'; thFs = '6.8px'; thPad = '1.8mm 1.3mm'; tdH = '6.5mm'; tdPad = '1.1mm'; }
+    // Manual scale on top of the automatic shrink-by-row-count above, so the
+    // headers can be enlarged without losing the anti-overlap protection.
+    const headerScale = Math.max(60, Math.min(200, Number(settings.tableHeaderScale) || 100)) / 100;
+    if (headerScale !== 1) thFs = (Math.round(parseFloat(thFs) * headerScale * 100) / 100) + 'px';
     const accent = settings.tableHeader || settings.accent || currentCompany.accent || '#86191f';
     const background = settings.background || '';
     const watermark = settings.showWatermark ? (settings.watermark || currentCompany.watermark || currentCompany.logo || '') : '';
