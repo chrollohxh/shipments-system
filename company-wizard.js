@@ -737,8 +737,8 @@
           quantity: record.qty || '',
           packaging: record.qtyUnit || '',
           hsCode: record.hsCode || '',
-          price: toAedText(record.unitPrice || '', record.bsgtAutoAed !== false),
-          amount: toAedText(record.totalAmount || '', record.bsgtAutoAed !== false)
+          price: toAedText(record.item1Price || record.unitPrice || '', record.bsgtAutoAed !== false),
+          amount: toAedText(record.item1Amount || record.totalAmount || '', record.bsgtAutoAed !== false)
         };
       }
       const suffix = String(index + 1);
