@@ -15911,14 +15911,26 @@ async function buildBsgtGeneratedPackagePdf(r, lang){
           .replaceAll('color-mix(in srgb, var(--red) 14%, white)', '#eedfe0')
           .replaceAll('color-mix(in srgb, var(--bs-value-color, #17202b) 75%, white)', '#526070');
       });
-      // Keep word spacing stable in the canvas-generated BSGT PDF pages.
-      const textNodes = [];
-      const textWalker = document.createTreeWalker(pageRoot, NodeFilter.SHOW_TEXT, {
-        acceptNode(node){ return /^(STYLE|SCRIPT)$/i.test(node.parentElement?.tagName || '')
-          ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT; }
+      // html2canvas can collapse spaces only in dynamic BSGT values. Replace
+      // those spaces with fixed inline gaps in the temporary PDF copy.
+      const valueSelectors = '.bs-field-value,.bs-address-value,.bs-product-value,.bs-total-cartons,.bs-total-amount,.bs-words,.bs-bottom-value,.line';
+      pageRoot.querySelectorAll(valueSelectors).forEach(element=>{
+        const nodes = [];
+        const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+        while(walker.nextNode()) nodes.push(walker.currentNode);
+        nodes.forEach(node=>{
+          if(!/\S\s+\S/.test(node.nodeValue)) return;
+          const fragment = document.createDocumentFragment();
+          node.nodeValue.split(/(\s+)/).forEach(part=>{
+            if(/^\s+$/.test(part)){
+              const gap = document.createElement('span');
+              gap.style.cssText = 'display:inline-block;width:.34em;';
+              fragment.appendChild(gap);
+            }else fragment.appendChild(document.createTextNode(part));
+          });
+          node.parentNode.replaceChild(fragment, node);
+        });
       });
-      while(textWalker.nextNode()) textNodes.push(textWalker.currentNode);
-      textNodes.forEach(node=>{ node.nodeValue = node.nodeValue.replace(/(?<=\S) (?=\S)/g, '\u00A0'); });
       stage.appendChild(pageRoot);
       await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
       if(document.fonts && document.fonts.ready) await document.fonts.ready;
