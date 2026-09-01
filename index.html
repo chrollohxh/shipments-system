@@ -16069,7 +16069,7 @@ async function flattenBsgtPdfAttachment(fileData, filename){
     for(let index = 1; index <= source.numPages; index++){
       const sourcePage = await source.getPage(index);
       const outputViewport = sourcePage.getViewport({scale:1});
-      const renderViewport = sourcePage.getViewport({scale:2.5});
+      const renderViewport = sourcePage.getViewport({scale:3});
       const canvas = document.createElement('canvas');
       canvas.width = Math.max(1, Math.ceil(renderViewport.width));
       canvas.height = Math.max(1, Math.ceil(renderViewport.height));
