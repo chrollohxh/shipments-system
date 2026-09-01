@@ -548,6 +548,95 @@
   if (overlay.classList.contains('open')) build();
 })();
 
+// BSGT package merge: keep the generated invoices separate from the two
+// original files uploaded by the user, then merge all five in one PDF.
+(() => {
+  if (window.__bsgtPackageMergePatch || typeof window.mergeFullPackage !== 'function') return;
+  window.__bsgtPackageMergePatch = true;
+
+  const originalPackageBodyHtml = window.packageBodyHtml;
+  const originalMergeFullPackage = window.mergeFullPackage;
+  const originalOpenDetail = window.openDetail;
+  const isBsgt = record => /بحر\s*سواكن|bahar\s*swaken/i.test(`${companyDataFor(record)?.nameAr || ''} ${companyDataFor(record)?.nameEn || ''}`);
+
+  async function bsgtOriginalDocuments(record) {
+    if (!Object.prototype.hasOwnProperty.call(shipmentFilesCache, record.id)) await loadShipmentFiles(record.id);
+    return ['cert', 'bol'].map(key => baharUploadedDoc(record, key)).filter(Boolean);
+  }
+
+  async function bsgtImageToPdf(blob) {
+    const url = URL.createObjectURL(blob);
+    try {
+      const image = new Image();
+      await new Promise((resolve, reject) => {
+        image.onload = resolve;
+        image.onerror = () => reject(new Error('تعذّر قراءة الصورة المرفوعة'));
+        image.src = url;
+      });
+      const scale = Math.min(1, 2200 / Math.max(image.naturalWidth, image.naturalHeight));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+      canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+      canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height);
+      const pngBlob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+      if (!pngBlob) throw new Error('تعذّر تجهيز الصورة للدمج');
+      const pdf = await PDFLib.PDFDocument.create();
+      const png = await pdf.embedPng(await pngBlob.arrayBuffer());
+      const page = pdf.addPage([595.28, 841.89]);
+      const ratio = Math.min((page.getWidth() - 48) / png.width, (page.getHeight() - 48) / png.height);
+      const width = png.width * ratio;
+      const height = png.height * ratio;
+      page.drawImage(png, { x:(page.getWidth()-width)/2, y:(page.getHeight()-height)/2, width, height });
+      return new Blob([await pdf.save()], { type:'application/pdf' });
+    } finally { URL.revokeObjectURL(url); }
+  }
+
+  window.packageBodyHtml = function bsgtPackageBodyHtml(record, lang) {
+    if (!isBsgt(record)) return originalPackageBodyHtml(record, lang);
+    return ['proforma', 'invoice', 'packing']
+      .filter(kind => DOC_META[kind].ready(record))
+      .map(kind => buildSheet(record, kind, lang))
+      .join('');
+  };
+
+  window.mergeFullPackage = async function mergeBsgtFullPackage(record, lang, triggerBtn) {
+    if (!isBsgt(record)) return originalMergeFullPackage(record, lang, triggerBtn);
+    const originals = await bsgtOriginalDocuments(record);
+    const extras = (packageAttachmentsCache[record.id] || []).slice().sort((a, b) => a.sort_order - b.sort_order);
+    const previousAttachments = packageAttachmentsCache[record.id];
+    const previousUploader = window.ilovepdfUploadBlob;
+    packageAttachmentsCache[record.id] = [...originals, ...extras];
+    window.ilovepdfUploadBlob = async function uploadBsgtAttachment(token, server, task, blob, filename) {
+      if (blob.type && blob.type.startsWith('image/')) {
+        blob = await bsgtImageToPdf(blob);
+        filename = `${(filename || 'attachment').replace(/\.[^.]+$/, '')}.pdf`;
+      }
+      return previousUploader(token, server, task, blob, filename);
+    };
+    try {
+      if (originals.length < 2) toast('سيتم التجميع بالمستندات المتاحة. ارفع شهادة المنشأ والبوليصة لإكمال الحزمة.', 'err');
+      return await originalMergeFullPackage(record, lang, triggerBtn);
+    } finally {
+      packageAttachmentsCache[record.id] = previousAttachments;
+      window.ilovepdfUploadBlob = previousUploader;
+    }
+  };
+
+  window.openDetail = function bsgtAwareOpenDetail(id) {
+    window.__bsgtDetailShipmentId = id;
+    return originalOpenDetail.apply(this, arguments);
+  };
+
+  document.addEventListener('click', event => {
+    const button = event.target.closest?.('#packageBtn');
+    const record = records.find(item => item.id === window.__bsgtDetailShipmentId);
+    if (!button || !record || !isBsgt(record)) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    chooseDocLang(record, lang => window.mergeFullPackage(record, lang, button));
+  }, true);
+})();
+
 // Bahar Swaken uses a dedicated shipment invoice sheet. Keeping this override
 // here lets the company settings load it without changing other templates.
 (() => {
