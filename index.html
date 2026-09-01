@@ -15903,6 +15903,14 @@ async function buildBsgtGeneratedPackagePdf(r, lang){
       const pageRoot = document.createElement('div');
       pageRoot.style.cssText = 'width:210mm;height:297mm;overflow:hidden;background:#fff;';
       pageRoot.innerHTML = buildSheet(r, kind, lang);
+      // The BSGT editor uses color-mix() in its live stylesheet. Browsers
+      // support it, but html2canvas does not, so replace only this temporary
+      // render copy with equivalent stable colors.
+      pageRoot.querySelectorAll('style').forEach(style=>{
+        style.textContent = style.textContent
+          .replaceAll('color-mix(in srgb, var(--red) 14%, white)', '#eedfe0')
+          .replaceAll('color-mix(in srgb, var(--bs-value-color, #17202b) 75%, white)', '#526070');
+      });
       stage.appendChild(pageRoot);
       await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
       if(document.fonts && document.fonts.ready) await document.fonts.ready;
