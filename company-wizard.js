@@ -601,6 +601,10 @@
 
   window.mergeFullPackage = async function mergeBsgtFullPackage(record, lang, triggerBtn) {
     if (!isBsgt(record)) return originalMergeFullPackage(record, lang, triggerBtn);
+    // index.html now merges BSGT's two originals itself. The previous wrapper
+    // injected them into the cache as well, which produced duplicate pages.
+    return originalMergeFullPackage(record, lang, triggerBtn);
+    /* Legacy remote-converter flow retained below for reference only.
     const originals = await bsgtOriginalDocuments(record);
     const extras = (packageAttachmentsCache[record.id] || []).slice().sort((a, b) => a.sort_order - b.sort_order);
     const previousAttachments = packageAttachmentsCache[record.id];
@@ -619,7 +623,7 @@
     } finally {
       packageAttachmentsCache[record.id] = previousAttachments;
       window.ilovepdfUploadBlob = previousUploader;
-    }
+    } */
   };
 
   window.openDetail = function bsgtAwareOpenDetail(id) {
