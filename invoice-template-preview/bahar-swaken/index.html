@@ -57,7 +57,29 @@
     (function(){
       const params = new URLSearchParams(location.search);
       const isEditor = params.get('embed') === 'editor';
+      const isPdfPreview = params.get('embed') === 'pdf';
       if (params.has('embed')) document.body.classList.add('embed');
+      // The company settings window lives in the main app, so it can ask its
+      // parent for the same native PDF used by the final package. This removes
+      // the old HTML/PDF visual mismatch without changing the standalone page.
+      if (isPdfPreview) {
+        document.body.innerHTML = '<main style="width:210mm;height:297mm;background:#fff"><div style="padding:24mm;text-align:center;font:600 14px Arial;color:#526070">جارٍ تجهيز معاينة الطباعة...</div></main>';
+        const renderPdf = async () => {
+          try {
+            const parentApp = window.parent;
+            if (parentApp === window || typeof parentApp.bsgtPdfPreviewBlob !== 'function' || typeof parentApp.ceSampleRecord !== 'function') throw new Error('معاينة PDF متاحة من داخل إعدادات الشركة فقط.');
+            const blob = await parentApp.bsgtPdfPreviewBlob(parentApp.ceSampleRecord(), 'invoice');
+            const url = URL.createObjectURL(blob);
+            document.body.innerHTML = '<embed type="application/pdf" src="' + url + '#view=FitH&toolbar=0&navpanes=0" style="display:block;width:210mm;height:297mm;border:0;background:#fff">';
+            window.addEventListener('beforeunload', () => URL.revokeObjectURL(url), {once:true});
+          } catch (error) {
+            document.body.innerHTML = '<main style="width:210mm;height:297mm;padding:24mm;background:#fff;color:#8a1f25;font:600 14px Arial">تعذّر تجهيز معاينة الطباعة. افتحها من داخل إعدادات شركة بحر سواكن.</main>';
+            console.error('BSGT PDF preview', error);
+          }
+        };
+        renderPdf();
+        return;
+      }
       if (isEditor) document.body.classList.add('editor');
       const defaults = {
         accent:'#b72127', tableHeader:'#86191f', tableFont:'IBM Plex Sans', background:'', watermark:'', watermarkOpacity:7, showWatermark:false, signature:'', stamp:'', showStamp:true, showSigLine:true,

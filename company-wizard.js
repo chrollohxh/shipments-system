@@ -474,7 +474,7 @@
       <div class="cew-actions"><button type="button" class="btn btn-primary bi-save">حفظ إعدادات المعاينة</button><button type="button" class="btn btn-ghost bi-preview">فتح معاينة التصميم</button><button type="button" class="btn btn-ghost bi-reset">استرجاع المعتمد</button></div>
       <div class="section-title" style="margin-top:18px">معاينة جدول بحر سواكن</div>
       <div class="bi-inline-preview" style="width:100%;height:360px;overflow:hidden;border:1px solid #d8e3f0;border-radius:12px;background:#eef3f8;padding:10px;display:flex;justify-content:center;align-items:flex-start">
-        <iframe title="معاينة فاتورة بحر سواكن" src="/invoice-template-preview/bahar-swaken/?embed=1" style="width:210mm;height:297mm;border:0;transform:scale(.36);transform-origin:top center;pointer-events:none"></iframe>
+        <iframe title="معاينة فاتورة بحر سواكن المطابقة للطباعة" src="/invoice-template-preview/bahar-swaken/?embed=pdf" style="width:210mm;height:297mm;border:0;transform:scale(.36);transform-origin:top center;pointer-events:none"></iframe>
       </div>`;
     // Put the Bahar invoice controls first, before the ordinary company fields.
     invoiceSettingsPanel.insertBefore(section, invoiceSettingsPanel.querySelector('.cew-panel-head')?.nextElementSibling || null);
@@ -518,7 +518,7 @@
       if (!box) return;
       box.dataset.baharPreview = '1';
       box.classList.add('cew-bahar-preview');
-      box.innerHTML = '<iframe title="معاينة فاتورة بحر سواكن" src="/invoice-template-preview/bahar-swaken/?embed=1&v=' + Date.now() + '" style="width:210mm;height:297mm;border:0;transform:scale(.36);transform-origin:top center;pointer-events:none"></iframe>';
+      box.innerHTML = '<iframe title="معاينة فاتورة بحر سواكن المطابقة للطباعة" src="/invoice-template-preview/bahar-swaken/?embed=pdf&v=' + Date.now() + '" style="width:210mm;height:297mm;border:0;transform:scale(.36);transform-origin:top center;pointer-events:none"></iframe>';
       const button = document.getElementById('cePreviewBtn');
       if (button) button.textContent = 'تحديث معاينة قالب بحر سواكن';
     };
