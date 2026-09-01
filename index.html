@@ -4790,12 +4790,22 @@ SWIFT: NBEGEGCX"></textarea>
         </div>
         <div class="field"><label>رمز HS Code</label><input type="text" id="bsgt_hsCode" placeholder="مثال: 960321"></div>
       </div>
-      <div id="bsgtExtraItems"></div>
-      <div style="display:flex;align-items:center;gap:10px;margin:12px 0 4px;">
-        <button type="button" class="btn btn-ghost btn-small" id="bsgtAddItemBtn" data-ic="plus">إضافة صنف</button>
-        <small id="bsgtItemsHint" style="color:var(--muted);">صنف واحد من 10</small>
+      <div class="field" style="margin:8px 0 14px;">
+        <label>طريقة إدخال الأصناف</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button type="button" class="btn btn-primary btn-small" id="bsgtSingleItemModeBtn">صنف واحد</button>
+          <button type="button" class="btn btn-ghost btn-small" id="bsgtMultipleItemsModeBtn">عدة أصناف</button>
+        </div>
+        <small id="bsgtItemModeHint" style="color:var(--muted);">خطة سريعة: بيانات صنف واحد فقط</small>
       </div>
-      <div class="grid" style="margin:14px 0 8px;padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--panel-2,#f8fafc);">
+      <div id="bsgtMultipleItemsArea">
+        <div id="bsgtExtraItems"></div>
+        <div style="display:flex;align-items:center;gap:10px;margin:12px 0 4px;">
+          <button type="button" class="btn btn-ghost btn-small" id="bsgtAddItemBtn" data-ic="plus">إضافة صنف</button>
+          <small id="bsgtItemsHint" style="color:var(--muted);">صنف واحد من 10</small>
+        </div>
+      </div>
+      <div class="grid" id="bsgtDistributionArea" style="margin:14px 0 8px;padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--panel-2,#f8fafc);">
         <div class="field"><label>إجمالي الكمية</label><input type="text" id="bsgt_totalQtyInput" inputmode="decimal" placeholder="مثال: 1000"><small style="color:var(--muted);">يُوزّع بالتساوي عند إدخاله</small></div>
         <div class="field"><label>إجمالي مبلغ الأصناف <span id="bsgt_totalCurrencyLabel">(USD)</span></label><input type="text" id="bsgt_itemsGrandTotal" inputmode="decimal" placeholder="مثال: 50000 USD"><small style="color:var(--muted);">يُوزّع بالتساوي بالعملة المختارة عند إدخاله</small></div>
         <div class="field" style="display:flex;align-items:end"><button type="button" class="btn btn-primary" id="bsgtDistributeQtyBtn" style="width:100%">توزيع الكمية على الأصناف</button></div>
@@ -12608,6 +12618,31 @@ function recalcBsgtUnitPrice(){
 
 const BSGT_MAX_ITEMS = 10;
 const bsgtExtraItemsEl = document.getElementById('bsgtExtraItems');
+const bsgtMultipleItemsArea = document.getElementById('bsgtMultipleItemsArea');
+const bsgtDistributionArea = document.getElementById('bsgtDistributionArea');
+let bsgtItemMode = 'single';
+function setBsgtItemMode(mode, options = {}){
+  const nextMode = mode === 'multiple' ? 'multiple' : 'single';
+  const hasExtraItems = bsgtExtraItemsEl.querySelectorAll('.bsgt-extra-item').length > 0;
+  if(nextMode === 'single' && hasExtraItems && !options.force){
+    if(!confirm('الرجوع إلى خطة صنف واحد سيحذف الأصناف الإضافية. هل تريد المتابعة؟')) return;
+    bsgtExtraItemsEl.innerHTML = '';
+    updateBsgtItemControls();
+    syncBsgtItemTotals();
+  }
+  bsgtItemMode = nextMode;
+  const multiple = nextMode === 'multiple';
+  bsgtMultipleItemsArea.style.display = multiple ? '' : 'none';
+  bsgtDistributionArea.style.display = multiple ? '' : 'none';
+  document.getElementById('bsgtSingleItemModeBtn').classList.toggle('btn-primary', !multiple);
+  document.getElementById('bsgtSingleItemModeBtn').classList.toggle('btn-ghost', multiple);
+  document.getElementById('bsgtMultipleItemsModeBtn').classList.toggle('btn-primary', multiple);
+  document.getElementById('bsgtMultipleItemsModeBtn').classList.toggle('btn-ghost', !multiple);
+  document.getElementById('bsgtItemModeHint').textContent = multiple
+    ? 'خطة متعددة: أضف حتى 10 أصناف، ثم وزّع الإجمالي إن رغبت'
+    : 'خطة سريعة: بيانات صنف واحد فقط';
+  if(multiple && !hasExtraItems && !options.skipAdd) addBsgtExtraItem(2);
+}
 const bsgtNumber = value => {
   const parsed = parseFloat(String(value || '').replace(/[A-Za-z]/g, '').replace(/,/g, '').trim());
   return Number.isFinite(parsed) ? parsed : 0;
@@ -12671,6 +12706,8 @@ document.getElementById('bsgtDistributeQtyBtn').addEventListener('click', distri
 document.getElementById('bsgt_itemsGrandTotal').addEventListener('input', distributeBsgtAmount);
 document.getElementById('bsgtDistributeAmountBtn').addEventListener('click', distributeBsgtAmount);
 document.getElementById('bsgt_currency').addEventListener('change', ()=> syncBsgtItemTotals(true));
+document.getElementById('bsgtSingleItemModeBtn').addEventListener('click', ()=> setBsgtItemMode('single'));
+document.getElementById('bsgtMultipleItemsModeBtn').addEventListener('click', ()=> setBsgtItemMode('multiple'));
 const bsgtUnitOptions = selected => '<option value="">— اختر —</option>' + (lookups.qtyUnit || []).map(value => `<option value="${escapeHtml(value)}" ${value === selected ? 'selected' : ''}>${escapeHtml(shortLabel(value))}</option>`).join('');
 const bsgtExtraItemHtml = (index, row = {}) => `
   <section class="bsgt-extra-item" data-index="${index}" style="margin-top:14px;padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--panel-2,#f8fafc);">
@@ -12737,6 +12774,7 @@ function openBsgtShipForm(id){
   setBsgtAedToggle(r ? r.bsgtAutoAed !== false : true);
   document.getElementById('bsgt_totalAmount').value = r?.item1Amount || r?.totalAmount || '';
   resetBsgtExtraItems(r);
+  setBsgtItemMode(r?.bsgtItemMode || (bsgtExtraItemsEl.children.length ? 'multiple' : 'single'), {force:true});
   recalcBsgtUnitPrice();
   syncBsgtItemTotals();
   document.getElementById('bsgt_weight').value = r?.grossWeight || '';
@@ -12814,6 +12852,7 @@ async function saveBsgtShipment(){
     bankDetails: bankEntry ? bankEntry.body : '',
     notes: document.getElementById('bsgt_notes').value,
     currency,
+    bsgtItemMode,
     bsgtAutoAed: bsgtAutoAed,
     status: prev.status || 'sent',
   });
