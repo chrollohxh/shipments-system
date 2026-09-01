@@ -15911,6 +15911,14 @@ async function buildBsgtGeneratedPackagePdf(r, lang){
           .replaceAll('color-mix(in srgb, var(--red) 14%, white)', '#eedfe0')
           .replaceAll('color-mix(in srgb, var(--bs-value-color, #17202b) 75%, white)', '#526070');
       });
+      // Keep word spacing stable in the canvas-generated BSGT PDF pages.
+      const textNodes = [];
+      const textWalker = document.createTreeWalker(pageRoot, NodeFilter.SHOW_TEXT, {
+        acceptNode(node){ return /^(STYLE|SCRIPT)$/i.test(node.parentElement?.tagName || '')
+          ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT; }
+      });
+      while(textWalker.nextNode()) textNodes.push(textWalker.currentNode);
+      textNodes.forEach(node=>{ node.nodeValue = node.nodeValue.replace(/(?<=\S) (?=\S)/g, '\u00A0'); });
       stage.appendChild(pageRoot);
       await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
       if(document.fonts && document.fonts.ready) await document.fonts.ready;
