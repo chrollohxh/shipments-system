@@ -4795,6 +4795,11 @@ SWIFT: NBEGEGCX"></textarea>
         <button type="button" class="btn btn-ghost btn-small" id="bsgtAddItemBtn" data-ic="plus">إضافة صنف</button>
         <small id="bsgtItemsHint" style="color:var(--muted);">صنف واحد من 10</small>
       </div>
+      <div class="grid" style="margin:14px 0 8px;padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--panel-2,#f8fafc);">
+        <div class="field"><label>إجمالي الكمية</label><input type="text" id="bsgt_totalQtyInput" inputmode="decimal" placeholder="مثال: 1000"><small style="color:var(--muted);">يُوزّع بالتساوي عند إدخاله</small></div>
+        <div class="field"><label>إجمالي مبلغ الأصناف</label><input type="text" id="bsgt_itemsGrandTotal" readonly style="background:var(--panel-2,#f3f5f8);color:var(--muted)"></div>
+        <div class="field" style="display:flex;align-items:end"><button type="button" class="btn btn-primary" id="bsgtDistributeQtyBtn" style="width:100%">توزيع الكمية على الأصناف</button></div>
+      </div>
       <div class="section-title">جهة الوصول والمرسل إليه</div>
       <div class="grid">
         <div class="field"><label>جهة الوصول (تظهر في الفاتورة المبدئية والنهائية)</label><select class="lookup-sel" id="bsgt_portDischarge"></select></div>
@@ -12599,11 +12604,49 @@ function recalcBsgtUnitPrice(){
   const priceEl = document.getElementById('bsgt_unitPrice');
   priceEl.value = (Number.isFinite(qty) && qty > 0 && Number.isFinite(total)) ? (total / qty).toFixed(2) : '';
 }
-document.getElementById('bsgt_qty').addEventListener('input', recalcBsgtUnitPrice);
-document.getElementById('bsgt_totalAmount').addEventListener('input', recalcBsgtUnitPrice);
 
 const BSGT_MAX_ITEMS = 10;
 const bsgtExtraItemsEl = document.getElementById('bsgtExtraItems');
+const bsgtNumber = value => {
+  const parsed = parseFloat(String(value || '').replace(/[A-Za-z]/g, '').replace(/,/g, '').trim());
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+const bsgtQuantityInputs = () => [document.getElementById('bsgt_qty'), ...Array.from(bsgtExtraItemsEl.querySelectorAll('.bsgt-extra-item')).map(el => document.getElementById(`bsgt_item${el.dataset.index}Qty`))];
+const bsgtAmountInputs = () => [document.getElementById('bsgt_totalAmount'), ...Array.from(bsgtExtraItemsEl.querySelectorAll('.bsgt-extra-item')).map(el => document.getElementById(`bsgt_item${el.dataset.index}Amount`))];
+const bsgtFormatNumber = value => Number.isInteger(value) ? String(value) : value.toFixed(3).replace(/0+$/, '').replace(/\.$/, '');
+function syncBsgtItemTotals(keepQuantityInput = false){
+  const quantityTotal = bsgtQuantityInputs().reduce((sum, input) => sum + bsgtNumber(input.value), 0);
+  const amountTotal = bsgtAmountInputs().reduce((sum, input) => sum + bsgtNumber(input.value), 0);
+  const currency = document.getElementById('bsgt_currency').value || 'USD';
+  document.getElementById('bsgt_itemsGrandTotal').value = amountTotal ? `${currency} ${amountTotal.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})}` : '';
+  if(!keepQuantityInput) document.getElementById('bsgt_totalQtyInput').value = quantityTotal ? bsgtFormatNumber(quantityTotal) : '';
+}
+function distributeBsgtQuantity(){
+  const total = bsgtNumber(document.getElementById('bsgt_totalQtyInput').value);
+  const inputs = bsgtQuantityInputs();
+  if(!total || inputs.length < 2) return;
+  if(Number.isInteger(total)){
+    const base = Math.floor(total / inputs.length);
+    let remainder = total - (base * inputs.length);
+    inputs.forEach(input => { input.value = String(base + (remainder-- > 0 ? 1 : 0)); });
+  } else {
+    const portion = Math.round((total / inputs.length) * 1000) / 1000;
+    let remaining = total;
+    inputs.forEach((input, index) => {
+      const value = index === inputs.length - 1 ? remaining : portion;
+      input.value = bsgtFormatNumber(value);
+      remaining = Math.round((remaining - value) * 1000) / 1000;
+    });
+  }
+  recalcBsgtUnitPrice();
+  bsgtExtraItemsEl.querySelectorAll('.bsgt-extra-item').forEach(el => recalcBsgtExtraUnitPrice(Number(el.dataset.index)));
+  syncBsgtItemTotals(true);
+}
+document.getElementById('bsgt_qty').addEventListener('input', ()=>{ recalcBsgtUnitPrice(); syncBsgtItemTotals(); });
+document.getElementById('bsgt_totalAmount').addEventListener('input', ()=>{ recalcBsgtUnitPrice(); syncBsgtItemTotals(); });
+document.getElementById('bsgt_totalQtyInput').addEventListener('input', distributeBsgtQuantity);
+document.getElementById('bsgtDistributeQtyBtn').addEventListener('click', distributeBsgtQuantity);
+document.getElementById('bsgt_currency').addEventListener('change', ()=> syncBsgtItemTotals(true));
 const bsgtUnitOptions = selected => '<option value="">— اختر —</option>' + (lookups.qtyUnit || []).map(value => `<option value="${escapeHtml(value)}" ${value === selected ? 'selected' : ''}>${escapeHtml(shortLabel(value))}</option>`).join('');
 const bsgtExtraItemHtml = (index, row = {}) => `
   <section class="bsgt-extra-item" data-index="${index}" style="margin-top:14px;padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--panel-2,#f8fafc);">
@@ -12632,6 +12675,7 @@ function addBsgtExtraItem(index, row){
   bsgtExtraItemsEl.insertAdjacentHTML('beforeend', bsgtExtraItemHtml(index, row));
   recalcBsgtExtraUnitPrice(index);
   updateBsgtItemControls();
+  syncBsgtItemTotals();
 }
 function resetBsgtExtraItems(record){
   bsgtExtraItemsEl.innerHTML = '';
@@ -12640,6 +12684,7 @@ function resetBsgtExtraItems(record){
     if(Object.values(row).some(Boolean)) addBsgtExtraItem(index, row);
   }
   updateBsgtItemControls();
+  syncBsgtItemTotals();
 }
 document.getElementById('bsgtAddItemBtn').addEventListener('click', ()=>{
   const used = new Set(Array.from(bsgtExtraItemsEl.querySelectorAll('.bsgt-extra-item')).map(el => Number(el.dataset.index)));
@@ -12648,11 +12693,11 @@ document.getElementById('bsgtAddItemBtn').addEventListener('click', ()=>{
 });
 bsgtExtraItemsEl.addEventListener('click', event => {
   const button = event.target.closest('.bsgt-remove-item');
-  if(button){ button.closest('.bsgt-extra-item').remove(); updateBsgtItemControls(); }
+  if(button){ button.closest('.bsgt-extra-item').remove(); updateBsgtItemControls(); syncBsgtItemTotals(); }
 });
 bsgtExtraItemsEl.addEventListener('input', event => {
   const match = event.target.id.match(/^bsgt_item(\d+)(Qty|Amount)$/);
-  if(match) recalcBsgtExtraUnitPrice(Number(match[1]));
+  if(match){ recalcBsgtExtraUnitPrice(Number(match[1])); syncBsgtItemTotals(); }
 });
 
 function openBsgtShipForm(id){
@@ -12669,6 +12714,7 @@ function openBsgtShipForm(id){
   document.getElementById('bsgt_totalAmount').value = r?.item1Amount || r?.totalAmount || '';
   resetBsgtExtraItems(r);
   recalcBsgtUnitPrice();
+  syncBsgtItemTotals();
   document.getElementById('bsgt_weight').value = r?.grossWeight || '';
   document.getElementById('bsgt_hsCode').value = r?.hsCode || '';
   setBsgtWeightToggle(r ? !!r.bsgtShowWeight : false);
@@ -12723,6 +12769,7 @@ async function saveBsgtShipment(){
     itemDesc: document.getElementById('bsgt_itemDesc').value,
     qty: document.getElementById('bsgt_qty').value,
     qtyUnit: document.getElementById('bsgt_qtyUnit').value,
+    totalQty: document.getElementById('bsgt_totalQtyInput').value,
     unitPrice: withCurrency(document.getElementById('bsgt_unitPrice').value),
     totalAmount: shipmentTotal,
     grossWeight: document.getElementById('bsgt_weight').value,
