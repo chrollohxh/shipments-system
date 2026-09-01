@@ -16251,7 +16251,7 @@ async function appendBsgtHtmlPagePdf(output, record, kind, lang){
   });
   if(!response.ok) {
     const detail = await response.json().catch(() => ({}));
-    throw new Error(detail.error || 'تعذّر تجهيز PDF الفاتورة من الخادم.');
+    throw new Error(detail.details || detail.error || 'تعذّر تجهيز PDF الفاتورة من الخادم.');
   }
   const source = await PDFLib.PDFDocument.load(await response.arrayBuffer());
   const pages = await output.copyPages(source, source.getPageIndices());
