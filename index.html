@@ -16042,11 +16042,12 @@ async function drawBsgtPdfPage(doc, record, kind, embeddedFonts){
 // A4 PDF page before appending the uploaded PDFs.
 async function appendBsgtHtmlPagePdf(output, record, kind, lang){
   if(typeof window.html2canvas !== 'function') throw new Error('لم يكتمل تحميل محرك PDF. أعد تحميل الصفحة ثم حاول مرة أخرى.');
-  if(typeof window.invoiceSheet !== 'function') throw new Error('تعذّر تجهيز قالب فاتورة بحر سواكن.');
+  const renderSheet = window.bsgtInvoiceSheet || window.invoiceSheet;
+  if(typeof renderSheet !== 'function') throw new Error('تعذّر تجهيز قالب فاتورة بحر سواكن.');
   const host = document.createElement('div');
   host.setAttribute('aria-hidden', 'true');
   host.style.cssText = 'position:fixed;left:-10000px;top:0;width:210mm;height:297mm;overflow:hidden;pointer-events:none;z-index:-1;';
-  host.innerHTML = window.invoiceSheet(record, kind, lang);
+  host.innerHTML = renderSheet(record, kind, lang);
   const sheet = host.querySelector('.bahar-shipment-sheet');
   if(!sheet) throw new Error('تعذّر العثور على صفحة فاتورة بحر سواكن.');
   document.body.appendChild(host);

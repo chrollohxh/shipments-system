@@ -719,8 +719,14 @@
     return 'AED ' + (numeric * USD_TO_AED_RATE).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
-  const baharSheet = (record, kind) => {
-    const currentCompany = company;
+  // Resolve from the shipment when building a package. The global `company`
+  // reflects the last company opened in the dashboard and can be unrelated.
+  const companyForShipment = record => {
+    try { return typeof window.companyDataFor === 'function' ? (window.companyDataFor(record) || company) : company; }
+    catch (_) { return company; }
+  };
+  const baharSheet = (record, kind, sourceCompany = companyForShipment(record)) => {
+    const currentCompany = sourceCompany;
     const settings = setting();
     const proforma = kind === 'proforma';
     const isPack = kind === 'packing';
@@ -833,8 +839,11 @@
     return body;
   };
 
+  window.bsgtInvoiceSheet = function bsgtInvoiceSheet(record, kind, lang) {
+    return baharSheet(record, kind, companyForShipment(record));
+  };
   window.invoiceSheet = function baharAwareInvoiceSheet(record, kind, lang) {
-    if (isBaharSwaken(company) && (kind === 'proforma' || kind === 'invoice' || kind === 'packing')) return baharSheet(record, kind);
+    if (isBaharSwaken(companyForShipment(record)) && (kind === 'proforma' || kind === 'invoice' || kind === 'packing')) return window.bsgtInvoiceSheet(record, kind, lang);
     return legacyInvoiceSheet(record, kind, lang);
   };
 })();
