@@ -192,12 +192,17 @@
       // Same idea for the other bordered boxes in the document (invoice-no/consignee/address,
       // incoterm/delivery/origin/payment terms, bank details) — grouped as one "section" control
       // since they're all the same kind of box, not a per-box breakdown.
-      sectionBgColor:'', sectionBorderColor:'', transparentTableCells:false
+      sectionBgColor:'', sectionBorderColor:'', transparentTableCells:true
     };
   }
 
   function getInvoicePreviewSettings() {
-    try { return Object.assign({}, invoicePreviewDefaults(), JSON.parse(localStorage.getItem(invoicePreviewSettingsKey) || '{}')); }
+    try {
+      const settings = Object.assign({}, invoicePreviewDefaults(), JSON.parse(localStorage.getItem(invoicePreviewSettingsKey) || '{}'));
+      // Bahar Swaken uses a letterhead watermark, so opaque cells would hide it.
+      settings.transparentTableCells = true;
+      return settings;
+    }
     catch (e) { return invoicePreviewDefaults(); }
   }
 
@@ -792,7 +797,7 @@
       + colorVar('product-header-bg', settings.productHeaderBgColor) + colorVar('product-value-bg', settings.productValueBgColor)
       + colorVar('table-border-color', settings.tableBorderColor)
       + colorVar('section-bg', settings.sectionBgColor) + colorVar('section-border-color', settings.sectionBorderColor);
-    const transparencyVars = settings.transparentTableCells ? '--bs-transparent-sections:1;--bs-table-border-color:#000;--bs-section-border-color:#000;' : '';
+    const transparencyVars = '--bs-transparent-sections:1;--bs-table-border-color:#000;--bs-section-border-color:#000;';
     const typographyVars = fontVars + colorVars + transparencyVars;
     const accent = settings.tableHeader || settings.accent || currentCompany.accent || '#86191f';
     const background = settings.background || '';
