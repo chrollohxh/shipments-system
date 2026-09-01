@@ -624,7 +624,14 @@
 
   window.openDetail = function bsgtAwareOpenDetail(id) {
     window.__bsgtDetailShipmentId = id;
-    return originalOpenDetail.apply(this, arguments);
+    const result = originalOpenDetail.apply(this, arguments);
+    if (isBsgt(records.find(item => item.id === id))) {
+      setTimeout(() => {
+        const packageButton = document.getElementById('packageBtn');
+        if (packageButton) packageButton.textContent = 'طباعة';
+      }, 0);
+    }
+    return result;
   };
 
   document.addEventListener('click', event => {
