@@ -4781,6 +4781,8 @@ SWIFT: NBEGEGCX"></textarea>
         </div>
         <div class="field"><label>سعر الوحدة</label><input type="text" id="bsgt_unitPrice" placeholder="مثال: 41.82"></div>
         <div class="field"><label>المبلغ الإجمالي</label><input type="text" id="bsgt_totalAmount" placeholder="مثال: 44040.00"></div>
+        <div class="field"><label>الوزن (Weight)</label><input type="text" id="bsgt_weight" placeholder="مثال: 1500 KG"></div>
+        <div class="field"><label>رمز HS Code</label><input type="text" id="bsgt_hsCode" placeholder="مثال: 960321"></div>
       </div>
       <div class="section-title">جهة الوصول والمرسل إليه</div>
       <div class="grid">
@@ -12576,6 +12578,8 @@ function openBsgtShipForm(id){
   setBsgtAedToggle(r ? r.bsgtAutoAed !== false : true);
   document.getElementById('bsgt_unitPrice').value = r?.unitPrice || '';
   document.getElementById('bsgt_totalAmount').value = r?.totalAmount || '';
+  document.getElementById('bsgt_weight').value = r?.grossWeight || '';
+  document.getElementById('bsgt_hsCode').value = r?.hsCode || '';
   setLookupValue(document.getElementById('bsgt_portDischarge'), r?.portDischarge || '');
   setLookupValue(document.getElementById('bsgt_consignee'), r?.consignee || '');
   setLookupValue(document.getElementById('bsgt_consigneeAddress'), r?.consigneeAddress || '');
@@ -12612,6 +12616,8 @@ async function saveBsgtShipment(){
     qtyUnit: document.getElementById('bsgt_qtyUnit').value,
     unitPrice: withCurrency(document.getElementById('bsgt_unitPrice').value),
     totalAmount: withCurrency(document.getElementById('bsgt_totalAmount').value),
+    grossWeight: document.getElementById('bsgt_weight').value,
+    hsCode: document.getElementById('bsgt_hsCode').value,
     portDischarge: document.getElementById('bsgt_portDischarge').value,
     consignee: document.getElementById('bsgt_consignee').value,
     consigneeAddress: document.getElementById('bsgt_consigneeAddress').value,
