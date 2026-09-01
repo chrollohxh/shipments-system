@@ -171,7 +171,16 @@
   }
 
   function invoicePreviewDefaults() {
-    return { name:'Bahar Swaken — Commercial Invoice', accent:'#86191f', tableHeader:'#86191f', tableFont:'IBM Plex Sans', tableHeaderScale:100, background:'', watermark:'', watermarkOpacity:7, showWatermark:false, signature:'', stamp:'', showStamp:true, showSigLine:true, stampPosition:{xPercent:78,yPercent:78,widthPercent:13,rotate:0}, signaturePosition:{xPercent:10,yPercent:81,widthPercent:23,rotate:0} };
+    return {
+      name:'Bahar Swaken — Commercial Invoice', accent:'#86191f', tableHeader:'#86191f', tableFont:'IBM Plex Sans',
+      background:'', watermark:'', watermarkOpacity:7, showWatermark:false, signature:'', stamp:'', showStamp:true, showSigLine:true,
+      stampPosition:{xPercent:78,yPercent:78,widthPercent:13,rotate:0}, signaturePosition:{xPercent:10,yPercent:81,widthPercent:23,rotate:0},
+      // Typography — fixed px sizes (never auto-shrunk); granular fields fall back to the base
+      // label/value pair when left unset (empty string), so most users only touch the base four.
+      labelFontSize:14, labelFontWeight:700, valueFontSize:13, valueFontWeight:400,
+      titleFontSize:'', productHeaderFontSize:'', productValueFontSize:'', bottomLabelFontSize:'', bottomValueFontSize:'',
+      amountWordsFontSize:'', totalAmountFontSize:'', totalCartonsFontSize:''
+    };
   }
 
   function getInvoicePreviewSettings() {
@@ -214,6 +223,8 @@
     settings.showSigLine = document.getElementById('ce_showSigLine')?.checked ?? settings.showSigLine;
     const fileControl = (key, title, accept, value, help) => `<div class="bs-file" data-key="${key}"><label>${title}</label><small>${help}</small><div class="bs-file-row"><button type="button" class="btn btn-ghost btn-small bs-pick">إضافة / استبدال</button><button type="button" class="btn btn-ghost btn-small bs-remove">إزالة</button><input type="file" accept="${accept}" hidden></div><div class="bs-thumb">${value ? `<img src="${value}" alt="${title}">` : '<span>لا توجد صورة مرفوعة</span>'}</div></div>`;
     const transformControls = (key, title, values) => `<div class="bs-transform" data-transform="${key}"><strong>${title}</strong><div class="bs-transform-grid"><label>أفقي <b data-value="xPercent">${values.xPercent}</b>%<input data-prop="xPercent" type="range" min="0" max="100" step="0.5" value="${values.xPercent}"></label><label>عمودي <b data-value="yPercent">${values.yPercent}</b>%<input data-prop="yPercent" type="range" min="0" max="100" step="0.5" value="${values.yPercent}"></label><label>الحجم <b data-value="widthPercent">${values.widthPercent}</b>%<input data-prop="widthPercent" type="range" min="4" max="42" step="0.5" value="${values.widthPercent}"></label><label>التدوير <b data-value="rotate">${values.rotate}</b>°<input data-prop="rotate" type="range" min="-180" max="180" step="1" value="${values.rotate}"></label></div></div>`;
+    const fontSizeField = (key, title, value) => `<div class="field"><label>${title}</label><div style="display:flex;align-items:center;gap:6px"><button type="button" class="btn btn-ghost btn-small bs-fs-step" data-key="${key}" data-dir="-1">−</button><input type="number" class="bs-fs" data-key="${key}" min="8" max="30" step="1" value="${value || 14}" style="width:64px;text-align:center;padding:8px 4px"><button type="button" class="btn btn-ghost btn-small bs-fs-step" data-key="${key}" data-dir="1">+</button><span style="color:var(--muted);font-size:12px">px</span></div></div>`;
+    const fontWeightField = (key, title, value, options) => `<div class="field"><label>${title}</label><select class="lookup-sel bs-fw" data-key="${key}">${options.map(o => `<option value="${o}" ${Number(value) === o ? 'selected' : ''}>${o}</option>`).join('')}</select></div>`;
     const stampPosition = Object.assign({xPercent:78,yPercent:78,widthPercent:13,rotate:0}, settings.stampPosition || {});
     const signaturePosition = Object.assign({xPercent:10,yPercent:81,widthPercent:23,rotate:0}, settings.signaturePosition || {});
     simple.innerHTML = `
@@ -226,7 +237,27 @@
         <div class="bs-top"><label class="bs-toggle"><input class="bs-show-stamp" type="checkbox"> إظهار الختم على الفاتورة</label><label class="bs-toggle"><input class="bs-show-signature" type="checkbox"> إظهار خط التوقيع</label></div>
         <h3>جدول فاتورة Bahar Swaken</h3><p>إعدادات خاصة بمعاينة فاتورة بحر سواكن فقط، ولا تؤثر على الشركات الأخرى أو الفواتير الحالية.</p>
         <div class="bs-grid" style="margin-top:18px"><div class="field"><label>اسم النموذج</label><input class="bs-name" dir="ltr"></div><div class="field"><label>خط جدول البنود</label><select class="bs-font"><option value="IBM Plex Sans">IBM Plex Sans</option></select></div><div class="field"><label>لون التصميم الرئيسي</label><input class="bs-accent" type="color"></div><div class="field"><label>لون رأس الجدول</label><input class="bs-header" type="color"></div></div>
-        <div class="field" style="margin-top:10px"><label>حجم عناوين الجدول (DESCRIPTION, QUANTITY...): <b class="bs-headfs-value"></b>%</label><div style="display:flex;gap:8px;align-items:center"><input class="bs-headfs" type="range" min="60" max="200" step="5" style="flex:1"><button type="button" class="btn btn-ghost btn-small bs-headfs-reset">استرجاع الحجم الافتراضي</button></div></div>
+        <div class="section-title" style="margin-top:20px">أحجام خطوط الفاتورة</div>
+        <div class="bs-grid">
+          ${fontSizeField('labelFontSize', 'حجم خط العناوين', settings.labelFontSize)}
+          ${fontWeightField('labelFontWeight', 'سماكة خط العناوين', settings.labelFontWeight, [500,600,700,800])}
+          ${fontSizeField('valueFontSize', 'حجم خط البيانات', settings.valueFontSize)}
+          ${fontWeightField('valueFontWeight', 'سماكة خط البيانات', settings.valueFontWeight, [300,400,500,600])}
+          ${fontSizeField('titleFontSize', 'حجم عنوان COMMERCIAL - INVOICE', settings.titleFontSize || settings.labelFontSize)}
+          ${fontSizeField('productHeaderFontSize', 'حجم رؤوس أعمدة المنتجات', settings.productHeaderFontSize || settings.labelFontSize)}
+          ${fontSizeField('bottomLabelFontSize', 'حجم عناوين المعلومات السفلية', settings.bottomLabelFontSize || settings.labelFontSize)}
+          ${fontSizeField('bottomValueFontSize', 'حجم بيانات المعلومات السفلية', settings.bottomValueFontSize || settings.valueFontSize)}
+        </div>
+        <details class="bs-adv-typo" style="margin-top:14px;border:1px solid #e7edf4;border-radius:10px;padding:12px 14px;background:#fbfcfe">
+          <summary style="cursor:pointer;font-weight:700">إعدادات خطوط متقدمة (Advanced Typography)</summary>
+          <div class="bs-grid" style="margin-top:12px">
+            ${fontSizeField('productValueFontSize', 'حجم بيانات جدول المنتجات', settings.productValueFontSize || settings.valueFontSize)}
+            ${fontSizeField('amountWordsFontSize', 'حجم سطر التفقيط', settings.amountWordsFontSize || settings.valueFontSize)}
+            ${fontSizeField('totalAmountFontSize', 'حجم رقم الإجمالي', settings.totalAmountFontSize || settings.valueFontSize)}
+            ${fontSizeField('totalCartonsFontSize', 'حجم عدد الطرود الإجمالي', settings.totalCartonsFontSize || settings.valueFontSize)}
+          </div>
+        </details>
+        <button type="button" class="btn btn-ghost btn-small bs-typo-reset" style="margin-top:12px">استرجاع كل أحجام الخطوط الافتراضية</button>
         ${fileControl('background', 'خلفية جدول الفاتورة', 'image/png,image/jpeg,image/webp', settings.background, 'PNG أو JPG. تستخدم الصورة الأصلية عند الطباعة وPDF.')}
         <label class="bs-toggle" style="margin-top:10px"><input class="bs-show-watermark" type="checkbox"> إظهار العلامة المائية</label>
         ${fileControl('watermark', 'العلامة المائية', 'image/png,image/jpeg,image/webp', settings.watermark, 'PNG أو JPG. تظهر في فاتورة بحر سواكن فقط، وفقط لو "إظهار العلامة المائية" مفعّل.')}
@@ -244,13 +275,19 @@
     one('.bs-header').value = settings.tableHeader;
     one('.bs-opacity').value = settings.watermarkOpacity;
     one('.bs-opacity-value').textContent = settings.watermarkOpacity;
-    one('.bs-headfs').value = settings.tableHeaderScale || 100;
-    one('.bs-headfs-value').textContent = settings.tableHeaderScale || 100;
-    one('.bs-headfs').addEventListener('input', event => one('.bs-headfs-value').textContent = event.target.value);
-    one('.bs-headfs-reset').addEventListener('click', () => {
-      one('.bs-headfs').value = 100;
-      one('.bs-headfs-value').textContent = 100;
-      one('.bs-headfs').dispatchEvent(new Event('input', { bubbles:true }));
+    simple.querySelectorAll('.bs-fs-step').forEach(btn => btn.addEventListener('click', () => {
+      const input = simple.querySelector(`.bs-fs[data-key="${btn.dataset.key}"]`);
+      const next = Math.max(8, Math.min(30, (Number(input.value) || 14) + Number(btn.dataset.dir)));
+      input.value = next;
+      input.dispatchEvent(new Event('input', { bubbles:true }));
+    }));
+    one('.bs-typo-reset').addEventListener('click', () => {
+      // Labels default to 14px/700, values (including every granular data field
+      // below) default to 13px/400 unless the field is itself a label-type field.
+      const labelFields = new Set(['labelFontSize', 'titleFontSize', 'productHeaderFontSize', 'bottomLabelFontSize']);
+      simple.querySelectorAll('.bs-fs').forEach(el => { el.value = labelFields.has(el.dataset.key) ? 14 : 13; });
+      simple.querySelectorAll('.bs-fw').forEach(el => { el.value = el.dataset.key === 'labelFontWeight' ? 700 : 400; });
+      simple.querySelector('.bs-fs').dispatchEvent(new Event('input', { bubbles:true }));
     });
     one('.bs-show-stamp').checked = !!settings.showStamp;
     one('.bs-show-signature').checked = !!settings.showSigLine;
@@ -269,10 +306,17 @@
       group.querySelector(`[data-value="${input.dataset.prop}"]`).textContent = input.value;
     })));
     const transformValue = key => Object.fromEntries([...simple.querySelectorAll(`[data-transform="${key}"] input`)].map(input => [input.dataset.prop, Number(input.value)]));
+    const typographyValues = () => {
+      const out = {};
+      simple.querySelectorAll('.bs-fs').forEach(el => { out[el.dataset.key] = Number(el.value) || ''; });
+      simple.querySelectorAll('.bs-fw').forEach(el => { out[el.dataset.key] = Number(el.value); });
+      return out;
+    };
     const collect = () => ({
-      name:one('.bs-name').value.trim() || invoicePreviewDefaults().name, tableFont:one('.bs-font').value, accent:one('.bs-accent').value, tableHeader:one('.bs-header').value, tableHeaderScale:Number(one('.bs-headfs').value),
+      name:one('.bs-name').value.trim() || invoicePreviewDefaults().name, tableFont:one('.bs-font').value, accent:one('.bs-accent').value, tableHeader:one('.bs-header').value,
       background:simple.querySelector('[data-key="background"]').dataset.value || settings.background || '', watermark:simple.querySelector('[data-key="watermark"]').dataset.value || settings.watermark || '',
-      signature:simple.querySelector('[data-key="signature"]').dataset.value || settings.signature || '', watermarkOpacity:Number(one('.bs-opacity').value), stamp:simple.querySelector('[data-key="stamp"]').dataset.value || settings.stamp || company.stamp || '', showStamp:one('.bs-show-stamp').checked, showSigLine:one('.bs-show-signature').checked, showWatermark:one('.bs-show-watermark').checked, stampPosition:transformValue('stamp'), signaturePosition:transformValue('signature')
+      signature:simple.querySelector('[data-key="signature"]').dataset.value || settings.signature || '', watermarkOpacity:Number(one('.bs-opacity').value), stamp:simple.querySelector('[data-key="stamp"]').dataset.value || settings.stamp || company.stamp || '', showStamp:one('.bs-show-stamp').checked, showSigLine:one('.bs-show-signature').checked, showWatermark:one('.bs-show-watermark').checked, stampPosition:transformValue('stamp'), signaturePosition:transformValue('signature'),
+      ...typographyValues()
     });
     const liveFrame = one('.bs-live-frame');
     let liveTimer;
@@ -534,23 +578,32 @@
       };
     }).filter((row, index) => index === 0 || row.description || row.quantity || row.packaging);
     const visibleRows = Array.from({ length: Math.max(5, rows.length) }, (_, index) => rows[index] || {});
-    // Shrink the items table as row count grows, so it can never grow tall enough to
+    // Font sizes are fixed (admin-configurable, never auto-shrunk by row count — see the
+    // typography settings below). Only non-font spacing — padding, row height, section gaps —
+    // tightens as row count grows, so a full 15-item invoice still can't grow tall enough to
     // collide with the stamp/signature (which sit at fixed page positions).
     const rowCount = visibleRows.length;
-    // Sizes match the font scale already used by the standard (non-Bahar) invoice
-    // table in this app (12.5/11.5px default down to 9/8.5px at 12+ items), instead
-    // of a smaller made-up scale, so it reads like the other official documents.
-    // sectionGap/boxPad/termsMinH shrink the spacing around totals/words/terms/bank
-    // too, not just the items table — needed so a full 15-item invoice with bank
-    // details and terms still can't grow tall enough to reach the stamp.
-    let itemsFs = '12px', thFs = '13px', thPad = '2.8mm 2mm', tdH = '8.6mm', tdPad = '2mm', sectionGap = '3mm', boxPad = '3mm', termsMinH = '18mm';
-    if (rowCount >= 13) { itemsFs = '7.5px'; thFs = '8px'; thPad = '1.3mm 1mm'; tdH = '4.4mm'; tdPad = '0.7mm'; sectionGap = '1.5mm'; boxPad = '2mm'; termsMinH = '11mm'; }
-    else if (rowCount >= 10) { itemsFs = '9px'; thFs = '10px'; thPad = '1.7mm 1.3mm'; tdH = '5.4mm'; tdPad = '1mm'; sectionGap = '2mm'; boxPad = '2.4mm'; termsMinH = '14mm'; }
-    else if (rowCount >= 7) { itemsFs = '10px'; thFs = '11px'; thPad = '2.1mm 1.6mm'; tdH = '6.4mm'; tdPad = '1.5mm'; sectionGap = '2.5mm'; boxPad = '2.6mm'; termsMinH = '16mm'; }
-    // Manual scale on top of the automatic shrink-by-row-count above, so the
-    // headers can be enlarged without losing the anti-overlap protection.
-    const headerScale = Math.max(60, Math.min(200, Number(settings.tableHeaderScale) || 100)) / 100;
-    if (headerScale !== 1) thFs = (Math.round(parseFloat(thFs) * headerScale * 100) / 100) + 'px';
+    let thPad = '2.8mm 2mm', tdH = '8.6mm', tdPad = '2mm', sectionGap = '3mm', boxPad = '3mm', termsMinH = '18mm';
+    if (rowCount >= 13) { thPad = '1.4mm 1.1mm'; tdH = '5mm'; tdPad = '0.8mm'; sectionGap = '1.5mm'; boxPad = '2mm'; termsMinH = '11mm'; }
+    else if (rowCount >= 10) { thPad = '1.8mm 1.4mm'; tdH = '5.6mm'; tdPad = '1.1mm'; sectionGap = '2mm'; boxPad = '2.4mm'; termsMinH = '14mm'; }
+    else if (rowCount >= 7) { thPad = '2.2mm 1.7mm'; tdH = '6.4mm'; tdPad = '1.5mm'; sectionGap = '2.5mm'; boxPad = '2.6mm'; termsMinH = '16mm'; }
+    // Typography: one source of truth (CSS custom properties set on the sheet's root element),
+    // read by both this generator and the standalone live-preview app via the same setting keys.
+    // Granular per-section sizes fall back to the base label/value size when left unset.
+    const px = (value, fallback) => { const n = Number(value); return Number.isFinite(n) && n > 0 ? n : fallback; };
+    const labelFs = px(settings.labelFontSize, 14);
+    const labelFw = px(settings.labelFontWeight, 700);
+    const valueFs = px(settings.valueFontSize, 13);
+    const valueFw = px(settings.valueFontWeight, 400);
+    const titleFs = px(settings.titleFontSize, labelFs);
+    const productHeaderFs = px(settings.productHeaderFontSize, labelFs);
+    const productValueFs = px(settings.productValueFontSize, valueFs);
+    const bottomLabelFs = px(settings.bottomLabelFontSize, labelFs);
+    const bottomValueFs = px(settings.bottomValueFontSize, valueFs);
+    const wordsFs = px(settings.amountWordsFontSize, bottomValueFs);
+    const totalAmountFs = px(settings.totalAmountFontSize, bottomValueFs);
+    const totalCartonsFs = px(settings.totalCartonsFontSize, bottomValueFs);
+    const typographyVars = `--bs-label-font-size:${labelFs}px;--bs-label-font-weight:${labelFw};--bs-value-font-size:${valueFs}px;--bs-value-font-weight:${valueFw};--bs-title-font-size:${titleFs}px;--bs-product-header-font-size:${productHeaderFs}px;--bs-product-value-font-size:${productValueFs}px;--bs-bottom-label-font-size:${bottomLabelFs}px;--bs-bottom-value-font-size:${bottomValueFs}px;--bs-words-font-size:${wordsFs}px;--bs-total-amount-font-size:${totalAmountFs}px;--bs-total-cartons-font-size:${totalCartonsFs}px;`;
     const accent = settings.tableHeader || settings.accent || currentCompany.accent || '#86191f';
     const background = settings.background || '';
     const watermark = settings.showWatermark ? (settings.watermark || currentCompany.watermark || currentCompany.logo || '') : '';
@@ -559,7 +612,7 @@
     const stampPos = Object.assign({ xPercent: 78, yPercent: 78, widthPercent: 13, rotate: 0 }, settings.stampPosition || {});
     const signPos = Object.assign({ xPercent: 10, yPercent: 81, widthPercent: 23, rotate: 0 }, settings.signaturePosition || {});
     const date = typeof fmtDateByLang === 'function' ? fmtDateByLang(proforma ? record.proformaDate : record.invoiceDate, 'en') : (proforma ? record.proformaDate : record.invoiceDate);
-    const itemRows = visibleRows.map(row => `<tr><td class="desc">${safe(row.description)}</td><td>${safe(row.quantity)}</td><td>${safe(row.packaging)}</td><td>${safe(row.hsCode)}</td><td>${safe(record.grossWeight || '—')}</td>${isPack ? '' : `<td>${safe(row.price)}</td><td>${safe(row.amount)}</td>`}</tr>`).join('');
+    const itemRows = visibleRows.map(row => `<tr><td class="bs-product-value desc">${safe(row.description)}</td><td class="bs-product-value">${safe(row.quantity)}</td><td class="bs-product-value">${safe(row.packaging)}</td><td class="bs-product-value">${safe(row.hsCode)}</td><td class="bs-product-value">${safe(record.grossWeight || '—')}</td>${isPack ? '' : `<td class="bs-product-value">${safe(row.price)}</td><td class="bs-product-value">${safe(row.amount)}</td>`}</tr>`).join('');
     let bankRaw = (record.bankDetails || '').trim();
     if (!bankRaw) {
       const legacy = [];
@@ -571,20 +624,20 @@
     const bankLines = bankRaw.split('\n').map(line => line.trim()).filter(Boolean).map(line => `<div>${safe(line)}</div>`).join('');
     const body = `
       <style>
-        .bahar-shipment-sheet{position:relative;width:210mm;height:297mm;margin:0 auto;overflow:hidden;background:#fff;color:#17202b;font-family:'IBM Plex Sans',Arial,sans-serif;page-break-after:always;break-after:page;direction:ltr;text-align:left}.bahar-shipment-sheet *{box-sizing:border-box}.bahar-shipment-sheet .bg{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;z-index:0}.bahar-shipment-sheet main{position:relative;z-index:2;padding:${background ? '56mm 14mm 37mm' : '18mm 14mm'}}.bahar-shipment-sheet .wm{position:absolute;z-index:1;top:25%;left:22%;width:56%;max-height:52%;object-fit:contain;opacity:.06}.bahar-shipment-sheet .brand{height:24mm;display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid var(--red);margin-bottom:8mm}.bahar-shipment-sheet .brand b{font-size:17px;letter-spacing:1.5px}.bahar-shipment-sheet .brand small{display:block;font-size:10px}.bahar-shipment-sheet .brand img{max-width:34mm;max-height:20mm;object-fit:contain}.bahar-shipment-sheet .title{background:color-mix(in srgb, var(--red) 14%, white);color:var(--red);border:1px solid var(--red);text-align:center;padding:3.2mm;font-size:13px;font-weight:700;letter-spacing:1px}.bahar-shipment-sheet .meta{display:grid;grid-template-columns:1fr 1.2fr;border:1px solid var(--red);border-top:0}.bahar-shipment-sheet .meta>div{min-height:15mm;padding:3mm;border-inline-end:1px solid #dfc9ca;display:flex;flex-direction:column;gap:2mm}.bahar-shipment-sheet .meta .wide{grid-column:1/-1;border-top:1px solid #dfc9ca;border-inline-end:0;min-height:13mm}.bahar-shipment-sheet b{font-size:7px;letter-spacing:.5px}.bahar-shipment-sheet .meta b,.bahar-shipment-sheet .terms b{color:var(--red)}.bahar-shipment-sheet .meta span,.bahar-shipment-sheet .terms span{font-size:9px;font-weight:700;line-height:1.35}.bahar-shipment-sheet table{width:100%;border-collapse:collapse;margin-top:4mm;font-size:${itemsFs};font-weight:400}.bahar-shipment-sheet th{background:color-mix(in srgb, var(--red) 14%, white);color:var(--red);border:1px solid var(--red);padding:${thPad};font-size:${thFs};font-weight:700;white-space:nowrap}.bahar-shipment-sheet td{height:${tdH};border:1px solid #d8dce0;padding:${tdPad};text-align:center;background:transparent;font-weight:400}.bahar-shipment-sheet .desc{text-align:left;font-weight:400}.bahar-shipment-sheet .totals{display:grid;grid-template-columns:1fr 1fr;gap:3mm;margin-top:${sectionGap}}.bahar-shipment-sheet .totals>div{background:transparent;border:1px solid #d8dce0;padding:${boxPad} 4mm;display:flex;justify-content:space-between}.bahar-shipment-sheet .totals>div:last-child{background:color-mix(in srgb, var(--red) 14%, white);color:var(--red);border-color:var(--red)}.bahar-shipment-sheet .totals strong{font-size:12px;color:var(--red)}.bahar-shipment-sheet .totals>div:last-child strong{color:var(--red)}.bahar-shipment-sheet .words{background:color-mix(in srgb, var(--red) 14%, white);color:var(--red);border:1px solid var(--red);text-align:center;font-size:8px;font-weight:800;padding:2.8mm;margin-top:${sectionGap}}.bahar-shipment-sheet .terms{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--red);margin-top:${sectionGap};background:transparent}.bahar-shipment-sheet .terms>div{min-height:${termsMinH};padding:${boxPad};border-inline-end:1px solid #dfc9ca;display:flex;flex-direction:column;gap:2mm}.bahar-shipment-sheet .bank{border:1px solid var(--red);margin-top:${sectionGap};padding:${boxPad};background:transparent}.bahar-shipment-sheet .bank b{display:block;margin-bottom:2mm;color:var(--red)}.bahar-shipment-sheet .bank div{font-size:9px;font-weight:700;line-height:1.5}.bahar-shipment-sheet .line{width:80mm;border-bottom:1px solid #7c8490;padding-bottom:2mm;font-size:8px;color:#59616a;font-weight:700;margin-top:${sectionGap}}.bahar-shipment-sheet .stamp,.bahar-shipment-sheet .signature{position:absolute;z-index:3;object-fit:contain;transform-origin:center}@media print{.bahar-shipment-sheet{page-break-after:auto;break-after:auto}}
+        .bahar-shipment-sheet{position:relative;width:210mm;height:297mm;margin:0 auto;overflow:hidden;background:#fff;color:#17202b;font-family:'IBM Plex Sans',Arial,sans-serif;page-break-after:always;break-after:page;direction:ltr;text-align:left}.bahar-shipment-sheet *{box-sizing:border-box}.bahar-shipment-sheet .bg{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;z-index:0}.bahar-shipment-sheet main{position:relative;z-index:2;padding:${background ? '56mm 14mm 37mm' : '18mm 14mm'}}.bahar-shipment-sheet .wm{position:absolute;z-index:1;top:25%;left:22%;width:56%;max-height:52%;object-fit:contain;opacity:.06}.bahar-shipment-sheet .brand{height:24mm;display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid var(--red);margin-bottom:8mm}.bahar-shipment-sheet .brand b{font-size:17px;letter-spacing:1.5px}.bahar-shipment-sheet .brand small{display:block;font-size:10px}.bahar-shipment-sheet .brand img{max-width:34mm;max-height:20mm;object-fit:contain}.bahar-shipment-sheet .bs-invoice-title{background:color-mix(in srgb, var(--red) 14%, white);color:var(--red);border:1px solid var(--red);text-align:center;padding:3.2mm;font-size:var(--bs-title-font-size,14px);font-weight:var(--bs-label-font-weight,700);line-height:1.3;letter-spacing:1px}.bahar-shipment-sheet .meta{display:grid;grid-template-columns:1fr 1.2fr;border:1px solid var(--red);border-top:0}.bahar-shipment-sheet .meta>div{min-height:15mm;padding:3mm;border-inline-end:1px solid #dfc9ca;display:flex;flex-direction:column;gap:2mm}.bahar-shipment-sheet .meta .wide{grid-column:1/-1;border-top:1px solid #dfc9ca;border-inline-end:0;min-height:13mm}.bahar-shipment-sheet .bs-field-label{font-size:var(--bs-label-font-size,14px);font-weight:var(--bs-label-font-weight,700);line-height:1.3;letter-spacing:.5px;color:var(--red)}.bahar-shipment-sheet .bs-field-value{font-size:var(--bs-value-font-size,13px);font-weight:var(--bs-value-font-weight,400);line-height:1.35}.bahar-shipment-sheet table{width:100%;border-collapse:collapse;margin-top:4mm}.bahar-shipment-sheet .bs-product-header{background:color-mix(in srgb, var(--red) 14%, white);color:var(--red);border:1px solid var(--red);padding:${thPad};font-size:var(--bs-product-header-font-size,14px);font-weight:var(--bs-label-font-weight,700);line-height:1.25;white-space:normal}.bahar-shipment-sheet .bs-product-value{height:${tdH};border:1px solid #d8dce0;padding:${tdPad};text-align:center;background:transparent;font-size:var(--bs-product-value-font-size,13px);font-weight:var(--bs-value-font-weight,400);line-height:1.3}.bahar-shipment-sheet .desc{text-align:left}.bahar-shipment-sheet .totals{display:grid;grid-template-columns:1fr 1fr;gap:3mm;margin-top:${sectionGap}}.bahar-shipment-sheet .totals>div{background:transparent;border:1px solid #d8dce0;padding:${boxPad} 4mm;display:flex;justify-content:space-between;align-items:center}.bahar-shipment-sheet .totals>div:last-child{background:color-mix(in srgb, var(--red) 14%, white);color:var(--red);border-color:var(--red)}.bahar-shipment-sheet .bs-total-cartons{font-size:var(--bs-total-cartons-font-size,13px);font-weight:var(--bs-value-font-weight,400);color:var(--red)}.bahar-shipment-sheet .bs-total-amount{font-size:var(--bs-total-amount-font-size,13px);font-weight:var(--bs-label-font-weight,700);color:var(--red)}.bahar-shipment-sheet .bs-words{background:color-mix(in srgb, var(--red) 14%, white);color:var(--red);border:1px solid var(--red);text-align:center;font-size:var(--bs-words-font-size,13px);font-weight:var(--bs-label-font-weight,700);padding:2.8mm;margin-top:${sectionGap}}.bahar-shipment-sheet .terms{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--red);margin-top:${sectionGap};background:transparent}.bahar-shipment-sheet .terms>div{min-height:${termsMinH};padding:${boxPad};border-inline-end:1px solid #dfc9ca;display:flex;flex-direction:column;gap:2mm}.bahar-shipment-sheet .bank{border:1px solid var(--red);margin-top:${sectionGap};padding:${boxPad};background:transparent}.bahar-shipment-sheet .bank .bs-bottom-label{display:block;margin-bottom:2mm}.bahar-shipment-sheet .bs-bottom-label{font-size:var(--bs-bottom-label-font-size,14px);font-weight:var(--bs-label-font-weight,700);letter-spacing:.5px;color:var(--red)}.bahar-shipment-sheet .bs-bottom-value{font-size:var(--bs-bottom-value-font-size,13px);font-weight:var(--bs-value-font-weight,400);line-height:1.5}.bahar-shipment-sheet .line{width:80mm;border-bottom:1px solid #7c8490;padding-bottom:2mm;font-size:8px;color:#59616a;font-weight:700;margin-top:${sectionGap}}.bahar-shipment-sheet .stamp,.bahar-shipment-sheet .signature{position:absolute;z-index:3;object-fit:contain;transform-origin:center}@media print{.bahar-shipment-sheet{page-break-after:auto;break-after:auto}}
       </style>
-      <div class="bahar-shipment-sheet" style="--red:${safe(accent)}">
+      <div class="bahar-shipment-sheet" style="--red:${safe(accent)};${typographyVars}">
         ${background ? `<img class="bg" src="${background}" alt="">` : ''}
         ${watermark ? `<img class="wm" src="${watermark}" alt="">` : ''}
         <main>
           ${background ? '' : `<header class="brand"><div><b>${safe(currentCompany.nameEn || 'BAHAR SWAKEN GENERAL TRADING L.L.C')}</b><small>${safe(currentCompany.nameAr || '')}</small></div>${currentCompany.logo ? `<img src="${currentCompany.logo}" alt="">` : ''}</header>`}
-          <div class="title">${isPack ? 'PACKING LIST' : (proforma ? 'PROFORMA INVOICE' : 'COMMERCIAL INVOICE')}</div>
-          <section class="meta"><div><b>INVOICE NO &amp; DATE</b><span>${safe(proforma ? record.proformaNo : record.invoiceNo)} · ${safe(date)}</span></div><div><b>CONSIGNEE</b><span>${safe(record.consignee)}</span></div><div class="wide"><b>ADDRESS</b><span>${safe(record.consigneeAddress || record.portDischarge || '')}</span></div></section>
-          <table><thead><tr><th>DESCRIPTION</th><th>QUANTITY</th><th>PACKAGING TYPE</th><th>HS CODE</th><th>WEIGHT</th>${isPack ? '' : '<th>AED U. PRICE</th><th>AED AMOUNT</th>'}</tr></thead><tbody>${itemRows}</tbody></table>
-          <section class="totals" style="${isPack ? 'grid-template-columns:1fr' : ''}"><div><b>TOTAL PACKAGES</b><strong>${safe(record.totalQty || record.qty || '')} ${safe(record.qtyUnit || '')}</strong></div>${isPack ? '' : `<div><b>TOTAL AMOUNT</b><strong>${safe(toAedText(record.totalAmount, record.bsgtAutoAed !== false) || rows[0]?.amount || '')}</strong></div>`}</section>
-          ${(!isPack && (record.amountInWords || amountInWordsLine(toAedText(record.totalAmount, record.bsgtAutoAed !== false) || rows[0]?.amount))) ? `<div class="words">${safe(record.amountInWords || amountInWordsLine(toAedText(record.totalAmount, record.bsgtAutoAed !== false) || rows[0]?.amount))}</div>` : ''}
-          ${isPack ? '' : `<section class="terms"><div><b>INCOTERM</b><span>${safe(record.incoterm || '')}</span></div><div><b>PORT OF DELIVERY</b><span>${safe(record.portDischarge || '')}</span></div><div><b>COUNTRY OF ORIGIN</b><span>${safe(record.countryOrigin || '')}</span></div><div><b>TERM OF PAYMENTS</b><span>${safe(record.paymentTerm || '')}</span></div></section>`}
-          ${(!isPack && bankLines) ? `<div class="bank"><b>BANK DETAILS</b>${bankLines}</div>` : ''}
+          <div class="bs-invoice-title">${isPack ? 'PACKING LIST' : (proforma ? 'PROFORMA INVOICE' : 'COMMERCIAL INVOICE')}</div>
+          <section class="meta"><div><b class="bs-field-label">INVOICE NO &amp; DATE</b><span class="bs-field-value">${safe(proforma ? record.proformaNo : record.invoiceNo)} · ${safe(date)}</span></div><div><b class="bs-field-label">CONSIGNEE</b><span class="bs-field-value">${safe(record.consignee)}</span></div><div class="wide"><b class="bs-field-label">ADDRESS</b><span class="bs-field-value">${safe(record.consigneeAddress || record.portDischarge || '')}</span></div></section>
+          <table><thead><tr><th class="bs-product-header">DESCRIPTION</th><th class="bs-product-header">QUANTITY</th><th class="bs-product-header">PACKAGING TYPE</th><th class="bs-product-header">HS CODE</th><th class="bs-product-header">WEIGHT</th>${isPack ? '' : '<th class="bs-product-header">AED U. PRICE</th><th class="bs-product-header">AED AMOUNT</th>'}</tr></thead><tbody>${itemRows}</tbody></table>
+          <section class="totals" style="${isPack ? 'grid-template-columns:1fr' : ''}"><div><b class="bs-bottom-label">TOTAL PACKAGES</b><strong class="bs-total-cartons">${safe(record.totalQty || record.qty || '')} ${safe(record.qtyUnit || '')}</strong></div>${isPack ? '' : `<div><b class="bs-bottom-label">TOTAL AMOUNT</b><strong class="bs-total-amount">${safe(toAedText(record.totalAmount, record.bsgtAutoAed !== false) || rows[0]?.amount || '')}</strong></div>`}</section>
+          ${(!isPack && (record.amountInWords || amountInWordsLine(toAedText(record.totalAmount, record.bsgtAutoAed !== false) || rows[0]?.amount))) ? `<div class="bs-words">${safe(record.amountInWords || amountInWordsLine(toAedText(record.totalAmount, record.bsgtAutoAed !== false) || rows[0]?.amount))}</div>` : ''}
+          ${isPack ? '' : `<section class="terms"><div><b class="bs-bottom-label">INCOTERM</b><span class="bs-bottom-value">${safe(record.incoterm || '')}</span></div><div><b class="bs-bottom-label">PORT OF DELIVERY</b><span class="bs-bottom-value">${safe(record.portDischarge || '')}</span></div><div><b class="bs-bottom-label">COUNTRY OF ORIGIN</b><span class="bs-bottom-value">${safe(record.countryOrigin || '')}</span></div><div><b class="bs-bottom-label">TERM OF PAYMENTS</b><span class="bs-bottom-value">${safe(record.paymentTerm || '')}</span></div></section>`}
+          ${(!isPack && bankLines) ? `<div class="bank"><b class="bs-bottom-label">BANK DETAILS</b>${bankLines.replace(/<div>/g, '<div class="bs-bottom-value">')}</div>` : ''}
           ${settings.showSigLine === false ? '' : '<div class="line">Authorized Signature &amp; Company Stamp</div>'}
         </main>
         ${stamp ? `<img class="stamp" src="${stamp}" alt="" style="left:${stampPos.xPercent}%;top:${stampPos.yPercent}%;width:${stampPos.widthPercent}%;transform:rotate(${stampPos.rotate}deg)">` : ''}
