@@ -646,13 +646,15 @@
     const visibleRows = Array.from({ length: Math.max(5, rows.length) }, (_, index) => rows[index] || {});
     // Font sizes are fixed (admin-configurable, never auto-shrunk by row count — see the
     // typography settings below). Only non-font spacing — padding, row height, section gaps —
-    // tightens as row count grows, so a full 15-item invoice still can't grow tall enough to
-    // collide with the stamp/signature (which sit at fixed page positions).
+    // tightens as row count grows, keeping the common case (a handful of items, with bank
+    // details and terms both present) clear of the stamp's fixed page position. With very
+    // high item counts (9+) plus full bank+terms, the fixed fonts leave no more spacing to
+    // reclaim, so some stamp overlap can still occur — move the stamp position for that case.
     const rowCount = visibleRows.length;
-    let thPad = '2.8mm 2mm', tdH = '8.6mm', tdPad = '2mm', sectionGap = '3mm', boxPad = '3mm', termsMinH = '18mm';
-    if (rowCount >= 13) { thPad = '1.4mm 1.1mm'; tdH = '5mm'; tdPad = '0.8mm'; sectionGap = '1.5mm'; boxPad = '2mm'; termsMinH = '11mm'; }
-    else if (rowCount >= 10) { thPad = '1.8mm 1.4mm'; tdH = '5.6mm'; tdPad = '1.1mm'; sectionGap = '2mm'; boxPad = '2.4mm'; termsMinH = '14mm'; }
-    else if (rowCount >= 7) { thPad = '2.2mm 1.7mm'; tdH = '6.4mm'; tdPad = '1.5mm'; sectionGap = '2.5mm'; boxPad = '2.6mm'; termsMinH = '16mm'; }
+    let thPad = '1.8mm 1.4mm', tdH = '5.4mm', tdPad = '1.2mm', sectionGap = '1.7mm', boxPad = '2mm', termsMinH = '12mm';
+    if (rowCount >= 13) { thPad = '0.9mm 0.7mm'; tdH = '3.8mm'; tdPad = '0.3mm'; sectionGap = '0.4mm'; boxPad = '0.9mm'; termsMinH = '3mm'; }
+    else if (rowCount >= 10) { thPad = '1mm 0.8mm'; tdH = '4mm'; tdPad = '0.4mm'; sectionGap = '0.5mm'; boxPad = '1mm'; termsMinH = '3mm'; }
+    else if (rowCount >= 7) { thPad = '1.2mm 0.9mm'; tdH = '4.3mm'; tdPad = '0.5mm'; sectionGap = '0.6mm'; boxPad = '1.1mm'; termsMinH = '4mm'; }
     // Typography: one source of truth (CSS custom properties set on the sheet's root element),
     // read by both this generator and the standalone live-preview app via the same setting keys.
     // Granular per-section sizes fall back to the base label/value size when left unset.
