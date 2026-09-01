@@ -16323,8 +16323,29 @@ async function buildBsgtGeneratedPackagePdf(r, lang){
   if(!kinds.length) throw new Error('لا توجد مستندات BSGT جاهزة للطباعة.');
   const {PDFDocument} = PDFLib;
   const output = await PDFDocument.create();
-  for(const kind of kinds) await appendBsgtHtmlPagePdf(output, r, kind, lang);
+  for(const kind of kinds) await appendBsgtBrowserlessPagePdf(output, r, kind, lang);
   return new Blob([await output.save()], {type:'application/pdf'});
+}
+
+// Browserless runs a real Chrome print engine. Unlike the canvas fallback above,
+// its PDF keeps the invoice text selectable while preserving the browser layout.
+async function appendBsgtBrowserlessPagePdf(output, record, kind, lang){
+  const renderSheet = typeof buildSheet === 'function' ? buildSheet : (window.bsgtInvoiceSheet || window.invoiceSheet);
+  if(typeof renderSheet !== 'function') throw new Error('تعذّر تجهيز قالب فاتورة بحر سواكن.');
+  const html = buildStandaloneDocHtml(renderSheet(record, kind, lang), 'فاتورة بحر سواكن');
+  const response = await fetch('/api/render-bsgt-pdf', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({html})
+  });
+  if(!response.ok){
+    let message = '';
+    try { message = (await response.json()).error || ''; } catch {}
+    throw new Error(message || 'تعذّر تحويل فاتورة بحر سواكن إلى PDF.');
+  }
+  const rendered = await PDFLib.PDFDocument.load(await response.arrayBuffer());
+  const pages = await output.copyPages(rendered, rendered.getPageIndices());
+  pages.forEach(page => output.addPage(page));
 }
 // The editor and merged package now use the exact same rendered invoice sheet.
 window.bsgtPdfPreviewBlob = async function bsgtPdfPreviewBlob(record, kind='invoice'){
