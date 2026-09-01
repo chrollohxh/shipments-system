@@ -16057,6 +16057,47 @@ async function imageAttachmentToPdf(fileData){
   }finally{ URL.revokeObjectURL(url); }
 }
 
+// BSGT packages are visual print packs. Flattening uploaded PDF pages prevents
+// missing fonts, transparency, or producer-specific PDF features from changing
+// their appearance after the final merge.
+async function flattenBsgtPdfAttachment(fileData, filename){
+  if(typeof pdfjsLib === 'undefined') throw new Error('مكتبة قراءة ملفات PDF غير متاحة.');
+  const source = await pdfjsLib.getDocument({data: await fileData.arrayBuffer()}).promise;
+  const {PDFDocument} = PDFLib;
+  const flattened = await PDFDocument.create();
+  try {
+    for(let index = 1; index <= source.numPages; index++){
+      const sourcePage = await source.getPage(index);
+      const outputViewport = sourcePage.getViewport({scale:1});
+      const renderViewport = sourcePage.getViewport({scale:2.5});
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.ceil(renderViewport.width));
+      canvas.height = Math.max(1, Math.ceil(renderViewport.height));
+      const context = canvas.getContext('2d', {alpha:false});
+      context.fillStyle = '#fff';
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      await sourcePage.render({canvasContext:context, viewport:renderViewport, background:'#fff'}).promise;
+      const imageBytes = await new Promise((resolve, reject) => canvas.toBlob(blob => blob ? blob.arrayBuffer().then(resolve) : reject(new Error('تعذّر تثبيت صفحة من المرفق.')), 'image/jpeg', .96));
+      const image = await flattened.embedJpg(imageBytes);
+      const page = flattened.addPage([outputViewport.width, outputViewport.height]);
+      page.drawImage(image, {x:0, y:0, width:page.getWidth(), height:page.getHeight()});
+      sourcePage.cleanup();
+      canvas.width = 1; canvas.height = 1;
+    }
+    return new Blob([await flattened.save()], {type:'application/pdf'});
+  } catch(error) {
+    throw new Error(`تعذّر تثبيت المرفق "${filename || 'PDF'}": ${error.message}`);
+  } finally {
+    try { await source.destroy(); } catch (_) {}
+  }
+}
+
+async function flattenBsgtAttachment(fileData, attachment){
+  return (attachment.mime === 'application/pdf' || /\.pdf$/i.test(attachment.name || ''))
+    ? flattenBsgtPdfAttachment(fileData, attachment.name)
+    : imageAttachmentToPdf(fileData);
+}
+
 async function bsgtMergeAttachments(r){
   if(!isBaharSwakenCompany(companyDataFor(r))) return [];
   if(!shipmentFilesCache[r.id]) await loadShipmentFiles(r.id);
@@ -16302,9 +16343,7 @@ async function mergeBsgtPackageLocally(r, lang){
   for(const att of attachments){
     const {data, error} = await sb.storage.from('shipment-files').download(att.path);
     if(error) throw new Error('تعذّر تحميل المرفق "' + att.name + '": ' + error.message);
-    sourcePdfs.push((att.mime === 'application/pdf' || /\.pdf$/i.test(att.name||''))
-      ? data
-      : await imageAttachmentToPdf(data));
+    sourcePdfs.push(await flattenBsgtAttachment(data, att));
   }
   for(const source of sourcePdfs){
     const input = await PDFDocument.load(await source.arrayBuffer());
