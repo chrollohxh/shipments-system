@@ -4797,7 +4797,7 @@ SWIFT: NBEGEGCX"></textarea>
       </div>
       <div class="grid" style="margin:14px 0 8px;padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--panel-2,#f8fafc);">
         <div class="field"><label>إجمالي الكمية</label><input type="text" id="bsgt_totalQtyInput" inputmode="decimal" placeholder="مثال: 1000"><small style="color:var(--muted);">يُوزّع بالتساوي عند إدخاله</small></div>
-        <div class="field"><label>إجمالي مبلغ الأصناف</label><input type="text" id="bsgt_itemsGrandTotal" inputmode="decimal" placeholder="مثال: 50000"><small style="color:var(--muted);">يُوزّع بالتساوي عند إدخاله</small></div>
+        <div class="field"><label>إجمالي مبلغ الأصناف <span id="bsgt_totalCurrencyLabel">(USD)</span></label><input type="text" id="bsgt_itemsGrandTotal" inputmode="decimal" placeholder="مثال: 50000 USD"><small style="color:var(--muted);">يُوزّع بالتساوي بالعملة المختارة عند إدخاله</small></div>
         <div class="field" style="display:flex;align-items:end"><button type="button" class="btn btn-primary" id="bsgtDistributeQtyBtn" style="width:100%">توزيع الكمية على الأصناف</button></div>
         <div class="field" style="display:flex;align-items:end"><button type="button" class="btn btn-primary" id="bsgtDistributeAmountBtn" style="width:100%">توزيع المبلغ على الأصناف</button></div>
       </div>
@@ -12615,10 +12615,16 @@ const bsgtNumber = value => {
 const bsgtQuantityInputs = () => [document.getElementById('bsgt_qty'), ...Array.from(bsgtExtraItemsEl.querySelectorAll('.bsgt-extra-item')).map(el => document.getElementById(`bsgt_item${el.dataset.index}Qty`))];
 const bsgtAmountInputs = () => [document.getElementById('bsgt_totalAmount'), ...Array.from(bsgtExtraItemsEl.querySelectorAll('.bsgt-extra-item')).map(el => document.getElementById(`bsgt_item${el.dataset.index}Amount`))];
 const bsgtFormatNumber = value => Number.isInteger(value) ? String(value) : value.toFixed(3).replace(/0+$/, '').replace(/\.$/, '');
+function updateBsgtTotalCurrencyLabel(){
+  const currency = document.getElementById('bsgt_currency').value || 'USD';
+  document.getElementById('bsgt_totalCurrencyLabel').textContent = `(${currency})`;
+  document.getElementById('bsgt_itemsGrandTotal').placeholder = `مثال: 50000 ${currency}`;
+}
 function syncBsgtItemTotals(keepQuantityInput = false, keepAmountInput = false){
   const quantityTotal = bsgtQuantityInputs().reduce((sum, input) => sum + bsgtNumber(input.value), 0);
   const amountTotal = bsgtAmountInputs().reduce((sum, input) => sum + bsgtNumber(input.value), 0);
   const currency = document.getElementById('bsgt_currency').value || 'USD';
+  updateBsgtTotalCurrencyLabel();
   if(!keepAmountInput) document.getElementById('bsgt_itemsGrandTotal').value = amountTotal ? `${currency} ${amountTotal.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})}` : '';
   if(!keepQuantityInput) document.getElementById('bsgt_totalQtyInput').value = quantityTotal ? bsgtFormatNumber(quantityTotal) : '';
 }
@@ -12727,7 +12733,7 @@ function openBsgtShipForm(id){
   document.getElementById('bsgt_itemDesc').value = r?.itemDesc || '';
   document.getElementById('bsgt_qty').value = r?.qty || '';
   setLookupValue(document.getElementById('bsgt_qtyUnit'), r?.qtyUnit || '');
-  document.getElementById('bsgt_currency').value = 'USD';
+  document.getElementById('bsgt_currency').value = r?.currency || (/^[A-Za-z]{2,3}\s/.exec(r?.totalAmount || '')?.[0]) || 'USD';
   setBsgtAedToggle(r ? r.bsgtAutoAed !== false : true);
   document.getElementById('bsgt_totalAmount').value = r?.item1Amount || r?.totalAmount || '';
   resetBsgtExtraItems(r);
@@ -12807,6 +12813,7 @@ async function saveBsgtShipment(){
     bankId: bankSel.value || '',
     bankDetails: bankEntry ? bankEntry.body : '',
     notes: document.getElementById('bsgt_notes').value,
+    currency,
     bsgtAutoAed: bsgtAutoAed,
     status: prev.status || 'sent',
   });
