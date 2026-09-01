@@ -4781,7 +4781,13 @@ SWIFT: NBEGEGCX"></textarea>
         </div>
         <div class="field"><label>سعر الوحدة</label><input type="text" id="bsgt_unitPrice" placeholder="مثال: 41.82"></div>
         <div class="field"><label>المبلغ الإجمالي</label><input type="text" id="bsgt_totalAmount" placeholder="مثال: 44040.00"></div>
-        <div class="field"><label>الوزن (Weight)</label><input type="text" id="bsgt_weight" placeholder="مثال: 1500 KG"></div>
+        <div class="field">
+          <label>الوزن (Weight)</label>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input type="text" id="bsgt_weight" placeholder="مثال: 1500 KG" style="flex:1">
+            <button type="button" class="btn btn-ghost btn-small" id="bsgt_weightToggle" title="إظهار عمود الوزن في الفاتورة المبدئية والنهائية — يظهر دايماً في كشف التعبئة بصرف النظر عن هذا الخيار" style="white-space:nowrap;padding:8px 12px;">إظهار في الفاتورة</button>
+          </div>
+        </div>
         <div class="field"><label>رمز HS Code</label><input type="text" id="bsgt_hsCode" placeholder="مثال: 960321"></div>
       </div>
       <div class="section-title">جهة الوصول والمرسل إليه</div>
@@ -12565,6 +12571,17 @@ function setBsgtAedToggle(on){
 }
 document.getElementById('bsgt_aedToggle').addEventListener('click', ()=> setBsgtAedToggle(!bsgtAutoAed));
 
+// عمود الوزن في الفاتورة المبدئية/النهائية اختياري لكل شحنة (متوقف افتراضياً)، لكن
+// يظهر دايماً في كشف التعبئة بصرف النظر عن هذا الخيار — عمود الوزن ضروري فيه دايماً.
+let bsgtShowWeight = false;
+function setBsgtWeightToggle(on){
+  bsgtShowWeight = on;
+  document.getElementById('bsgt_weightToggle').classList.toggle('btn-primary', on);
+  document.getElementById('bsgt_weightToggle').classList.toggle('btn-ghost', !on);
+  document.getElementById('bsgt_weightToggle').textContent = on ? 'ظاهر في الفاتورة ✓' : 'إظهار في الفاتورة';
+}
+document.getElementById('bsgt_weightToggle').addEventListener('click', ()=> setBsgtWeightToggle(!bsgtShowWeight));
+
 function openBsgtShipForm(id){
   bsgtShipEditId = id || null;
   const r = id ? records.find(x=>x.id===id) : null;
@@ -12580,6 +12597,7 @@ function openBsgtShipForm(id){
   document.getElementById('bsgt_totalAmount').value = r?.totalAmount || '';
   document.getElementById('bsgt_weight').value = r?.grossWeight || '';
   document.getElementById('bsgt_hsCode').value = r?.hsCode || '';
+  setBsgtWeightToggle(r ? !!r.bsgtShowWeight : false);
   setLookupValue(document.getElementById('bsgt_portDischarge'), r?.portDischarge || '');
   setLookupValue(document.getElementById('bsgt_consignee'), r?.consignee || '');
   setLookupValue(document.getElementById('bsgt_consigneeAddress'), r?.consigneeAddress || '');
@@ -12618,6 +12636,7 @@ async function saveBsgtShipment(){
     totalAmount: withCurrency(document.getElementById('bsgt_totalAmount').value),
     grossWeight: document.getElementById('bsgt_weight').value,
     hsCode: document.getElementById('bsgt_hsCode').value,
+    bsgtShowWeight: bsgtShowWeight,
     portDischarge: document.getElementById('bsgt_portDischarge').value,
     consignee: document.getElementById('bsgt_consignee').value,
     consigneeAddress: document.getElementById('bsgt_consigneeAddress').value,
