@@ -4779,7 +4779,7 @@ SWIFT: NBEGEGCX"></textarea>
           </div>
           <small style="color:var(--muted);" id="bsgt_aedToggleHint">التحويل التلقائي لدرهم: مفعّل</small>
         </div>
-        <div class="field"><label>سعر الوحدة</label><input type="text" id="bsgt_unitPrice" placeholder="مثال: 41.82"></div>
+        <div class="field"><label>سعر الوحدة (يُحسب تلقائياً)</label><input type="text" id="bsgt_unitPrice" placeholder="يُحسب من المبلغ ÷ الكمية" readonly style="background:var(--panel-2,#f3f5f8);color:var(--muted)"></div>
         <div class="field"><label>المبلغ الإجمالي</label><input type="text" id="bsgt_totalAmount" placeholder="مثال: 44040.00"></div>
         <div class="field">
           <label>الوزن (Weight)</label>
@@ -12582,6 +12582,18 @@ function setBsgtWeightToggle(on){
 }
 document.getElementById('bsgt_weightToggle').addEventListener('click', ()=> setBsgtWeightToggle(!bsgtShowWeight));
 
+// سعر الوحدة يُحسب دائماً من المبلغ الإجمالي ÷ الكمية — حقل للعرض فقط، بدون إدخال يدوي،
+// عشان ما يفضل فاضي لو المستخدم نسي يكتبه (كان هذا سبب اختفائه من الفاتورة سابقاً).
+function recalcBsgtUnitPrice(){
+  const qty = parseFloat(document.getElementById('bsgt_qty').value);
+  const totalRaw = document.getElementById('bsgt_totalAmount').value || '';
+  const total = parseFloat(totalRaw.replace(/[A-Za-z]/g, '').replace(/,/g, '').trim());
+  const priceEl = document.getElementById('bsgt_unitPrice');
+  priceEl.value = (Number.isFinite(qty) && qty > 0 && Number.isFinite(total)) ? (total / qty).toFixed(2) : '';
+}
+document.getElementById('bsgt_qty').addEventListener('input', recalcBsgtUnitPrice);
+document.getElementById('bsgt_totalAmount').addEventListener('input', recalcBsgtUnitPrice);
+
 function openBsgtShipForm(id){
   bsgtShipEditId = id || null;
   const r = id ? records.find(x=>x.id===id) : null;
@@ -12593,8 +12605,8 @@ function openBsgtShipForm(id){
   setLookupValue(document.getElementById('bsgt_qtyUnit'), r?.qtyUnit || '');
   document.getElementById('bsgt_currency').value = 'USD';
   setBsgtAedToggle(r ? r.bsgtAutoAed !== false : true);
-  document.getElementById('bsgt_unitPrice').value = r?.unitPrice || '';
   document.getElementById('bsgt_totalAmount').value = r?.totalAmount || '';
+  recalcBsgtUnitPrice();
   document.getElementById('bsgt_weight').value = r?.grossWeight || '';
   document.getElementById('bsgt_hsCode').value = r?.hsCode || '';
   setBsgtWeightToggle(r ? !!r.bsgtShowWeight : false);
