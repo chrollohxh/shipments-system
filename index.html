@@ -16234,28 +16234,47 @@ async function drawBsgtPdfPage(doc, record, kind, embeddedFonts){
   if(stamp){ const pos=Object.assign({xPercent:78,yPercent:78,widthPercent:13},settings.stampPosition||{});const width=PW*pos.widthPercent/100;const height=width*(stamp.height/stamp.width);page.drawImage(stamp,{x:PW*pos.xPercent/100,y:PH-PH*pos.yPercent/100-height,width,height,rotate:PDFLib.degrees(Number(pos.rotate)||0)}); }
   if(settings.showSigLine !== false){ page.drawLine({start:{x:left,y:Math.max(90,top-8)},end:{x:left+220,y:Math.max(90,top-8)},thickness:.55,color:ink});bsgtPdfText(page,'Authorized Signature & Company Stamp',left,Math.max(102,top+4),220,{font:bold,size:6.5,color:ink,maxLines:1}); }
 }
-// The individual BSGT invoice is an HTML page. The Vercel renderer uses Chrome's
-// native print engine, which preserves the same layout before PDFLib merges the
-// result with uploaded certificate and bill-of-lading PDFs.
+// Capture the exact browser-rendered BSGT sheet. This keeps the same layout and
+// fonts seen in the invoice preview without relying on a headless browser on Vercel.
 async function appendBsgtHtmlPagePdf(output, record, kind, lang){
-  // buildSheet() is also what the single-document Print button uses. It wraps
-  // the template in the shipment's company context and applies the same print
-  // CSS, so the package cannot accidentally inherit dashboard styling.
   const renderSheet = typeof buildSheet === 'function' ? buildSheet : (window.bsgtInvoiceSheet || window.invoiceSheet);
   if(typeof renderSheet !== 'function') throw new Error('تعذّر تجهيز قالب فاتورة بحر سواكن.');
-  const html = buildStandaloneDocHtml(renderSheet(record, kind, lang), 'فاتورة بحر سواكن');
-  const response = await fetch('/api/render-bsgt-pdf', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ html })
-  });
-  if(!response.ok) {
-    const detail = await response.json().catch(() => ({}));
-    throw new Error(detail.details || detail.error || 'تعذّر تجهيز PDF الفاتورة من الخادم.');
+  if(typeof html2canvas !== 'function') throw new Error('تعذّر تحميل محرك تجهيز الفاتورة. حدّث الصفحة وحاول مرة أخرى.');
+
+  const frame = document.createElement('iframe');
+  frame.setAttribute('aria-hidden', 'true');
+  frame.style.cssText = 'position:fixed;left:-10000px;top:0;width:794px;height:1123px;border:0;opacity:0;pointer-events:none;';
+  frame.srcdoc = buildStandaloneDocHtml(renderSheet(record, kind, lang), 'فاتورة بحر سواكن');
+  document.body.appendChild(frame);
+  try {
+    await new Promise((resolve, reject) => {
+      frame.addEventListener('load', resolve, {once:true});
+      frame.addEventListener('error', () => reject(new Error('تعذّر تجهيز صفحة الفاتورة.')), {once:true});
+    });
+    const frameDoc = frame.contentDocument;
+    const sheet = frameDoc?.querySelector('.bahar-inv-sheet, .bs-invoice, .doc-page');
+    if(!sheet) throw new Error('تعذّر العثور على صفحة فاتورة بحر سواكن.');
+    await Promise.race([
+      Promise.all([frameDoc.fonts?.ready, waitForDocumentImages(sheet)]),
+      new Promise(resolve => setTimeout(resolve, 7000))
+    ]);
+    const canvas = await html2canvas(sheet, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: '#ffffff',
+      logging: false,
+      width: Math.ceil(sheet.getBoundingClientRect().width),
+      height: Math.ceil(sheet.getBoundingClientRect().height),
+      windowWidth: 794,
+      windowHeight: 1123
+    });
+    const pngBytes = await new Promise((resolve, reject) => canvas.toBlob(blob => blob ? blob.arrayBuffer().then(resolve) : reject(new Error('تعذّر تجهيز صورة الفاتورة.')), 'image/png'));
+    const image = await output.embedPng(pngBytes);
+    const page = output.addPage([595.28, 841.89]);
+    page.drawImage(image, {x:0, y:0, width:page.getWidth(), height:page.getHeight()});
+  } finally {
+    frame.remove();
   }
-  const source = await PDFLib.PDFDocument.load(await response.arrayBuffer());
-  const pages = await output.copyPages(source, source.getPageIndices());
-  pages.forEach(page => output.addPage(page));
 }
 async function buildBsgtGeneratedPackagePdf(r, lang){
   const kinds = ['proforma','invoice','packing'].filter(k=>DOC_META[k].ready(r));
