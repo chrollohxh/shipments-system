@@ -16050,6 +16050,17 @@ async function appendBsgtHtmlPagePdf(output, record, kind, lang){
   host.innerHTML = renderSheet(record, kind, lang);
   const sheet = host.querySelector('.bahar-shipment-sheet');
   if(!sheet) throw new Error('تعذّر العثور على صفحة فاتورة بحر سواكن.');
+  // html2canvas cannot parse CSS color-mix(). Give only the off-screen export
+  // page concrete colours; the visible invoice keeps its normal live styling.
+  const settings = bsgtPdfSettings();
+  const transparent = !!settings.transparentTableCells;
+  const accent = settings.tableHeader || settings.accent || '#86191f';
+  const section = transparent ? 'transparent' : (settings.sectionBgColor || '#f3e6e7');
+  const header = transparent ? 'transparent' : (settings.productHeaderBgColor || section);
+  const address = settings.valueColor || '#667482';
+  const exportStyles = document.createElement('style');
+  exportStyles.textContent = `.bahar-shipment-sheet .bs-invoice-title,.bahar-shipment-sheet .totals>div:last-child,.bahar-shipment-sheet .bs-words{background:${section}!important}.bahar-shipment-sheet .bs-product-header{background:${header}!important}.bahar-shipment-sheet .bs-address-value{color:${address}!important}.bahar-shipment-sheet .terms>div{border-inline-end-color:${transparent ? '#000' : '#dfc9ca'}!important}`;
+  host.append(exportStyles);
   document.body.appendChild(host);
   try {
     if(document.fonts?.ready) await document.fonts.ready;
