@@ -63,6 +63,26 @@ $('previewTabs').addEventListener('click',event=>{const button=event.target.clos
 $('groupByConsignee').addEventListener('click',()=>{const groups={};selectedShipments().forEach(r=>(groups[r.consignee||'غير محدد']??=[]).push(r));$('consigneeGroups').hidden=false;$('consigneeGroups').innerHTML=Object.entries(groups).map(([name,rows])=>`<b>${esc(name)}</b>: ${rows.map(r=>esc(r.shipmentNo)).join('، ')}`).join('<br>');});
 $('resetBtn').addEventListener('click',()=>{state.selected.clear();state.overrides={};$('settingsForm').reset();Object.assign(state.settings,{collectionDate:new Date().toISOString().slice(0,10),remittingBank:'ADIB',collectingBank:'SAUDI SUDANESE BANK',collectingBankAddress:'MAIN BRANCH, FREE ZONE AREA, PORT SUDAN, SUDAN',term:'D/A 90 DAYS FROM BILL OF EXCHANGE DATE',drawer:'BAHAR SWAKEN GENERAL TRADING L.L.C',authorizedPerson:'JAWAD ELMASRI',title:'MANAGER',draweeAddress:''});Object.entries(state.settings).forEach(([key,value])=>{const input=$('settingsForm').elements[key];if(input)input.value=value;});renderAll();});
 $('printBtn').addEventListener('click',()=>window.print());
+$('printAllBtn').addEventListener('click', printAllCollectionDocuments);
+
+function printAllCollectionDocuments(){
+  if(!selectedShipments().length){ alert('اختر شحنة واحدة على الأقل قبل طباعة المستندات.'); return; }
+  const originalPreview = state.preview;
+  const previews = ['application','letter','undertaking','exchange'].map(kind=>{
+    state.preview = kind;
+    renderPreview();
+    return $('documentPreview').innerHTML;
+  });
+  state.preview = originalPreview;
+  renderPreview();
+  const brandCss = document.getElementById('collectionBrandStyle')?.textContent || '';
+  const popup = window.open('', '_blank');
+  if(!popup){ alert('المتصفح منع نافذة الطباعة. اسمح بالنوافذ المنبثقة ثم حاول مرة أخرى.'); return; }
+  popup.opener = null;
+  popup.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>BSGT Collection Documents</title><link rel="stylesheet" href="/experiments/bs-collection/collection-lab.css"><style>${brandCss}.print-page{break-after:page;page-break-after:always}.print-page:last-child{break-after:auto;page-break-after:auto}@media screen{body{background:#eaf0f6}.print-page{padding:12mm 0}}</style></head><body>${previews.map(page=>`<section class="print-page">${page}</section>`).join('')}</body></html>`);
+  popup.document.close();
+  popup.onload = ()=>setTimeout(()=>popup.print(), 450);
+}
 function referenceDocumentsEnclosed(){
   return `<table><thead><tr><th>No</th><th>Type of Document</th><th>Original</th><th>Duplicate</th></tr></thead><tbody>
     <tr><td>1</td><td>BILL OF EXCHANGE</td><td>1</td><td>0</td></tr>
@@ -110,14 +130,15 @@ function applyCollectionBranding(){
   const signaturePos = Object.assign({xPercent:10,yPercent:81,widthPercent:23,rotate:0}, settings.signaturePosition || {});
   if(!document.getElementById('collectionBrandStyle')){
     document.head.insertAdjacentHTML('beforeend', `<style id="collectionBrandStyle">
-      .collection-a4{position:relative;isolation:isolate;width:210mm!important;min-height:297mm!important;padding:0!important;overflow:visible!important}
+      .collection-a4{position:relative;isolation:isolate;width:210mm!important;height:297mm!important;min-height:297mm!important;max-height:297mm!important;padding:0!important;overflow:hidden!important}
       .collection-a4>.collection-brand-layer{position:absolute;display:block;pointer-events:none}
       .collection-a4>.collection-brand-bg{inset:0;width:100%;height:100%;object-fit:fill;z-index:0}
-      .collection-a4>.collection-page-content{position:relative;z-index:1;display:flex;flex-direction:column;min-height:297mm;padding:45mm 17mm 39mm;overflow-wrap:anywhere}
+      .collection-a4>.collection-page-content{position:relative;z-index:1;display:flex;flex-direction:column;height:297mm;padding:53mm 17mm 39mm;overflow-wrap:anywhere;transform-origin:top right}
       .collection-a4 .collection-flow-seals{display:flex;align-items:flex-end;justify-content:space-between;gap:16mm;min-height:30mm;margin-top:auto;padding-top:8mm}
-      .collection-a4 .collection-flow-seals img{display:block;object-fit:contain;max-height:31mm;transform-origin:center}
-      .collection-a4 .collection-flow-stamp{margin-inline-start:auto}
-      @media print{@page{size:A4;margin:0}.collection-a4{width:210mm!important;min-height:297mm!important;margin:0!important;box-shadow:none!important}.collection-a4>.collection-page-content{min-height:297mm;padding:45mm 17mm 39mm}}
+      .collection-a4 .collection-flow-seals img{position:relative;display:block;object-fit:contain;max-height:31mm;transform-origin:center}
+      .collection-a4 .collection-flow-stamp{margin-inline-start:auto;pointer-events:auto!important;cursor:grab;touch-action:none}
+      .collection-a4 .collection-flow-stamp:active{cursor:grabbing}
+      @media print{@page{size:A4;margin:0}.collection-a4{width:210mm!important;height:297mm!important;min-height:297mm!important;max-height:297mm!important;margin:0!important;box-shadow:none!important}.collection-a4>.collection-page-content{height:297mm;padding:53mm 17mm 39mm}}
     </style>`);
   }
   paper.classList.add('collection-a4');
@@ -131,6 +152,41 @@ function applyCollectionBranding(){
   paper.append(content);
   const background = settings.background ? `<img class="collection-brand-layer collection-brand-bg" src="${esc(settings.background)}" alt="">` : '';
   paper.insertAdjacentHTML('afterbegin', background);
+  fitCollectionContent(content);
+  wireCollectionStampDrag(paper);
+}
+
+function fitCollectionContent(content){
+  requestAnimationFrame(()=>{
+    content.style.transform = '';
+    content.style.width = '';
+    const ratio = Math.min(1, content.clientHeight / Math.max(content.clientHeight, content.scrollHeight));
+    if(ratio < .998){
+      const safeRatio = Math.max(.72, ratio);
+      content.style.transform = `scale(${safeRatio})`;
+      content.style.width = `${100 / safeRatio}%`;
+    }
+  });
+}
+
+function wireCollectionStampDrag(paper){
+  const stamp = paper.querySelector('.collection-flow-stamp');
+  if(!stamp) return;
+  let saved = {x:0,y:0};
+  try { saved = Object.assign(saved, JSON.parse(localStorage.getItem('bsCollectionStampOffset') || '{}')); } catch (_) {}
+  const apply = () => { stamp.style.left = `${saved.x}px`; stamp.style.top = `${saved.y}px`; };
+  apply();
+  stamp.title = 'اسحب الختم لتحريك مكانه في مستندات التحصيل';
+  stamp.addEventListener('pointerdown', event=>{
+    event.preventDefault();
+    const start = {x:event.clientX,y:event.clientY,baseX:saved.x,baseY:saved.y};
+    stamp.setPointerCapture(event.pointerId);
+    const move = point=>{ saved.x = start.baseX + point.clientX - start.x; saved.y = start.baseY + point.clientY - start.y; apply(); };
+    const finish = ()=>{ try { localStorage.setItem('bsCollectionStampOffset', JSON.stringify(saved)); } catch (_) {} ; stamp.removeEventListener('pointermove', move); stamp.removeEventListener('pointerup', finish); stamp.removeEventListener('pointercancel', finish); };
+    stamp.addEventListener('pointermove', move);
+    stamp.addEventListener('pointerup', finish);
+    stamp.addEventListener('pointercancel', finish);
+  });
 }
 
 init();
