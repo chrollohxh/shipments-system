@@ -13,7 +13,7 @@
 <body>
   <header class="lab-header">
     <div><span class="lab-kicker">BSGT / EXPERIMENTAL</span><h1>مختبر مستندات التحصيل - بحر سواكن</h1><p>بوابة تجريبية للقراءة فقط. لا تؤثر على الشحنات أو المستندات الحالية.</p></div>
-    <div class="lab-actions"><button id="resetBtn" class="btn btn-secondary"><i class="bx bx-reset"></i> إعادة تعيين التجربة</button><button id="printBtn" class="btn btn-primary"><i class="bx bx-printer"></i> طباعة المستند الحالي</button><button id="printAllBtn" class="btn btn-secondary"><i class="bx bx-printer"></i> طباعة المستندات الأربعة</button></div>
+    <div class="lab-actions"><button id="resetBtn" class="btn btn-secondary"><i class="bx bx-reset"></i> إعادة تعيين التجربة</button><button id="printBtn" class="btn btn-primary"><i class="bx bx-printer"></i> طباعة المستند الحالي</button></div>
   </header>
 
   <main class="lab-shell">
@@ -49,7 +49,7 @@
 
     <section class="lab-section preview-section">
       <div class="section-heading"><div><span>04</span><h2>معاينة مستندات التحصيل</h2></div><p>تتحدث فوراً من مسودة التحصيل المحلية.</p></div>
-      <div class="preview-tabs" id="previewTabs"><button class="active" data-preview="application">Collection Application</button><button data-preview="letter">Collection Letter</button><button data-preview="undertaking">Undertaking Letter</button><button data-preview="exchange">Bill of Exchange</button></div>
+      <div class="preview-tools"><div class="preview-tabs" id="previewTabs"><button class="active" data-preview="application">Collection Application</button><button data-preview="letter">Collection Letter</button><button data-preview="undertaking">Undertaking Letter</button><button data-preview="exchange">Bill of Exchange</button></div><div class="preview-actions"><span class="stamp-hint">اسحب الختم داخل المعاينة لتحريكه</span><button id="resetStampBtn" class="text-btn" type="button"><i class="bx bx-reset"></i> استرجاع موضع الختم</button><button id="printAllBtn" class="btn btn-primary" type="button"><i class="bx bx-printer"></i> طباعة الحزمة كاملة (4 مستندات)</button></div></div>
       <div id="documentPreview" class="document-preview"><div class="empty-state">اختر شحنات لعرض المستند التجريبي.</div></div>
     </section>
 
