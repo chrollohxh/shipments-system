@@ -134,13 +134,15 @@ function applyCollectionBranding(){
       .collection-a4{position:relative;isolation:isolate;width:210mm!important;height:297mm!important;min-height:297mm!important;max-height:297mm!important;padding:0!important;overflow:hidden!important}
       .collection-a4>.collection-brand-layer{position:absolute;display:block;pointer-events:none}
       .collection-a4>.collection-brand-bg{inset:0;width:100%;height:100%;object-fit:fill;z-index:0}
-      .collection-a4>.collection-page-content{position:relative;z-index:1;display:flex;flex-direction:column;height:297mm;padding:53mm 17mm 39mm;overflow-wrap:anywhere;transform-origin:top left}
+      .collection-a4>.collection-page-content{position:relative;z-index:1;display:flex;flex-direction:column;height:297mm;padding:53mm 17mm 52mm;overflow-wrap:anywhere;transform-origin:top left}
+      .collection-a4 .signature{margin-top:8mm!important;width:64mm!important;font-size:9.5px!important;line-height:1.25!important}
+      .collection-a4 table,.collection-a4 table th,.collection-a4 table td{background:transparent!important;border-color:#000!important}
       .collection-a4 .collection-flow-seals{display:flex;align-items:flex-end;justify-content:space-between;gap:16mm;min-height:30mm;margin-top:auto;padding-top:8mm}
       .collection-a4 .collection-flow-seals img{position:relative;display:block;object-fit:contain;max-height:31mm;transform-origin:center}
       .collection-a4 .collection-flow-stamp{margin-inline-start:auto;pointer-events:auto!important;cursor:grab;touch-action:none}
       .collection-a4 .collection-flow-stamp:active{cursor:grabbing}
       .preview-tools{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.preview-tools .preview-tabs{margin-bottom:0}.preview-actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap}.stamp-hint{font-size:10px;color:#637d98}
-      @media print{@page{size:A4;margin:0}.collection-a4{width:210mm!important;height:297mm!important;min-height:297mm!important;max-height:297mm!important;margin:0!important;box-shadow:none!important}.collection-a4>.collection-page-content{height:297mm;padding:53mm 17mm 39mm}}
+      @media print{@page{size:A4;margin:0}.collection-a4{width:210mm!important;height:297mm!important;min-height:297mm!important;max-height:297mm!important;margin:0!important;box-shadow:none!important}.collection-a4>.collection-page-content{height:297mm;padding:53mm 17mm 52mm}}
     </style>`);
   }
   paper.classList.add('collection-a4');
@@ -162,7 +164,9 @@ function fitCollectionContent(content){
   requestAnimationFrame(()=>{
     content.style.transform = '';
     content.style.width = '';
-    const ratio = Math.min(1, content.clientHeight / Math.max(content.clientHeight, content.scrollHeight));
+    const top = content.getBoundingClientRect().top;
+    const usedHeight = Math.max(content.scrollHeight, ...Array.from(content.children).map(node=>node.getBoundingClientRect().bottom - top));
+    const ratio = Math.min(1, content.clientHeight / Math.max(content.clientHeight, usedHeight));
     if(ratio < .998){
       const safeRatio = Math.max(.72, ratio);
       content.style.transform = `scale(${safeRatio})`;
