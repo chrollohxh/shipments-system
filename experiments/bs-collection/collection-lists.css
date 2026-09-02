@@ -51,6 +51,12 @@
 .text-position-controls label { display: grid; grid-template-columns: 72px 1fr 42px; align-items: center; gap: 7px; color: var(--ink); font-size: 9px; }
 .text-position-controls input { width: 100%; accent-color: var(--blue); }
 .text-position-controls output { direction: ltr; color: var(--muted); font: 700 9px 'IBM Plex Mono', monospace; text-align: left; }
+.text-position-controls small { color: var(--muted); font-size: 8.5px; line-height: 1.55; }
+.text-position-controls .text-btn.is-active { color: #fff; background: var(--blue); border-radius: 6px; padding: 6px 8px; }
+.collection-page-content.is-text-layout-editing [data-text-block] { cursor: move; outline: 1px dashed rgba(23, 104, 189, .45); outline-offset: 3px; }
+.collection-page-content.is-text-layout-editing [data-text-block]:hover { background: rgba(23, 104, 189, .06); }
+.collection-page-content.is-text-layout-editing [data-text-block].is-text-block-selected { outline: 2px solid var(--blue); background: rgba(23, 104, 189, .1); }
+@media print { .collection-page-content.is-text-layout-editing [data-text-block] { cursor: auto; outline: 0; background: transparent; } }
 .collection-list-controls { display: grid; grid-template-columns: minmax(180px, .8fr) minmax(220px, 1.6fr) auto; gap: 8px; }
 .collection-list-controls select, .collection-list-controls input { min-width: 0; padding: 9px; border: 1px solid var(--line); border-radius: 7px; background: #fff; color: var(--ink); font: 10px inherit; }
 .collection-list-controls .mini-btn { padding: 0 8px; border: 1px solid #b9d2ea; border-radius: 7px; background: #fff; }

@@ -7,6 +7,9 @@ const state = {shipments:[], payments:{}, selected:new Set(), overrides:{}, prev
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const collectionListStorageKey = 'bsCollectionDataLists';
 const collectionTextOffsetStorageKey = 'bsCollectionTextOffsets';
+const collectionTextBlockOffsetStorageKey = 'bsCollectionTextBlockOffsets';
+let textBlockEditMode = false;
+let selectedTextBlock = null;
 const collectionListFields = {
   remittingBank:{label:'البنك المُرسِل',defaults:['Abu Dhabi Islamic Bank']}, remittingBankLetterAddress:{label:'عنوان بنك الإرسال للخطاب',defaults:['Abu Dhabi, UAE']}, remittingBankAddress:{label:'عنوان بنك الإرسال للتعهد',defaults:['BANIYAS BRANCH BUILDING, 2ND FLOOR, BANIYAS EAST, P.O.BOX 313, ABU DHABI, UAE.']}, remittingBankAccountNo:{label:'رقم حساب بنك الإرسال',defaults:['19567664']}, collectingBank:{label:'بنك التحصيل',defaults:['SAUDI SUDANESE BANK']},
   collectingBankAddress:{label:'عنوان بنك التحصيل',defaults:['MAIN BRANCH, FREE ZONE AREA, PORT SUDAN, SUDAN']},
@@ -34,6 +37,36 @@ function saveTextOffset(axis, value){
   current[axis]=Number(value)||0; offsets[state.preview]=current;
   try { localStorage.setItem(collectionTextOffsetStorageKey,JSON.stringify(offsets)); } catch (_) {}
   renderPreview();
+}
+function collectionTextBlockOffsets(){ try { return JSON.parse(localStorage.getItem(collectionTextBlockOffsetStorageKey)||'{}')||{}; } catch (_) { return {}; } }
+function textBlockOffset(preview, index){ return Object.assign({x:0,y:0}, collectionTextBlockOffsets()[preview]?.[index]||{}); }
+function saveTextBlockOffset(preview, index, offset){
+  const offsets=collectionTextBlockOffsets(); offsets[preview]=offsets[preview]||{}; offsets[preview][index]=offset;
+  try { localStorage.setItem(collectionTextBlockOffsetStorageKey,JSON.stringify(offsets)); } catch (_) {}
+}
+function updateTextBlockControls(){
+  const reset=$('resetSelectedTextBlockBtn'); if(!reset) return;
+  reset.hidden=!selectedTextBlock || selectedTextBlock.preview!==state.preview;
+  $('toggleTextBlockModeBtn').classList.toggle('is-active',textBlockEditMode);
+  $('toggleTextBlockModeBtn').innerHTML=textBlockEditMode?'<i class="bx bx-check"></i> اضغط على فقرة للتحريك':'<i class="bx bx-target-lock"></i> تحريك فقرة بالنقر';
+}
+function prepareTextBlocks(content){
+  if(selectedTextBlock && selectedTextBlock.preview!==state.preview) selectedTextBlock=null;
+  const blocks=[...content.children].filter(node=>!node.classList.contains('collection-flow-seals'));
+  content.classList.toggle('is-text-layout-editing',textBlockEditMode);
+  blocks.forEach((block,index)=>{
+    const offset=textBlockOffset(state.preview,index);
+    block.dataset.textBlock=String(index);
+    block.style.transform=`translate(${offset.x}px, ${offset.y}px)`;
+    block.classList.toggle('is-text-block-selected',selectedTextBlock?.preview===state.preview&&selectedTextBlock.index===index);
+  });
+  if(textBlockEditMode) content.addEventListener('click',event=>{
+    const block=event.target.closest('[data-text-block]'); if(!block||!content.contains(block)) return;
+    event.preventDefault(); selectedTextBlock={preview:state.preview,index:Number(block.dataset.textBlock)};
+    content.querySelectorAll('[data-text-block]').forEach(node=>node.classList.toggle('is-text-block-selected',node===block));
+    updateTextBlockControls();
+  });
+  updateTextBlockControls();
 }
 function populateCollectionSelects(){
   Object.keys(collectionListFields).forEach(key=>{
@@ -195,6 +228,25 @@ $('resetTextOffsetBtn').addEventListener('click',()=>{
   try { localStorage.setItem(collectionTextOffsetStorageKey,JSON.stringify(offsets)); } catch (_) {}
   renderPreview();
 });
+$('toggleTextBlockModeBtn').addEventListener('click',()=>{ textBlockEditMode=!textBlockEditMode; renderPreview(); });
+$('resetSelectedTextBlockBtn').addEventListener('click',()=>{
+  if(!selectedTextBlock) return;
+  const offsets=collectionTextBlockOffsets();
+  if(offsets[selectedTextBlock.preview]) delete offsets[selectedTextBlock.preview][selectedTextBlock.index];
+  try { localStorage.setItem(collectionTextBlockOffsetStorageKey,JSON.stringify(offsets)); } catch (_) {}
+  renderPreview();
+});
+document.addEventListener('keydown',event=>{
+  if(!textBlockEditMode||!selectedTextBlock||selectedTextBlock.preview!==state.preview) return;
+  if(['INPUT','TEXTAREA','SELECT','BUTTON'].includes(document.activeElement?.tagName)) return;
+  const movement={ArrowLeft:['x',-1],ArrowRight:['x',1],ArrowUp:['y',-1],ArrowDown:['y',1]}[event.key];
+  if(!movement) return;
+  event.preventDefault();
+  const [axis,direction]=movement, step=event.shiftKey?5:1, offset=textBlockOffset(selectedTextBlock.preview,selectedTextBlock.index);
+  offset[axis]+=direction*step;
+  saveTextBlockOffset(selectedTextBlock.preview,selectedTextBlock.index,offset);
+  renderPreview();
+});
 
 function printAllCollectionDocuments(){
   if(!selectedShipments().length){ alert('اختر شحنة واحدة على الأقل قبل طباعة المستندات.'); return; }
@@ -292,6 +344,7 @@ function applyCollectionBranding(){
   paper.append(content);
   const background = settings.background ? `<img class="collection-brand-layer collection-brand-bg" src="${esc(settings.background)}" alt="">` : '';
   paper.insertAdjacentHTML('afterbegin', background);
+  prepareTextBlocks(content);
   fitCollectionContent(content);
   wireCollectionStampDrag(paper);
 }
