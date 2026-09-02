@@ -3,7 +3,7 @@ const SB_URL = 'https://vthcmqqiexaedukduquv.supabase.co';
 const SB_KEY = 'sb_publishable_kYEMmAQ2KTETIabDTMz2ig_fNB8vo02';
 const sb = supabase.createClient(SB_URL, SB_KEY, {auth:{storageKey:'shipdocs-auth',persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}});
 const $ = id => document.getElementById(id);
-const state = {shipments:[], selected:new Set(), overrides:{}, preview:'application', settings:{collectionDate:new Date().toISOString().slice(0,10),remittingBank:'ADIB',collectingBank:'SAUDI SUDANESE BANK',collectingBankAddress:'',term:'D/A 90 DAYS FROM BILL OF EXCHANGE DATE',drawer:'BAHAR SWAKEN GENERAL TRADING L.L.C',authorizedPerson:'JAWAD ELMASRI',title:'MANAGER',draweeAddress:''}};
+const state = {shipments:[], selected:new Set(), overrides:{}, preview:'application', settings:{collectionDate:new Date().toISOString().slice(0,10),remittingBank:'ADIB',collectingBank:'SAUDI SUDANESE BANK',collectingBankAddress:'MAIN BRANCH, FREE ZONE AREA, PORT SUDAN, SUDAN',term:'D/A 90 DAYS FROM BILL OF EXCHANGE DATE',drawer:'BAHAR SWAKEN GENERAL TRADING L.L.C',authorizedPerson:'JAWAD ELMASRI',title:'MANAGER',draweeAddress:''}};
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const rowToShipment = row => Object.assign({}, row.data||{}, {id:row.id,status:row.status,companyId:row.company_id,shipmentNo:row.task_ref||row.id.slice(0,8)});
 const moneyInfo = value => { const text=String(value||''); const currency=(text.match(/\b[A-Z]{3}\b/)||[])[0]||''; const number=parseFloat((text.match(/-?[\d,]+(?:\.\d+)?/)||['0'])[0].replace(/,/g,'')); return {currency:currency||'—',number:Number.isFinite(number)?number:0}; };
@@ -61,6 +61,37 @@ $('settingsForm').addEventListener('input',event=>{state.settings[event.target.n
 $('settingsForm').addEventListener('change',event=>{state.settings[event.target.name]=event.target.value;renderPreview();renderDebug();});
 $('previewTabs').addEventListener('click',event=>{const button=event.target.closest('[data-preview]');if(!button)return;state.preview=button.dataset.preview;document.querySelectorAll('[data-preview]').forEach(b=>b.classList.toggle('active',b===button));renderPreview();});
 $('groupByConsignee').addEventListener('click',()=>{const groups={};selectedShipments().forEach(r=>(groups[r.consignee||'غير محدد']??=[]).push(r));$('consigneeGroups').hidden=false;$('consigneeGroups').innerHTML=Object.entries(groups).map(([name,rows])=>`<b>${esc(name)}</b>: ${rows.map(r=>esc(r.shipmentNo)).join('، ')}`).join('<br>');});
-$('resetBtn').addEventListener('click',()=>{state.selected.clear();state.overrides={};$('settingsForm').reset();Object.assign(state.settings,{collectionDate:new Date().toISOString().slice(0,10),remittingBank:'ADIB',collectingBank:'SAUDI SUDANESE BANK',collectingBankAddress:'',term:'D/A 90 DAYS FROM BILL OF EXCHANGE DATE',drawer:'BAHAR SWAKEN GENERAL TRADING L.L.C',authorizedPerson:'JAWAD ELMASRI',title:'MANAGER',draweeAddress:''});$('settingsForm').elements.collectionDate.value=state.settings.collectionDate;renderAll();});
+$('resetBtn').addEventListener('click',()=>{state.selected.clear();state.overrides={};$('settingsForm').reset();Object.assign(state.settings,{collectionDate:new Date().toISOString().slice(0,10),remittingBank:'ADIB',collectingBank:'SAUDI SUDANESE BANK',collectingBankAddress:'MAIN BRANCH, FREE ZONE AREA, PORT SUDAN, SUDAN',term:'D/A 90 DAYS FROM BILL OF EXCHANGE DATE',drawer:'BAHAR SWAKEN GENERAL TRADING L.L.C',authorizedPerson:'JAWAD ELMASRI',title:'MANAGER',draweeAddress:''});Object.entries(state.settings).forEach(([key,value])=>{const input=$('settingsForm').elements[key];if(input)input.value=value;});renderAll();});
 $('printBtn').addEventListener('click',()=>window.print());
+function referenceDocumentsEnclosed(){
+  return `<table><thead><tr><th>No</th><th>Type of Document</th><th>Original</th><th>Duplicate</th></tr></thead><tbody>
+    <tr><td>1</td><td>BILL OF EXCHANGE</td><td>1</td><td>0</td></tr>
+    <tr><td>2</td><td>COMMERCIAL INVOICE</td><td>2</td><td>0</td></tr>
+    <tr><td>3</td><td>COPY B/L</td><td>0</td><td>2</td></tr>
+    <tr><td>4</td><td>Certificate of Origin</td><td>2</td><td>0</td></tr>
+  </tbody></table>`;
+}
+
+function renderPreview(){
+  const {rows,currencies,consignees,totals}=detected();
+  const s=state.settings;
+  if(!rows.length){ $('documentPreview').innerHTML='<div class="empty-state">اختر شحنات أولاً لعرض مستندات التحصيل.</div>'; return; }
+  if(currencies.length!==1){ $('documentPreview').innerHTML='<div class="empty-state">لا يمكن إنشاء معاينة موحدة لمستند تحصيل متعدد العملات. اختر شحنات بعملة واحدة.</div>'; return; }
+  const currency=currencies[0], total=totals[currency]||0, amount=formatMoney(currency,total), words=`${currency} ${amountWords(total)} ONLY`;
+  const drawee=consignees.join(' / ')||'-';
+  const draweeAddress=s.draweeAddress||rows[0].consigneeAddress||'-';
+  const invoiceRefs=rows.map(r=>`${r.invoiceNo||'-'} dated ${r.invoiceDate||'-'}`).join('; ');
+  let body='';
+  if(state.preview==='application'){
+    body=`<article class="document-paper"><h2>COLLECTION APPLICATION</h2><p><b>REMITTING BANK:</b> ${esc(s.remittingBank)}<br><b>REMITTING BANK ADD:</b> ${esc(s.remittingBank)}<br><b>COLLECTING BANK:</b> ${esc(s.collectingBank)}<br><b>COLLECTING BANK ADD:</b> ${esc(s.collectingBankAddress||'-')}<br><b>Consignee:</b> ${esc(drawee)}<br><b>Con Address:</b> ${esc(draweeAddress)}</p><table><thead><tr><th>INVOICE NO.</th><th>DATE</th><th>B/L NO.</th><th>Total Amount</th></tr></thead><tbody>${docRows(rows)}</tbody></table><div class="document-total"><span>TOTAL AMOUNT</span><span>${esc(amount)}</span></div><h3>DOCUMENTS ENCLOSED</h3>${referenceDocumentsEnclosed()}<p><b>Bill of Lading Type:</b> Copy of Original Bill of Lading<br><b>Bill By:</b> Kindly send SWIFT message to collecting bank for docs and share SWIFT copy with us.<br><b>Term Of Payment:</b> ${esc(s.term)}</p></article>`;
+  }else if(state.preview==='letter'){
+    body=`<article class="document-paper"><p>Date: ${esc(s.collectionDate)}<br><br>The Manager<br>Abu Dhabi Islamic Bank<br>Trade Finance Department<br>Abu Dhabi, UAE</p><p>Dear Sir,</p><p>We enclose herewith the following documents and request you to forward the same to collecting bank without any responsibility on your part, requesting them to release the documents to drawee only against their acceptance for payment on due date and only upon receipt of funds from them. Please credit the proceeds to our account held with you after deduction of your charges under advice to us.</p><p>All bank charges outside UAE are to be collected from buyer/drawee.</p><h3>COLLECTION DOCUMENTS for:</h3><p><b>Amount:</b> ${esc(amount)}<br><b>SAY:</b> ${esc(words)}<br><b>Tenor:</b> ${esc(s.term)}<br><b>COLLECTING BANK:</b> ${esc(s.collectingBank)}<br>${esc(s.collectingBankAddress||'')}<br><b>DRAWEE:</b> ${esc(drawee)}<br>${esc(draweeAddress)}</p><h3>DOCUMENTS ENCLOSED:</h3>${referenceDocumentsEnclosed()}<p><b>KINDLY SEND SWIFT MESSAGE TO COLLECTING BANK FOR DOCS AND SHARE SWIFT COPY WITH US.</b></p><div class="signature">Yours faithfully,<br>For and on behalf of<br>${esc(s.drawer)}<br>${esc(s.authorizedPerson)}<br>${esc(s.title)}</div></article>`;
+  }else if(state.preview==='undertaking'){
+    body=`<article class="document-paper"><p>THE MANAGER<br>TRADE FINANCE DEPARTMENT<br>ABU DHABI ISLAMIC BANK<br>BANIYAS BRANCH BUILDING, 2ND FLOOR, BANIYAS EAST, P.O.BOX 313, ABU DHABI, UAE.</p><h2>UNDERTAKING LETTER UNDER EXPORT COLLECTION DOCS</h2><table><thead><tr><th>REF #</th><th>B/L No</th><th>Currency</th><th>Amount</th></tr></thead><tbody>${rows.map(r=>{const m=moneyInfo(r.totalAmount);return `<tr><td>${esc(r.invoiceNo||r.shipmentNo)}</td><td>${esc(r.billNo||'-')}</td><td>${esc(m.currency)}</td><td>${esc(formatMoney(m.currency,m.number))}</td></tr>`}).join('')}</tbody></table><p>Dear Sir / Madam,</p><p>We hereby certify to Abu Dhabi Islamic Bank PJSC that all enclosed Documents and any other document in relation to the underlying shipment or goods as described in the enclosed documents are accurate, correct and complete documents in full force and effect at the date of this letter.</p><p>We acknowledge that the Bank is the only bank handling the collection as the remitting bank and that the documents will not be submitted as a duplicate presentation to any other bank.</p><p>The Bank shall be under no obligation to make any payment to us as seller/exporter/drawer in respect of the collection until it has received full payment from the collecting/presenting bank. The collection documents will be handled in accordance with the Uniform Rules for Collections, ICC publication number 522 (URC 522).</p><div class="signature">Sincerely,<br>For and on behalf of:<br>${esc(s.drawer)}<br>Name: ${esc(s.authorizedPerson)}<br>Title: ${esc(s.title)}<br><br>Signature:</div></article>`;
+  }else{
+    body=`<article class="document-paper"><h2>BILL OF EXCHANGE</h2><p><b>Amount:</b> ${esc(amount)}<br><b>DATED:</b> ${esc(s.collectionDate)}</p><p>AT ${esc(s.term)} PAY TO THE ORDER OF <b>${esc(s.remittingBank)}, ABU DHABI - UAE</b> A SUM OF <b>${esc(amount)}</b>.</p><p><b>${esc(words)}</b> BEING VALUE DRAWN UNDER INVOICE # ${esc(invoiceRefs)}</p><p><b>Drawn On:</b> ${esc(drawee)}<br>${esc(draweeAddress)}</p><div class="signature">Drawer<br>${esc(s.drawer)}<br>${esc(s.authorizedPerson)}<br>${esc(s.title)}</div></article>`;
+  }
+  $('documentPreview').innerHTML=body;
+}
+
 init();
