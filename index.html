@@ -2447,6 +2447,7 @@ body.role-staff #navWallet,body.role-staff #navAdmin{display:flex !important;}
   </div>
   <div class="o-cp-actions" id="cpActions">
     <button class="btn btn-primary" id="newBtn" style="display:none;" data-ic="plus">جديد</button>
+    <button class="btn btn-ghost btn-small" id="bsgtCollectionLabBtn" style="display:none;" data-ic="clipboard">مختبر التحصيل (تجريبي)</button>
     <button class="bsgt-new-btn" id="bsgtNewBtn" style="display:none;" data-ic="plus">إنشاء شحنة BSGT</button>
   </div>
   <div class="o-cp-search" id="cpSearch" style="display:none;">
@@ -7985,6 +7986,7 @@ function switchView(v){
   const names = {dashboard:'لوحة المعلومات', records:'الشحنات', bsgt:'شحنات BSGT', createShip:'إنشاء شحنة', shipForm:'إدخال بيانات الشحنة', tasks:'المهام', review:'الاعتماد', money:'التحصيل والمستحقات', wallet:'محفظة العملاء', admin:'لوحة التحكم', activityLog:'سجل العمليات'};
   document.getElementById('crumbCurrent').textContent = names[navKey] || names[v] || '';
   document.getElementById('cpSearch').style.display = v==='records' ? 'flex' : 'none';
+  document.getElementById('bsgtCollectionLabBtn').style.display = (v==='records' && currentCompanyScope==='bsgt') ? 'inline-flex' : 'none';
   document.getElementById('bsgtNewBtn').style.display = (v==='records' && currentCompanyScope==='bsgt' && canEdit()) ? 'inline-flex' : 'none';
   if(v==='dashboard'){ renderDashboard(); renderReport(); }
   if(v==='records'){
@@ -13052,6 +13054,9 @@ function openBsgtShipForm(id){
   document.getElementById('bsgtShipOverlay').classList.add('open');
 }
 document.getElementById('bsgtNewBtn').addEventListener('click', ()=> openBsgtShipForm(null));
+document.getElementById('bsgtCollectionLabBtn').addEventListener('click', ()=>{
+  window.open('/experiments/bs-collection/', '_blank', 'noopener');
+});
 document.getElementById('bsgtShipCloseX').addEventListener('click', ()=> document.getElementById('bsgtShipOverlay').classList.remove('open'));
 document.getElementById('bsgtShipCancelBtn').addEventListener('click', ()=> document.getElementById('bsgtShipOverlay').classList.remove('open'));
 
