@@ -10,4 +10,7 @@
 .collection-list-value { display: inline-flex; align-items: center; gap: 5px; max-width: 100%; padding: 4px 7px; border: 1px solid #d6e4ef; border-radius: 999px; background: #fff; color: #476681; font: 9px 'IBM Plex Mono', monospace; }
 .collection-list-value span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .collection-list-value button { border: 0; background: transparent; color: #a84a52; cursor: pointer; font: 700 13px/1 Arial; }
+.collection-status { display: inline-flex; width: max-content; margin-top: 7px; padding: 3px 6px; border-radius: 999px; font-size: 9px; font-weight: 700; }
+.collection-status.settled { background: #e7f8ef; color: #157957; }
+.collection-status.partial { background: #fff6e3; color: #875a00; }
 @media (max-width: 640px) { .collection-list-controls { grid-template-columns: 1fr; } }

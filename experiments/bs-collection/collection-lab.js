@@ -3,7 +3,7 @@ const SB_URL = 'https://vthcmqqiexaedukduquv.supabase.co';
 const SB_KEY = 'sb_publishable_kYEMmAQ2KTETIabDTMz2ig_fNB8vo02';
 const sb = supabase.createClient(SB_URL, SB_KEY, {auth:{storageKey:'shipdocs-auth',persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}});
 const $ = id => document.getElementById(id);
-const state = {shipments:[], selected:new Set(), overrides:{}, preview:'application', settings:{collectionDate:new Date().toISOString().slice(0,10),remittingBank:'ADIB',collectingBank:'SAUDI SUDANESE BANK',collectingBankAddress:'MAIN BRANCH, FREE ZONE AREA, PORT SUDAN, SUDAN',billOfLadingType:'Copy of Original Bill of Lading',billBy:'Kindly send SWIFT message to collecting bank for docs and share SWIFT copy with us.',term:'D/A 90 DAYS FROM BILL OF EXCHANGE DATE',drawer:'BAHAR SWAKEN GENERAL TRADING L.L.C',authorizedPerson:'JAWAD ELMASRI',title:'MANAGER',draweeAddress:''}};
+const state = {shipments:[], payments:{}, selected:new Set(), overrides:{}, preview:'application', settings:{collectionDate:new Date().toISOString().slice(0,10),remittingBank:'ADIB',collectingBank:'SAUDI SUDANESE BANK',collectingBankAddress:'MAIN BRANCH, FREE ZONE AREA, PORT SUDAN, SUDAN',billOfLadingType:'Copy of Original Bill of Lading',billBy:'Kindly send SWIFT message to collecting bank for docs and share SWIFT copy with us.',term:'D/A 90 DAYS FROM BILL OF EXCHANGE DATE',drawer:'BAHAR SWAKEN GENERAL TRADING L.L.C',authorizedPerson:'JAWAD ELMASRI',title:'MANAGER',draweeAddress:''}};
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const collectionListStorageKey = 'bsCollectionDataLists';
 const collectionListFields = {
@@ -38,6 +38,9 @@ function renderCollectionListManager(){
 }
 const rowToShipment = row => Object.assign({}, row.data||{}, {id:row.id,status:row.status,companyId:row.company_id,shipmentNo:row.task_ref||row.id.slice(0,8)});
 const moneyInfo = value => { const text=String(value||''); const currency=(text.match(/\b[A-Z]{3}\b/)||[])[0]||''; const number=parseFloat((text.match(/-?[\d,]+(?:\.\d+)?/)||['0'])[0].replace(/,/g,'')); return {currency:currency||'—',number:Number.isFinite(number)?number:0}; };
+const paidOf = id => (state.payments[id]||[]).reduce((sum,payment)=>sum+(Number(payment.amount)||0),0);
+const remainingOf = shipment => Math.max(0,moneyInfo(shipment.totalAmount).number-paidOf(shipment.id));
+const collectionState = shipment => { const total=moneyInfo(shipment.totalAmount).number, paid=paidOf(shipment.id); return paid>=total-.01&&total>0?'settled':paid>0?'partial':''; };
 const effective = shipment => Object.assign({}, shipment, state.overrides[shipment.id]||{});
 const selectedShipments = () => state.shipments.filter(s=>state.selected.has(s.id)).map(effective);
 const valueOrDash = v => v === undefined || v === null || v === '' ? '-' : v;
@@ -55,7 +58,7 @@ function renderPicker(){
   const search=$('searchInput').value.trim().toLowerCase(), cur=$('currencyFilter').value, consignee=$('consigneeFilter').value;
   const list=state.shipments.filter(s=>{const m=moneyInfo(s.totalAmount);const hay=[s.shipmentNo,s.itemDesc,s.invoiceNo,s.billNo,s.consignee].join(' ').toLowerCase();return (!search||hay.includes(search))&&(!cur||m.currency===cur)&&(!consignee||s.consignee===consignee);});
   $('shipmentCount').textContent=`${list.length} شحنة BSGT متاحة للقراءة`;
-  $('shipmentList').innerHTML=list.length?list.map(s=>{const m=moneyInfo(s.totalAmount);return `<label class="shipment-card ${state.selected.has(s.id)?'is-selected':''}"><input type="checkbox" data-select="${esc(s.id)}" ${state.selected.has(s.id)?'checked':''}><div><h3>${esc(s.itemDesc||'-')}</h3><p>${esc(s.consignee||'-')}</p><div class="shipment-meta"><span class="shipment-ref">${esc(s.shipmentNo)}</span><span>${esc(s.invoiceNo||'-')}</span><span>${esc(m.currency)} ${m.number?m.number.toLocaleString('en-US'):'-'}</span></div></div></label>`}).join(''):'<div class="empty-state">لا توجد نتائج مطابقة.</div>';
+  $('shipmentList').innerHTML=list.length?list.map(s=>{const m=moneyInfo(s.totalAmount),status=collectionState(s),paid=paidOf(s.id);const statusTag=status==='settled'?'<span class="collection-status settled">تم التحصيل بالكامل</span>':status==='partial'?`<span class="collection-status partial">تحصيل جزئي: ${esc(formatMoney(m.currency,paid))}</span>`:'';return `<label class="shipment-card ${state.selected.has(s.id)?'is-selected':''}"><input type="checkbox" data-select="${esc(s.id)}" ${state.selected.has(s.id)?'checked':''}><div><h3>${esc(s.itemDesc||'-')}</h3><p>${esc(s.consignee||'-')}</p><div class="shipment-meta"><span class="shipment-ref">${esc(s.shipmentNo)}</span><span>${esc(s.invoiceNo||'-')}</span><span>${esc(m.currency)} ${m.number?m.number.toLocaleString('en-US'):'-'}</span></div>${statusTag}</div></label>`}).join(''):'<div class="empty-state">لا توجد نتائج مطابقة.</div>';
   document.querySelectorAll('[data-select]').forEach(input=>input.addEventListener('change',()=>{input.checked?state.selected.add(input.dataset.select):state.selected.delete(input.dataset.select);renderAll();}));
 }
 function renderDraft(){
@@ -81,6 +84,28 @@ function renderPreview(){
 function renderDebug(){const d=detected();$('debugOutput').textContent=JSON.stringify({selectedShipmentIds:[...state.selected],originalValues:state.shipments.filter(s=>state.selected.has(s.id)),overrides:state.overrides,totals:d.totals,detectedCurrency:d.currencies,detectedConsignee:d.consignees},null,2);}
 function renderAll(){renderPicker();renderDraft();renderPreview();renderDebug();}
 function fillFilters(){const currencies=[...new Set(state.shipments.map(s=>moneyInfo(s.totalAmount).currency).filter(c=>c!=='—'))].sort(), consignees=[...new Set(state.shipments.map(s=>s.consignee).filter(Boolean))].sort();$('currencyFilter').innerHTML='<option value="">كل العملات</option>'+currencies.map(v=>`<option>${esc(v)}</option>`).join('');$('consigneeFilter').innerHTML='<option value="">كل المستوردين</option>'+consignees.map(v=>`<option>${esc(v)}</option>`).join('');}
+async function recordCollection(){
+  const rows=selectedShipments();
+  const eligible=rows.filter(row=>moneyInfo(row.totalAmount).number>0&&remainingOf(row)>.01);
+  if(!eligible.length){ alert('كل الشحنات المختارة مسجلة كمحصلة بالفعل، أو لا تحتوي على مبلغ صالح للتحصيل.'); return; }
+  const totalByCurrency={}; eligible.forEach(row=>{const info=moneyInfo(row.totalAmount);totalByCurrency[info.currency]=(totalByCurrency[info.currency]||0)+remainingOf(row);});
+  const summary=Object.entries(totalByCurrency).map(([currency,total])=>formatMoney(currency,total)).join('\n');
+  if(!confirm(`سيتم تسجيل التحصيل الكامل المتبقي لـ ${eligible.length} شحنة:\n${summary}\n\nهل تؤكد تسجيل التحصيل؟`)) return;
+  const button=$('recordCollectionBtn'), original=button.innerHTML;
+  button.disabled=true; button.textContent='جارٍ تسجيل التحصيل...';
+  try{
+    const paidOn=state.settings.collectionDate||new Date().toISOString().slice(0,10);
+    const rowsToInsert=eligible.map(row=>({shipment_id:row.id,amount:remainingOf(row),currency:moneyInfo(row.totalAmount).currency,paid_on:paidOn,method:'تحصيل مستندات BSGT',reference:row.invoiceNo||row.shipmentNo,note:'تم التسجيل من بوابة مستندات التحصيل - بحر سواكن'}));
+    const {data,error}=await sb.from('payments').insert(rowsToInsert).select();
+    if(error) throw error;
+    (data||[]).forEach(payment=>(state.payments[payment.shipment_id]??=[]).push(payment));
+    renderAll();
+    alert(`تم تسجيل تحصيل ${eligible.length} شحنة بنجاح. ستظهر الآن ضمن «محصّلة» في قائمة التحصيل الرئيسية.`);
+  }catch(error){
+    const message=error?.message||String(error);
+    alert(`تعذّر تسجيل التحصيل. ${message.includes('payments')?'تأكد من تشغيل ملف 6_التحصيل_والمستحقات.sql في Supabase ومن صلاحية المستخدم.':message}`);
+  }finally{ button.disabled=false; button.innerHTML=original; }
+}
 async function init(){
   loadCollectionLists();
   populateCollectionSelects();
@@ -89,7 +114,7 @@ async function init(){
     const input = $('settingsForm').elements[key];
     if(input) input.value = value;
   });
-  try{const [{data:companies,error:ce},{data:rows,error:se}]=await Promise.all([sb.from('companies').select('*'),sb.from('shipments').select('*').order('updated_at',{ascending:false})]);if(ce)throw ce;if(se)throw se;const bsgt=(companies||[]).find(c=>/بحر\s*سواكن|bahar\s*swaken/i.test(`${c.name_ar||''} ${c.name_en||''}`));if(!bsgt)throw new Error('لم يتم العثور على شركة بحر سواكن في بيانات الشركات.');state.shipments=(rows||[]).map(rowToShipment).filter(s=>s.companyId===bsgt.id);fillFilters();renderAll();}catch(error){$('shipmentList').innerHTML=`<div class="empty-state">تعذّر تحميل مختبر التحصيل: ${esc(error.message||error)}. تأكد من تسجيل الدخول في النظام الأساسي أولاً.</div>`;$('shipmentCount').textContent='لم تُحمّل البيانات';}}
+  try{const [{data:companies,error:ce},{data:rows,error:se},{data:paymentRows,error:pe}]=await Promise.all([sb.from('companies').select('*'),sb.from('shipments').select('*').order('updated_at',{ascending:false}),sb.from('payments').select('*').order('paid_on')]);if(ce)throw ce;if(se)throw se;if(pe)console.warn('payments',pe);state.payments={};(paymentRows||[]).forEach(payment=>(state.payments[payment.shipment_id]??=[]).push(payment));const bsgt=(companies||[]).find(c=>/بحر\s*سواكن|bahar\s*swaken/i.test(`${c.name_ar||''} ${c.name_en||''}`));if(!bsgt)throw new Error('لم يتم العثور على شركة بحر سواكن في بيانات الشركات.');state.shipments=(rows||[]).map(rowToShipment).filter(s=>s.companyId===bsgt.id);fillFilters();renderAll();}catch(error){$('shipmentList').innerHTML=`<div class="empty-state">تعذّر تحميل مختبر التحصيل: ${esc(error.message||error)}. تأكد من تسجيل الدخول في النظام الأساسي أولاً.</div>`;$('shipmentCount').textContent='لم تُحمّل البيانات';}}
 ['searchInput','currencyFilter','consigneeFilter'].forEach(id=>$(id).addEventListener('input',renderPicker));
 $('settingsForm').addEventListener('input',event=>{if(!event.target.name)return;state.settings[event.target.name]=event.target.value;renderPreview();renderDebug();});
 $('settingsForm').addEventListener('change',event=>{if(!event.target.name)return;state.settings[event.target.name]=event.target.value;renderPreview();renderDebug();});
@@ -111,6 +136,7 @@ $('previewTabs').addEventListener('click',event=>{const button=event.target.clos
 $('groupByConsignee').addEventListener('click',()=>{const groups={};selectedShipments().forEach(r=>(groups[r.consignee||'غير محدد']??=[]).push(r));$('consigneeGroups').hidden=false;$('consigneeGroups').innerHTML=Object.entries(groups).map(([name,rows])=>`<b>${esc(name)}</b>: ${rows.map(r=>esc(r.shipmentNo)).join('، ')}`).join('<br>');});
 $('resetBtn').addEventListener('click',()=>{state.selected.clear();state.overrides={};$('settingsForm').reset();Object.assign(state.settings,{collectionDate:new Date().toISOString().slice(0,10),remittingBank:'ADIB',collectingBank:'SAUDI SUDANESE BANK',collectingBankAddress:'MAIN BRANCH, FREE ZONE AREA, PORT SUDAN, SUDAN',billOfLadingType:'Copy of Original Bill of Lading',billBy:'Kindly send SWIFT message to collecting bank for docs and share SWIFT copy with us.',term:'D/A 90 DAYS FROM BILL OF EXCHANGE DATE',drawer:'BAHAR SWAKEN GENERAL TRADING L.L.C',authorizedPerson:'JAWAD ELMASRI',title:'MANAGER',draweeAddress:''});populateCollectionSelects();Object.entries(state.settings).forEach(([key,value])=>{const input=$('settingsForm').elements[key];if(input)input.value=value;});renderAll();});
 $('printBtn').addEventListener('click',()=>window.print());
+$('recordCollectionBtn').addEventListener('click',recordCollection);
 $('printAllBtn').addEventListener('click', printAllCollectionDocuments);
 $('resetStampBtn').addEventListener('click',()=>{ try { localStorage.removeItem('bsCollectionStampOffset'); } catch (_) {} renderPreview(); });
 
