@@ -137,6 +137,7 @@ function applyCollectionBranding(){
       .collection-a4>.collection-page-content{position:relative;z-index:1;display:flex;flex-direction:column;height:297mm;padding:53mm 17mm 52mm;overflow-wrap:anywhere;transform-origin:top left}
       .collection-a4 .signature{margin-top:8mm!important;width:64mm!important;font-size:9.5px!important;line-height:1.25!important}
       .collection-a4 table,.collection-a4 table th,.collection-a4 table td{background:transparent!important;border-color:#000!important}
+      .collection-a4 .document-total{background:transparent!important}
       .collection-a4 .collection-flow-seals{display:flex;align-items:flex-end;justify-content:space-between;gap:16mm;min-height:30mm;margin-top:auto;padding-top:8mm}
       .collection-a4 .collection-flow-seals img{position:relative;display:block;object-fit:contain;max-height:31mm;transform-origin:center}
       .collection-a4 .collection-flow-stamp{margin-inline-start:auto;pointer-events:auto!important;cursor:grab;touch-action:none}
