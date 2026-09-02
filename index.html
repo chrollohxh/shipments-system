@@ -569,6 +569,62 @@ body{padding-right:230px;}
 .doc-action-btn:active{transform:translateY(-1px) scale(.99);}
 .doc-action-btn .t{font-weight:800;font-size:14.5px;color:var(--ink);}
 .doc-action-btn .s{font-size:12px;color:var(--muted);}
+
+/* BSGT details: rearranges the existing detail controls without changing their handlers. */
+#detailCard.bsgt-detail-card{width:min(96vw,1500px)!important;max-width:1500px!important;max-height:92vh;border-radius:16px;background:#fff;box-shadow:0 16px 42px rgba(18,45,80,.16);overflow:hidden;}
+.bsgt-detail-shell{display:grid;grid-template-columns:184px minmax(0,1fr);min-height:min(780px,92vh);max-height:92vh;}
+.bsgt-detail-side{display:flex;flex-direction:column;padding:20px 12px;background:#112f55;color:#dbe9f9;overflow:auto;}
+.bsgt-detail-identity{padding:5px 8px 18px;border-bottom:1px solid rgba(219,233,249,.16);margin-bottom:13px;}
+.bsgt-detail-identity .bsgt-detail-icon{display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;border-radius:12px;background:#1e5d9e;color:#fff;margin-bottom:11px;}
+.bsgt-detail-identity b{display:block;color:#fff;font-size:13px;line-height:1.45;word-break:break-word;}
+.bsgt-detail-identity span{display:block;margin-top:5px;font-size:11px;color:#a9c9ec;}
+.bsgt-detail-nav{display:grid;gap:6px;}
+.bsgt-detail-nav button{display:flex;align-items:center;gap:8px;width:100%;padding:10px 9px;border:0;border-radius:9px;background:transparent;color:#c9dcf1;cursor:pointer;font:700 11px inherit;text-align:right;transition:background .18s var(--ease),color .18s var(--ease);}
+.bsgt-detail-nav button:hover,.bsgt-detail-nav button.active{background:#214d7d;color:#fff;}
+.bsgt-detail-main{min-width:0;padding:24px 28px;overflow:auto;background:#fff;}
+.bsgt-detail-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:20px;}
+.bsgt-detail-head h2{margin:4px 0 0;color:#183652;font-size:22px;}
+.bsgt-detail-head .tc-ref{color:#56728f;}
+.bsgt-detail-card .close-x{border-color:#dbe6f2;color:#54708d;flex:none;}
+.bsgt-summary-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px;margin-bottom:22px;}
+.bsgt-summary-card,.bsgt-data-card{min-width:0;padding:13px;border:1px solid #dfe9f4;border-radius:11px;background:#fff;}
+.bsgt-summary-card .sum-top,.bsgt-data-card .sum-top{display:flex;align-items:center;gap:7px;color:#5a7695;font-size:10.5px;font-weight:700;margin-bottom:8px;}
+.bsgt-summary-card .sum-value,.bsgt-data-card .sum-value{display:block;color:#173753;font-size:13px;font-weight:800;line-height:1.4;overflow-wrap:anywhere;}
+.bsgt-summary-card .sum-value.amount{font-family:'IBM Plex Mono',monospace;color:#1657a8;direction:ltr;text-align:right;}
+.bsgt-detail-section{scroll-margin-top:16px;margin-top:22px;}
+.bsgt-detail-section h3{display:flex;align-items:center;gap:8px;margin:0 0 12px;color:#183652;font-size:15px;}
+.bsgt-detail-section h3:before{content:'';width:3px;height:17px;border-radius:2px;background:#1e64b4;}
+.bsgt-detail-card .doc-actions-grid{margin:0;grid-template-columns:repeat(5,minmax(140px,1fr));gap:9px;}
+.bsgt-detail-card .doc-action-btn{min-height:110px;padding:13px;border-color:#dce7f3;border-radius:11px;}
+.bsgt-detail-card .doc-action-btn:hover{border-color:#1e64b4;background:#f4f8fd;box-shadow:none;transform:translateY(-2px);}
+.bsgt-detail-card .doc-action-btn .t{font-size:12px;color:#1b3c5d;}
+.bsgt-detail-card .doc-action-btn .s{font-size:10.5px;line-height:1.4;}
+.bsgt-doc-order{margin-top:13px;padding:12px;border:1px dashed #d4e2f1;border-radius:11px;background:#f8fbff;}
+.bsgt-doc-order .sf-head{font-size:11px;margin-bottom:8px;color:#4d6a88;}
+.bsgt-doc-order .sf-list{max-height:155px;overflow:auto;}
+.bsgt-data-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px;}
+.bsgt-timeline{padding:13px;border:1px solid #e1eaf4;border-radius:11px;background:#fbfdff;}
+.bsgt-detail-card .stl-section{margin:0;padding:0;border:0;background:transparent;}
+.bsgt-detail-card .stl-head{display:none;}
+.bsgt-detail-card .bsgt-hidden-content{display:none!important;}
+.bsgt-detail-card .detail-actions{position:sticky;bottom:-24px;display:flex;flex-wrap:wrap;gap:8px;margin:25px -28px -24px;padding:14px 28px;background:rgba(255,255,255,.96);border-top:1px solid #dfe8f2;z-index:2;}
+.bsgt-detail-card .detail-actions #mergeAllBtn{order:-1;background:#1657a8;color:#fff;border-color:#1657a8;}
+.bsgt-detail-card .detail-actions #deleteBtn{margin-inline-start:auto;}
+@media (max-width:1100px){
+  .bsgt-summary-grid,.bsgt-data-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .bsgt-detail-card .doc-actions-grid{grid-template-columns:repeat(3,minmax(0,1fr));}
+}
+@media (max-width:720px){
+  #detailCard.bsgt-detail-card{width:100%!important;max-height:100vh;border-radius:0;}
+  .bsgt-detail-shell{display:block;max-height:100vh;}
+  .bsgt-detail-side{position:sticky;top:0;z-index:3;flex-direction:row;align-items:center;gap:10px;padding:10px;background:#112f55;overflow-x:auto;}
+  .bsgt-detail-identity{display:flex;align-items:center;gap:8px;padding:0 10px 0 0;margin:0;border:0;border-inline-end:1px solid rgba(219,233,249,.18);white-space:nowrap;}
+  .bsgt-detail-identity .bsgt-detail-icon{width:30px;height:30px;margin:0;border-radius:8px;}.bsgt-detail-identity b{font-size:11px;}.bsgt-detail-identity span{display:none;}
+  .bsgt-detail-nav{display:flex;gap:5px;}.bsgt-detail-nav button{width:auto;white-space:nowrap;padding:8px;}.bsgt-detail-nav button span{display:none;}
+  .bsgt-detail-main{padding:18px 16px;}.bsgt-summary-grid,.bsgt-data-grid{grid-template-columns:1fr 1fr;gap:8px;}
+  .bsgt-detail-card .doc-actions-grid{grid-template-columns:1fr 1fr;gap:8px;}
+  .bsgt-detail-card .detail-actions{bottom:-18px;margin:22px -16px -18px;padding:12px 16px;}.bsgt-detail-card .detail-actions #deleteBtn{margin-inline-start:0;}
+}
 .doc-action-btn:disabled{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none;}
 .doc-action-btn:disabled:hover{transform:none;border-color:var(--border);background:var(--white);box-shadow:none;}
 .detail-actions{
@@ -13538,12 +13594,107 @@ async function moveDocOrder(r, key, dir){
   }catch(e){ console.warn('تعذّر حفظ ترتيب المستندات', e); }
 }
 
+function bsgtDetailSourceName(r){
+  const c = companyDataFor(r);
+  return c.nameAr || c.nameEn || 'شركة بحر سواكن';
+}
+
+function renderBsgtDetail(r){
+  const status = recStatus(r)==='sent' ? 'صادرة' : recStatus(r)==='draft' ? 'مسودة' : 'قيد المراجعة';
+  const quantity = r.totalQty || r.qty || r.numberOfPackages || '—';
+  const shippingType = isSea(r) ? 'بحري' : 'بري';
+  const dataCards = [
+    [isSea(r) ? 'anchor' : 'truck', 'نوع الشحنة', shippingType],
+    ['box', 'عدد الطرود', r.numberOfPackages || r.totalQty || r.qty || '—'],
+    ['tag', 'الوزن الإجمالي', r.weight || r.totalWeight || r.netWeight || r.grossWeight || '—'],
+    ['ship', 'الحاويات', r.containers || r.containerNo || r.container || '—']
+  ];
+  return `
+    <div class="bsgt-detail-shell">
+      <aside class="bsgt-detail-side">
+        <div class="bsgt-detail-identity">
+          <span class="bsgt-detail-icon">${icon(getShipmentIcon(r.itemDesc||'', r),23)}</span>
+          <b>${escapeHtml(r.itemDesc||'بدون وصف')}</b>
+          <span>الحالة: ${status}</span>
+        </div>
+        <nav class="bsgt-detail-nav" aria-label="أقسام تفاصيل الشحنة">
+          <button type="button" class="active" data-bsgt-target="bsgtOverview">${icon('dashboard',15)} <span>نظرة عامة</span></button>
+          <button type="button" data-bsgt-target="bsgtDocuments">${icon('doc',15)} <span>المستندات</span></button>
+          <button type="button" data-bsgt-target="bsgtShipmentData">${icon('box',15)} <span>بيانات الشحنة</span></button>
+          <button type="button" data-bsgt-target="bsgtActions">${icon('gear',15)} <span>الإجراءات</span></button>
+        </nav>
+      </aside>
+      <main class="bsgt-detail-main">
+        <header class="bsgt-detail-head">
+          <div>${r.taskRef? '<span class="tc-ref">'+escapeHtml(r.taskRef)+'</span>' : ''}<h2>${escapeHtml(r.itemDesc||'بدون وصف')}</h2></div>
+          <button class="close-x" id="closeDetail">${icon('close',16)}</button>
+        </header>
+
+        <section class="bsgt-detail-section" id="bsgtOverview">
+          <div class="bsgt-summary-grid">
+            <div class="bsgt-summary-card"><div class="sum-top">${icon('user',14)} المرسل إليه</div><span class="sum-value">${escapeHtml(r.consignee||'—')}</span></div>
+            <div class="bsgt-summary-card"><div class="sum-top">${icon('building',14)} المصدر</div><span class="sum-value">${escapeHtml(bsgtDetailSourceName(r))}</span></div>
+            <div class="bsgt-summary-card"><div class="sum-top">${icon('box',14)} الكمية</div><span class="sum-value">${escapeHtml(String(quantity))}</span></div>
+            <div class="bsgt-summary-card"><div class="sum-top">${icon('invoice',14)} الإجمالي</div><span class="sum-value amount">${escapeHtml(r.totalAmount||'—')}</span></div>
+          </div>
+          ${r.reviewNote ? `<div class="rework-note"><span class="lbl">${icon('warning',14)} ملاحظة من المدير — تحتاج تعديل</span>${escapeHtml(r.reviewNote)}</div>` : ''}
+        </section>
+
+        <section class="bsgt-detail-section" id="bsgtDocuments">
+          <h3>المستندات الأساسية</h3>
+          <div class="doc-actions-grid" id="docActionsGrid">${renderDocActionsGrid(r)}</div>
+          <div class="bsgt-doc-order"><div class="sf-head">${icon('list',14)} ترتيب مستندات الحزمة</div><div id="docOrderList" class="sf-list"></div></div>
+        </section>
+
+        <section class="bsgt-detail-section" id="bsgtShipmentData">
+          <h3>بيانات الشحنة</h3>
+          <div class="bsgt-data-grid">${dataCards.map(([i,l,v])=>`<div class="bsgt-data-card"><div class="sum-top">${icon(i,14)} ${l}</div><span class="sum-value">${escapeHtml(String(v))}</span></div>`).join('')}</div>
+        </section>
+
+        <section class="bsgt-detail-section" id="bsgtActions">
+          <h3>الإجراءات</h3>
+          <div class="bsgt-timeline"><div class="stl-section"><div class="stl-head">${icon('list',15)} مراحل الشحنة</div><div id="stlList" class="stl-list"><div class="sf-loading">جاري التحميل…</div></div></div></div>
+        </section>
+
+        <div class="bsgt-hidden-content">
+          <div class="cmt-section"><div id="cmtList"></div><textarea id="cmtInput"></textarea><button id="cmtSendBtn"></button></div>
+          <div class="comments-box"><div id="cmList"></div><textarea id="cmInput"></textarea><button id="cmSendBtn"></button></div>
+          <div class="sf-section"><div id="sfList" class="sf-list"></div><input type="file" id="sf_files" multiple></div>
+          ${recStatus(r)==='sent' ? `<div class="sf-section" id="pkgAttSection"><div id="pkgAttList" class="sf-list"></div><input type="text" id="pkgAttName"><input type="file" id="pkgAttFile" accept="application/pdf"><div id="pkgAttLimitNote"></div></div>` : ''}
+        </div>
+
+        <footer class="detail-actions">
+          <button class="btn btn-gold" id="packageBtn">${icon('printer')} تجميع الحزمة الكاملة PDF</button>
+          <button class="btn btn-ghost" id="mergeAllBtn">${icon('doc')} دمج الحزمة في ملف واحد</button>
+          ${reviewButtonsHtml(r)}
+          ${r.consignee ? `<button class="btn btn-ghost btn-small" id="lgBtn">${icon('bank',15)} حساب العميل</button>` : ''}
+          ${r.consignee ? `<button class="btn btn-ghost btn-small" id="shipCostBtn">${icon('truck',15)} تكلفة الشحن</button>` : ''}
+          <button class="btn btn-ghost btn-small" id="dupBtn">${icon('folder',15)} نسخة جديدة منها</button>
+          <button class="btn btn-ghost btn-small" id="editBtn">${icon('edit',15)} تعديل</button>
+          <button class="btn btn-danger btn-small" id="deleteBtn">${icon('trash',15)} حذف الشحنة</button>
+        </footer>
+      </main>
+    </div>`;
+}
+
+function wireBsgtDetailSidebar(card){
+  card.querySelectorAll('[data-bsgt-target]').forEach(button=>{
+    button.addEventListener('click', ()=>{
+      const target = card.querySelector('#'+button.dataset.bsgtTarget);
+      if(target) target.scrollIntoView({behavior:'smooth', block:'start'});
+      card.querySelectorAll('[data-bsgt-target]').forEach(item=>item.classList.toggle('active', item===button));
+    });
+  });
+}
+
 function openDetail(id){
   const r = records.find(x=>x.id===id);
   if(!r) return;
   updateHash('records', id);
   const card = document.getElementById('detailCard');
-  card.innerHTML = `
+  const isBsgtDetail = isBaharSwakenCompany(companyDataFor(r));
+  card.classList.toggle('bsgt-detail-card', isBsgtDetail);
+  card.innerHTML = isBsgtDetail ? renderBsgtDetail(r) : `
     <div class="dh">
       <div>${r.taskRef? '<span class="tc-ref">'+escapeHtml(r.taskRef)+'</span>' : ''}<h2>${isSea(r)? icon('anchor',17)+' ' : ''}${escapeHtml(r.itemDesc||'بدون وصف')}</h2></div>
       <button class="close-x" id="closeDetail">${icon('close',16)}</button>
@@ -13619,6 +13770,7 @@ function openDetail(id){
     </div>
   `;
   overlay.classList.add('open');
+  if(isBsgtDetail) wireBsgtDetailSidebar(card);
   document.getElementById('closeDetail').addEventListener('click', ()=> overlay.classList.remove('open'));
   renderDocOrderList(r);
   wireDocActionButtons(r);
