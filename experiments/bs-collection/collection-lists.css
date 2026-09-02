@@ -45,6 +45,12 @@
 .collection-lists { display: grid; gap: 10px; padding: 14px; border: 1px dashed #b9d2ea; border-radius: 10px; background: #fbfdff; }
 .collection-lists strong, .collection-lists small { display: block; }
 .collection-lists small { margin-top: 3px; color: var(--muted); font-size: 9.5px; }
+.text-position-controls { position: relative; direction: rtl; }
+.text-position-controls summary { cursor: pointer; color: var(--blue); font: 700 10px 'Noto Kufi Arabic', sans-serif; }
+.text-position-controls > div { position: absolute; z-index: 20; top: 24px; inset-inline-end: 0; display: grid; gap: 8px; width: 265px; padding: 11px; border: 1px solid var(--line); border-radius: 9px; background: #fff; box-shadow: 0 8px 20px rgba(35, 62, 90, .15); }
+.text-position-controls label { display: grid; grid-template-columns: 72px 1fr 42px; align-items: center; gap: 7px; color: var(--ink); font-size: 9px; }
+.text-position-controls input { width: 100%; accent-color: var(--blue); }
+.text-position-controls output { direction: ltr; color: var(--muted); font: 700 9px 'IBM Plex Mono', monospace; text-align: left; }
 .collection-list-controls { display: grid; grid-template-columns: minmax(180px, .8fr) minmax(220px, 1.6fr) auto; gap: 8px; }
 .collection-list-controls select, .collection-list-controls input { min-width: 0; padding: 9px; border: 1px solid var(--line); border-radius: 7px; background: #fff; color: var(--ink); font: 10px inherit; }
 .collection-list-controls .mini-btn { padding: 0 8px; border: 1px solid #b9d2ea; border-radius: 7px; background: #fff; }

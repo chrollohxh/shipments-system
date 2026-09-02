@@ -6,6 +6,7 @@ const $ = id => document.getElementById(id);
 const state = {shipments:[], payments:{}, selected:new Set(), overrides:{}, preview:'letter', convertToAed:false, exchangeRate:3.6725, settings:{collectionDate:new Date().toISOString().slice(0,10),remittingBank:'Abu Dhabi Islamic Bank',remittingBankLetterAddress:'Abu Dhabi, UAE',remittingBankAddress:'BANIYAS BRANCH BUILDING, 2ND FLOOR, BANIYAS EAST, P.O.BOX 313, ABU DHABI, UAE.',remittingBankAccountNo:'19567664',collectingBank:'SAUDI SUDANESE BANK',collectingBankAddress:'MAIN BRANCH, FREE ZONE AREA, PORT SUDAN, SUDAN',billOfLadingType:'Copy of  Original Bill of Lading',billBy:'KINDLY SEND SWIFT MESSAGE TO COLLECTING BANK FOR DOCS AND SHARE SWIFT COPY WITH US.',term:'D/A 90 DAYS FROM BILL OF EXCHANGE DATE.',drawer:'BAHAR SWAKEN GENERAL TRADING LLC',authorizedPerson:'JAWAD ELMASRI',title:'MANAGER',draweeAddress:''}};
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const collectionListStorageKey = 'bsCollectionDataLists';
+const collectionTextOffsetStorageKey = 'bsCollectionTextOffsets';
 const collectionListFields = {
   remittingBank:{label:'البنك المُرسِل',defaults:['Abu Dhabi Islamic Bank']}, remittingBankLetterAddress:{label:'عنوان بنك الإرسال للخطاب',defaults:['Abu Dhabi, UAE']}, remittingBankAddress:{label:'عنوان بنك الإرسال للتعهد',defaults:['BANIYAS BRANCH BUILDING, 2ND FLOOR, BANIYAS EAST, P.O.BOX 313, ABU DHABI, UAE.']}, remittingBankAccountNo:{label:'رقم حساب بنك الإرسال',defaults:['19567664']}, collectingBank:{label:'بنك التحصيل',defaults:['SAUDI SUDANESE BANK']},
   collectingBankAddress:{label:'عنوان بنك التحصيل',defaults:['MAIN BRANCH, FREE ZONE AREA, PORT SUDAN, SUDAN']},
@@ -20,6 +21,20 @@ function loadCollectionLists(){
   collectionLists=Object.fromEntries(Object.entries(collectionListFields).map(([key,field])=>[key,[...new Set([...(field.defaults||[]),...((saved[key]||[]).filter(Boolean))])]]));
 }
 function saveCollectionLists(){ try { localStorage.setItem(collectionListStorageKey,JSON.stringify(collectionLists)); } catch (_) {} }
+function collectionTextOffsets(){ try { return JSON.parse(localStorage.getItem(collectionTextOffsetStorageKey)||'{}')||{}; } catch (_) { return {}; } }
+function textOffsetForPreview(){ return Object.assign({x:0,y:0}, collectionTextOffsets()[state.preview]||{}); }
+function updateTextOffsetControls(){
+  const x=$('textOffsetX'), y=$('textOffsetY'); if(!x||!y) return;
+  const offset=textOffsetForPreview(); x.value=offset.x; y.value=offset.y;
+  $('textOffsetXValue').textContent=`${offset.x} mm`;
+  $('textOffsetYValue').textContent=`${offset.y} mm`;
+}
+function saveTextOffset(axis, value){
+  const offsets=collectionTextOffsets(), current=Object.assign({x:0,y:0},offsets[state.preview]||{});
+  current[axis]=Number(value)||0; offsets[state.preview]=current;
+  try { localStorage.setItem(collectionTextOffsetStorageKey,JSON.stringify(offsets)); } catch (_) {}
+  renderPreview();
+}
 function populateCollectionSelects(){
   Object.keys(collectionListFields).forEach(key=>{
     const select=$('settingsForm').elements[key]; if(!select) return;
@@ -173,6 +188,13 @@ $('printBtn').addEventListener('click',()=>window.print());
 $('recordCollectionBtn').addEventListener('click',recordCollection);
 $('printAllBtn').addEventListener('click', printAllCollectionDocuments);
 $('resetStampBtn').addEventListener('click',()=>{ try { localStorage.removeItem('bsCollectionStampOffset'); } catch (_) {} renderPreview(); });
+$('textOffsetX').addEventListener('input',event=>saveTextOffset('x',event.target.value));
+$('textOffsetY').addEventListener('input',event=>saveTextOffset('y',event.target.value));
+$('resetTextOffsetBtn').addEventListener('click',()=>{
+  const offsets=collectionTextOffsets(); delete offsets[state.preview];
+  try { localStorage.setItem(collectionTextOffsetStorageKey,JSON.stringify(offsets)); } catch (_) {}
+  renderPreview();
+});
 
 function printAllCollectionDocuments(){
   if(!selectedShipments().length){ alert('اختر شحنة واحدة على الأقل قبل طباعة المستندات.'); return; }
@@ -223,6 +245,7 @@ function renderPreview(){
   }
   $('documentPreview').innerHTML=body;
   applyCollectionBranding();
+  updateTextOffsetControls();
 }
 
 function collectionBrandingSettings(){
@@ -258,6 +281,9 @@ function applyCollectionBranding(){
   paper.classList.add('collection-a4');
   const content = document.createElement('div');
   content.className = 'collection-page-content';
+  const textOffset=textOffsetForPreview();
+  content.style.setProperty('--collection-text-x', `${textOffset.x}mm`);
+  content.style.setProperty('--collection-text-y', `${textOffset.y}mm`);
   Array.from(paper.childNodes).forEach(node=>content.append(node));
   const flowImage = (className, source, position) => source ? `<img class="${className}" src="${esc(source)}" alt="" style="width:${Math.max(10,Math.min(Number(position.widthPercent)||16,35))}%;transform:rotate(${Number(position.rotate)||0}deg)">` : '';
   if(stamp || signature){
@@ -272,14 +298,15 @@ function applyCollectionBranding(){
 
 function fitCollectionContent(content){
   requestAnimationFrame(()=>{
-    content.style.transform = '';
+    const translate = 'translate(var(--collection-text-x), var(--collection-text-y))';
+    content.style.transform = translate;
     content.style.width = '';
     const top = content.getBoundingClientRect().top;
     const usedHeight = Math.max(content.scrollHeight, ...Array.from(content.children).map(node=>node.getBoundingClientRect().bottom - top));
     const ratio = Math.min(1, content.clientHeight / Math.max(content.clientHeight, usedHeight));
     if(ratio < .998){
       const safeRatio = Math.max(.72, ratio);
-      content.style.transform = `scale(${safeRatio})`;
+      content.style.transform = `${translate} scale(${safeRatio})`;
       content.style.width = `${100 / safeRatio}%`;
     }
   });
