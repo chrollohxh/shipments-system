@@ -5,6 +5,37 @@ const sb = supabase.createClient(SB_URL, SB_KEY, {auth:{storageKey:'shipdocs-aut
 const $ = id => document.getElementById(id);
 const state = {shipments:[], selected:new Set(), overrides:{}, preview:'application', settings:{collectionDate:new Date().toISOString().slice(0,10),remittingBank:'ADIB',collectingBank:'SAUDI SUDANESE BANK',collectingBankAddress:'MAIN BRANCH, FREE ZONE AREA, PORT SUDAN, SUDAN',billOfLadingType:'Copy of Original Bill of Lading',billBy:'Kindly send SWIFT message to collecting bank for docs and share SWIFT copy with us.',term:'D/A 90 DAYS FROM BILL OF EXCHANGE DATE',drawer:'BAHAR SWAKEN GENERAL TRADING L.L.C',authorizedPerson:'JAWAD ELMASRI',title:'MANAGER',draweeAddress:''}};
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const collectionListStorageKey = 'bsCollectionDataLists';
+const collectionListFields = {
+  remittingBank:{label:'البنك المُرسِل',defaults:['ADIB']}, collectingBank:{label:'بنك التحصيل',defaults:['SAUDI SUDANESE BANK']},
+  collectingBankAddress:{label:'عنوان بنك التحصيل',defaults:['MAIN BRANCH, FREE ZONE AREA, PORT SUDAN, SUDAN']},
+  billOfLadingType:{label:'نوع بوليصة الشحن',defaults:['Copy of Original Bill of Lading']},
+  billBy:{label:'تعليمات Bill By',defaults:['Kindly send SWIFT message to collecting bank for docs and share SWIFT copy with us.']},
+  term:{label:'شرط الدفع',defaults:['D/A 90 DAYS FROM BILL OF EXCHANGE DATE']}, drawer:{label:'المُصدّر / Drawer',defaults:['BAHAR SWAKEN GENERAL TRADING L.L.C']},
+  authorizedPerson:{label:'الشخص المفوض',defaults:['JAWAD ELMASRI']}, title:{label:'المنصب',defaults:['MANAGER']}, draweeAddress:{label:'عنوان المستورد',defaults:[]}
+};
+let collectionLists = {};
+function loadCollectionLists(){
+  let saved={}; try { saved=JSON.parse(localStorage.getItem(collectionListStorageKey)||'{}')||{}; } catch (_) {}
+  collectionLists=Object.fromEntries(Object.entries(collectionListFields).map(([key,field])=>[key,[...new Set([...(field.defaults||[]),...((saved[key]||[]).filter(Boolean))])]]));
+}
+function saveCollectionLists(){ try { localStorage.setItem(collectionListStorageKey,JSON.stringify(collectionLists)); } catch (_) {} }
+function populateCollectionSelects(){
+  Object.keys(collectionListFields).forEach(key=>{
+    const select=$('settingsForm').elements[key]; if(!select) return;
+    const values=[...(collectionLists[key]||[])];
+    if(state.settings[key] && !values.includes(state.settings[key])) values.push(state.settings[key]);
+    const auto=key==='draweeAddress'?'<option value="">من الشحنة المختارة تلقائياً</option>':'';
+    select.innerHTML=auto+values.map(value=>`<option value="${esc(value)}">${esc(value)}</option>`).join('');
+    select.value=state.settings[key]||'';
+  });
+}
+function renderCollectionListManager(){
+  const field=$('collectionListField'), values=$('collectionListValues'); if(!field||!values) return;
+  if(!field.options.length) field.innerHTML=Object.entries(collectionListFields).map(([key,meta])=>`<option value="${key}">${esc(meta.label)}</option>`).join('');
+  const key=field.value||'remittingBank';
+  values.innerHTML=(collectionLists[key]||[]).length?(collectionLists[key]||[]).map(value=>`<span class="collection-list-value"><span title="${esc(value)}">${esc(value)}</span><button type="button" title="حذف" data-remove-list-value="${esc(value)}">×</button></span>`).join(''):'<small>لا توجد قيم محفوظة بعد.</small>';
+}
 const rowToShipment = row => Object.assign({}, row.data||{}, {id:row.id,status:row.status,companyId:row.company_id,shipmentNo:row.task_ref||row.id.slice(0,8)});
 const moneyInfo = value => { const text=String(value||''); const currency=(text.match(/\b[A-Z]{3}\b/)||[])[0]||''; const number=parseFloat((text.match(/-?[\d,]+(?:\.\d+)?/)||['0'])[0].replace(/,/g,'')); return {currency:currency||'—',number:Number.isFinite(number)?number:0}; };
 const effective = shipment => Object.assign({}, shipment, state.overrides[shipment.id]||{});
@@ -51,17 +82,34 @@ function renderDebug(){const d=detected();$('debugOutput').textContent=JSON.stri
 function renderAll(){renderPicker();renderDraft();renderPreview();renderDebug();}
 function fillFilters(){const currencies=[...new Set(state.shipments.map(s=>moneyInfo(s.totalAmount).currency).filter(c=>c!=='—'))].sort(), consignees=[...new Set(state.shipments.map(s=>s.consignee).filter(Boolean))].sort();$('currencyFilter').innerHTML='<option value="">كل العملات</option>'+currencies.map(v=>`<option>${esc(v)}</option>`).join('');$('consigneeFilter').innerHTML='<option value="">كل المستوردين</option>'+consignees.map(v=>`<option>${esc(v)}</option>`).join('');}
 async function init(){
+  loadCollectionLists();
+  populateCollectionSelects();
+  renderCollectionListManager();
   Object.entries(state.settings).forEach(([key, value])=>{
     const input = $('settingsForm').elements[key];
     if(input) input.value = value;
   });
   try{const [{data:companies,error:ce},{data:rows,error:se}]=await Promise.all([sb.from('companies').select('*'),sb.from('shipments').select('*').order('updated_at',{ascending:false})]);if(ce)throw ce;if(se)throw se;const bsgt=(companies||[]).find(c=>/بحر\s*سواكن|bahar\s*swaken/i.test(`${c.name_ar||''} ${c.name_en||''}`));if(!bsgt)throw new Error('لم يتم العثور على شركة بحر سواكن في بيانات الشركات.');state.shipments=(rows||[]).map(rowToShipment).filter(s=>s.companyId===bsgt.id);fillFilters();renderAll();}catch(error){$('shipmentList').innerHTML=`<div class="empty-state">تعذّر تحميل مختبر التحصيل: ${esc(error.message||error)}. تأكد من تسجيل الدخول في النظام الأساسي أولاً.</div>`;$('shipmentCount').textContent='لم تُحمّل البيانات';}}
 ['searchInput','currencyFilter','consigneeFilter'].forEach(id=>$(id).addEventListener('input',renderPicker));
-$('settingsForm').addEventListener('input',event=>{state.settings[event.target.name]=event.target.value;renderPreview();renderDebug();});
-$('settingsForm').addEventListener('change',event=>{state.settings[event.target.name]=event.target.value;renderPreview();renderDebug();});
+$('settingsForm').addEventListener('input',event=>{if(!event.target.name)return;state.settings[event.target.name]=event.target.value;renderPreview();renderDebug();});
+$('settingsForm').addEventListener('change',event=>{if(!event.target.name)return;state.settings[event.target.name]=event.target.value;renderPreview();renderDebug();});
+$('collectionListField').addEventListener('change',renderCollectionListManager);
+$('addCollectionListValue').addEventListener('click',()=>{
+  const key=$('collectionListField').value, input=$('collectionListValue'), value=input.value.trim();
+  if(!value){ input.focus(); return; }
+  if(!collectionLists[key].includes(value)) collectionLists[key].push(value);
+  state.settings[key]=value; input.value=''; saveCollectionLists(); populateCollectionSelects(); renderCollectionListManager(); renderPreview(); renderDebug();
+});
+$('collectionListValues').addEventListener('click',event=>{
+  const button=event.target.closest('[data-remove-list-value]'); if(!button) return;
+  const key=$('collectionListField').value, value=button.dataset.removeListValue;
+  collectionLists[key]=(collectionLists[key]||[]).filter(item=>item!==value);
+  if(state.settings[key]===value) state.settings[key]=key==='draweeAddress'?'':(collectionLists[key][0]||'');
+  saveCollectionLists(); populateCollectionSelects(); renderCollectionListManager(); renderPreview(); renderDebug();
+});
 $('previewTabs').addEventListener('click',event=>{const button=event.target.closest('[data-preview]');if(!button)return;state.preview=button.dataset.preview;document.querySelectorAll('[data-preview]').forEach(b=>b.classList.toggle('active',b===button));renderPreview();});
 $('groupByConsignee').addEventListener('click',()=>{const groups={};selectedShipments().forEach(r=>(groups[r.consignee||'غير محدد']??=[]).push(r));$('consigneeGroups').hidden=false;$('consigneeGroups').innerHTML=Object.entries(groups).map(([name,rows])=>`<b>${esc(name)}</b>: ${rows.map(r=>esc(r.shipmentNo)).join('، ')}`).join('<br>');});
-$('resetBtn').addEventListener('click',()=>{state.selected.clear();state.overrides={};$('settingsForm').reset();Object.assign(state.settings,{collectionDate:new Date().toISOString().slice(0,10),remittingBank:'ADIB',collectingBank:'SAUDI SUDANESE BANK',collectingBankAddress:'MAIN BRANCH, FREE ZONE AREA, PORT SUDAN, SUDAN',billOfLadingType:'Copy of Original Bill of Lading',billBy:'Kindly send SWIFT message to collecting bank for docs and share SWIFT copy with us.',term:'D/A 90 DAYS FROM BILL OF EXCHANGE DATE',drawer:'BAHAR SWAKEN GENERAL TRADING L.L.C',authorizedPerson:'JAWAD ELMASRI',title:'MANAGER',draweeAddress:''});Object.entries(state.settings).forEach(([key,value])=>{const input=$('settingsForm').elements[key];if(input)input.value=value;});renderAll();});
+$('resetBtn').addEventListener('click',()=>{state.selected.clear();state.overrides={};$('settingsForm').reset();Object.assign(state.settings,{collectionDate:new Date().toISOString().slice(0,10),remittingBank:'ADIB',collectingBank:'SAUDI SUDANESE BANK',collectingBankAddress:'MAIN BRANCH, FREE ZONE AREA, PORT SUDAN, SUDAN',billOfLadingType:'Copy of Original Bill of Lading',billBy:'Kindly send SWIFT message to collecting bank for docs and share SWIFT copy with us.',term:'D/A 90 DAYS FROM BILL OF EXCHANGE DATE',drawer:'BAHAR SWAKEN GENERAL TRADING L.L.C',authorizedPerson:'JAWAD ELMASRI',title:'MANAGER',draweeAddress:''});populateCollectionSelects();Object.entries(state.settings).forEach(([key,value])=>{const input=$('settingsForm').elements[key];if(input)input.value=value;});renderAll();});
 $('printBtn').addEventListener('click',()=>window.print());
 $('printAllBtn').addEventListener('click', printAllCollectionDocuments);
 $('resetStampBtn').addEventListener('click',()=>{ try { localStorage.removeItem('bsCollectionStampOffset'); } catch (_) {} renderPreview(); });

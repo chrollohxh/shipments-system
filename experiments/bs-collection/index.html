@@ -9,6 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;700&family=Noto+Kufi+Arabic:wght@400;600;700&display=swap" rel="stylesheet">
   <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
   <link rel="stylesheet" href="collection-lab.css">
+  <link rel="stylesheet" href="collection-lists.css">
 </head>
 <body>
   <header class="lab-header">
@@ -36,16 +37,21 @@
       <div class="section-heading"><div><span>03</span><h2>بيانات التحصيل</h2></div><p>مسودة محلية لهذه التجربة فقط، ولا يتم حفظها.</p></div>
       <form id="settingsForm" class="settings-grid" autocomplete="off">
         <label>تاريخ التحصيل<input name="collectionDate" type="date"></label>
-        <label>البنك المُرسِل<input name="remittingBank" value="ADIB"></label>
-        <label>بنك التحصيل<input name="collectingBank" value="SAUDI SUDANESE BANK"></label>
-        <label>عنوان بنك التحصيل<input name="collectingBankAddress" placeholder="يُدخل عند توفره"></label>
-        <label class="span2">نوع بوليصة الشحن (Bill of Lading Type)<input name="billOfLadingType" value="Copy of Original Bill of Lading"></label>
-        <label class="span2">تعليمات Bill By<input name="billBy" value="Kindly send SWIFT message to collecting bank for docs and share SWIFT copy with us."></label>
-        <label class="span2">شرط الدفع (Term Of Payment)<input name="term" value="D/A 90 DAYS FROM BILL OF EXCHANGE DATE"></label>
-        <label>المُصدّر / Drawer<input name="drawer" value="BAHAR SWAKEN GENERAL TRADING L.L.C"></label>
-        <label>الشخص المفوض<input name="authorizedPerson" value="JAWAD ELMASRI"></label>
-        <label>المنصب<input name="title" value="MANAGER"></label>
-        <label>عنوان المستورد<input name="draweeAddress" placeholder="يُستدعى من الشحنة عند توفره"></label>
+        <label>البنك المُرسِل<select name="remittingBank"></select></label>
+        <label>بنك التحصيل<select name="collectingBank"></select></label>
+        <label>عنوان بنك التحصيل<select name="collectingBankAddress"></select></label>
+        <label class="span2">نوع بوليصة الشحن (Bill of Lading Type)<select name="billOfLadingType"></select></label>
+        <label class="span2">تعليمات Bill By<select name="billBy"></select></label>
+        <label class="span2">شرط الدفع (Term Of Payment)<select name="term"></select></label>
+        <label>المُصدّر / Drawer<select name="drawer"></select></label>
+        <label>الشخص المفوض<select name="authorizedPerson"></select></label>
+        <label>المنصب<select name="title"></select></label>
+        <label>عنوان المستورد<select name="draweeAddress"></select></label>
+        <section class="collection-lists span-all" aria-labelledby="collectionListsTitle">
+          <div><strong id="collectionListsTitle">قوائم بيانات التحصيل</strong><small>أضف بيانات الجهات مرة واحدة ثم اخترها من القوائم أعلاه.</small></div>
+          <div class="collection-list-controls"><select id="collectionListField"></select><input id="collectionListValue" type="text" placeholder="اكتب القيمة الجديدة"><button id="addCollectionListValue" type="button" class="mini-btn">إضافة للقائمة</button></div>
+          <div id="collectionListValues" class="collection-list-values"></div>
+        </section>
       </form>
     </section>
 
