@@ -1733,6 +1733,59 @@ body.role-staff #backTop{display:none !important;}
 .ship-pane.active{display:block;animation:viewIn .25s var(--ease);}
 .nav-badge.all{background:var(--brand);}
 
+/* BSGT shipment list: a visual-only card view over the same shipment records. */
+#viewRecords.bsgt-shipment-view #shipTabLand,
+#viewRecords.bsgt-shipment-view #shipTabSea,
+#viewRecords.bsgt-shipment-view #shipPaneLand,
+#viewRecords.bsgt-shipment-view #shipPaneSea{display:none!important;}
+#viewRecords.bsgt-shipment-view .ship-tabs{margin-bottom:20px;}
+#viewRecords.bsgt-shipment-view .ship-tab{
+  border-color:#d7e4f4;color:#24496f;background:#fff;min-width:132px;justify-content:center;
+}
+#viewRecords.bsgt-shipment-view .ship-tab.active{
+  background:#1657a8;border-color:#1657a8;box-shadow:0 6px 16px rgba(22,87,168,.22);
+}
+#viewRecords.bsgt-shipment-view .ledger{background:transparent;border:0;box-shadow:none;overflow:visible;}
+#viewRecords.bsgt-shipment-view .ledger-row.head{display:none;}
+#viewRecords.bsgt-shipment-view #issuedBody,
+#viewRecords.bsgt-shipment-view #draftsBody{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;
+}
+.bsgt-shipment-card{
+  position:relative;display:flex;flex-direction:column;min-height:238px;padding:18px;
+  border:1px solid #dce7f5;border-radius:16px;background:#fff;box-shadow:0 7px 20px rgba(30,68,112,.08);
+  cursor:pointer;transition:transform .2s var(--ease),box-shadow .2s var(--ease),border-color .2s var(--ease);
+}
+.bsgt-shipment-card:hover{transform:translateY(-3px);border-color:#98bde8;box-shadow:0 13px 28px rgba(30,68,112,.14);}
+.bsgt-card-top{display:flex;align-items:center;gap:9px;margin-bottom:13px;}
+.bsgt-card-number{font:700 12px 'IBM Plex Mono',monospace;color:#6e829a;min-width:24px;}
+.bsgt-card-icon{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:11px;background:#eaf3ff;color:#1657a8;}
+.bsgt-card-kind{font-size:11px;font-weight:700;color:#71839a;margin-inline-start:auto;}
+.bsgt-card-arrow{color:#91a5bd;font-size:20px;line-height:1;}
+.bsgt-shipment-card h3{margin:0 0 5px;font-size:16px;line-height:1.35;color:#183652;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.bsgt-card-consignee{margin:0;color:#637991;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.bsgt-card-meta{display:flex;gap:12px;flex-wrap:wrap;margin:14px 0 12px;color:#60768f;font-size:11.5px;}
+.bsgt-card-meta span{display:inline-flex;align-items:center;gap:5px;}
+.bsgt-card-docs{min-height:26px;margin-bottom:15px;}
+.bsgt-card-docs .docpills{gap:5px;}
+.bsgt-card-docs .pill{padding:3px 8px;font-size:10.5px;}
+.bsgt-card-footer{display:flex;align-items:center;gap:10px;margin-top:auto;padding-top:12px;border-top:1px solid #edf2f8;}
+.bsgt-card-amount{font:700 14px 'IBM Plex Mono',monospace;color:#1657a8;direction:ltr;text-align:right;margin-inline-start:auto;}
+.bsgt-card-open{font-size:11px;font-weight:700;color:#5d7795;}
+.bsgt-card-draft{background:#fffdf8;}
+.bsgt-card-draft .bsgt-card-icon{background:#fff2d4;color:#a66b00;}
+.bsgt-card-draft .bsgt-card-amount{color:#8a5d08;}
+.bsgt-card-draft .miss-list{display:flex;gap:5px;flex-wrap:wrap;}
+.bsgt-card-draft .miss-tag{font-size:10px;padding:3px 7px;}
+#viewRecords.bsgt-shipment-view .pager{margin-top:20px;}
+@media (max-width:1080px){
+  #viewRecords.bsgt-shipment-view #issuedBody,#viewRecords.bsgt-shipment-view #draftsBody{grid-template-columns:repeat(2,minmax(0,1fr));}
+}
+@media (max-width:640px){
+  #viewRecords.bsgt-shipment-view #issuedBody,#viewRecords.bsgt-shipment-view #draftsBody{grid-template-columns:1fr;gap:12px;}
+  .bsgt-shipment-card{min-height:220px;padding:15px;}
+}
+
 /* ===== لوحة التحكم ===== */
 #viewAdmin{max-width:1320px;margin-inline:auto;padding-top:8px;}
 .admin-control-hero{
@@ -7429,6 +7482,60 @@ function renderSea(){
 }
 document.getElementById('seaSearch').addEventListener('input', ()=>{ seaPage=1; renderSea(); });
 
+function getShipmentIcon(description, record){
+  const text = [description, record?.item2Desc, record?.item3Desc].filter(Boolean).join(' ').toLowerCase();
+  const has = (...words)=>words.some(word=>text.includes(word));
+  if(has('bag','bags','شنط','شنطة','حقيبة','حقائب')) return 'briefcase';
+  if(has('textile','garment','clothes','fabric','ملابس','منسوجات','اقمشة','أقمشة')) return 'box';
+  if(has('spare part','hardware','tool','parts','قطع غيار','معدات','ادوات','أدوات')) return 'gear';
+  if(has('document','paper','ملف','مستند','ورق')) return 'doc';
+  return 'box';
+}
+
+function bsgtShipmentCard(r, index, isDraft, missingHtml){
+  const quantity = String(r.totalQty || r.qty || r.numberOfPackages || '').trim();
+  const unit = String(r.qtyUnit || '').trim();
+  const shownQuantity = quantity && unit && !quantity.toLowerCase().includes(unit.toLowerCase()) ? `${quantity} ${unit}` : quantity;
+  const invoice = r.invoiceNo || r.proformaNo || 'بدون رقم فاتورة';
+  const docs = isDraft ? (missingHtml || '<span class="miss-none">جاهزة للإرسال</span>') : `
+    <div class="docpills">
+      <span class="pill ${r.proformaNo?'ready':''}">بروفورما</span>
+      <span class="pill ${r.invoiceNo?'ready':''}">فاتورة</span>
+      <span class="pill ${r.certNo?'ready':''}">منشأ</span>
+      <span class="pill ${r.billNo?'ready':''}">بوليصة</span>
+    </div>`;
+  return `<article class="bsgt-shipment-card ${isDraft?'bsgt-card-draft':''}" data-id="${r.id}" tabindex="0" role="button" aria-label="فتح تفاصيل الشحنة">
+    <div class="bsgt-card-top">
+      <span class="bsgt-card-number">${String(index).padStart(2,'0')}</span>
+      <span class="bsgt-card-icon">${icon(getShipmentIcon(r.itemDesc||'', r),21)}</span>
+      <span class="bsgt-card-kind">${isDraft?'مسودة':'صادرة'}</span>
+      <span class="bsgt-card-arrow" aria-hidden="true">‹</span>
+    </div>
+    <h3 title="${escapeHtml(r.itemDesc||'(بدون وصف)')}">${escapeHtml(r.itemDesc||'(بدون وصف)')}</h3>
+    <p class="bsgt-card-consignee">${escapeHtml(r.consignee || r.exporter || 'لم يُحدد العميل')}</p>
+    <div class="bsgt-card-meta">
+      <span>${icon('calendarIcon',13)} ${escapeHtml(String(fmtDate(r.invoiceDate||'') || 'بدون تاريخ'))}</span>
+      ${shownQuantity ? `<span>${icon('box',13)} ${escapeHtml(shownQuantity)}</span>` : ''}
+      <span>${icon('invoice',13)} ${escapeHtml(invoice)}</span>
+    </div>
+    <div class="bsgt-card-docs">${docs}</div>
+    <div class="bsgt-card-footer">
+      <span class="bsgt-card-open">فتح التفاصيل</span>
+      <strong class="bsgt-card-amount">${escapeHtml(r.totalAmount||'—')}</strong>
+    </div>
+  </article>`;
+}
+
+function bindBsgtShipmentCards(body){
+  body.querySelectorAll('.bsgt-shipment-card').forEach(card=>{
+    const open = ()=> openDetail(card.dataset.id);
+    card.addEventListener('click', open);
+    card.addEventListener('keydown', event=>{
+      if(event.key==='Enter' || event.key===' '){ event.preventDefault(); open(); }
+    });
+  });
+}
+
 function renderIssued(){
   const q = (document.getElementById('issuedSearch').value||'').trim().toLowerCase();
   let list = records.filter(r=>recStatus(r)==='sent' && inCompanyScope(r));
@@ -7459,7 +7566,10 @@ function renderIssued(){
   const slice = list.slice((issuedPage-1)*per, issuedPage*per);
 
   const issuedOffset = (issuedPage-1)*per;
-  body.innerHTML = slice.map((r, idx)=>`
+  const isBsgtCards = currentCompanyScope==='bsgt';
+  body.innerHTML = slice.map((r, idx)=> isBsgtCards
+    ? bsgtShipmentCard(r, issuedOffset + idx + 1, false)
+    : `
     <div class="ledger-row" data-id="${r.id}">
       <div class="cell-no">${issuedOffset + idx + 1}</div>
       <div class="cell-desc">${escapeHtml(r.itemDesc||'—')}
@@ -7477,7 +7587,8 @@ function renderIssued(){
       <div class="cell-amount">${escapeHtml(r.totalAmount||'—')}</div>
       <div class="chev">‹</div>
     </div>`).join('');
-  body.querySelectorAll('.ledger-row').forEach(row=>{
+  if(isBsgtCards) bindBsgtShipmentCards(body);
+  else body.querySelectorAll('.ledger-row').forEach(row=>{
     row.addEventListener('click', ()=> openDetail(row.dataset.id));
   });
   buildPager(document.getElementById('issuedPager'), list.length, per, issuedPage, p=>{
@@ -7506,11 +7617,13 @@ function renderDrafts(){
   const slice = drafts.slice((draftsPage-1)*per, draftsPage*per);
 
   const draftOffset = (draftsPage-1)*per;
+  const isBsgtCards = currentCompanyScope==='bsgt';
   body.innerHTML = slice.map((r, idx)=>{
     const miss = missingFields(r);
     const missHtml = miss.length
       ? `<div class="miss-list">${miss.slice(0,4).map(m=>`<span class="miss-tag">${escapeHtml(m)}</span>`).join('')}${miss.length>4?`<span class="miss-tag">+${miss.length-4}</span>`:''}</div>`
       : '<span class="miss-none">✓ مكتملة — جاهزة للإرسال</span>';
+    if(isBsgtCards) return bsgtShipmentCard(r, draftOffset + idx + 1, true, missHtml);
     return `
       <div class="ledger-row is-draft" data-id="${r.id}">
         <div class="cell-no">${draftOffset + idx + 1}</div>
@@ -7523,7 +7636,8 @@ function renderDrafts(){
         <div class="chev">‹</div>
       </div>`;
   }).join('');
-  body.querySelectorAll('.ledger-row').forEach(row=>{
+  if(isBsgtCards) bindBsgtShipmentCards(body);
+  else body.querySelectorAll('.ledger-row').forEach(row=>{
     row.addEventListener('click', ()=> openDetail(row.dataset.id));
   });
   buildPager(document.getElementById('draftsPager'), drafts.length, per, draftsPage, p=>{
@@ -7803,6 +7917,7 @@ function switchView(v){
   document.querySelectorAll('.navtab').forEach(t=>t.classList.toggle('active', t.dataset.view===navKey));
   document.getElementById('viewDashboard').classList.toggle('active', v==='dashboard');
   document.getElementById('viewRecords').classList.toggle('active', v==='records');
+  document.getElementById('viewRecords').classList.toggle('bsgt-shipment-view', v==='records' && currentCompanyScope==='bsgt');
   document.getElementById('viewCreateShip').classList.toggle('active', v==='createShip');
   document.getElementById('viewShipForm').classList.toggle('active', v==='shipForm');
   document.getElementById('viewAdmin').classList.toggle('active', v==='admin');
@@ -7816,7 +7931,10 @@ function switchView(v){
   document.getElementById('cpSearch').style.display = v==='records' ? 'flex' : 'none';
   document.getElementById('bsgtNewBtn').style.display = (v==='records' && currentCompanyScope==='bsgt' && canEdit()) ? 'inline-flex' : 'none';
   if(v==='dashboard'){ renderDashboard(); renderReport(); }
-  if(v==='records'){ render(); renderSea(); renderIssued(); renderDrafts(); renderReview(); }
+  if(v==='records'){
+    render(); renderSea(); renderIssued(); renderDrafts(); renderReview();
+    if(currentCompanyScope==='bsgt') switchShipTab('issued');
+  }
   if(v==='tasks') renderTasks();
   if(v==='review') renderReview();
   if(v==='money') renderMoney();
@@ -12086,10 +12204,10 @@ function switchShipTab(tab){
     if(el) el.classList.toggle('active', k===tab);
   });
   document.querySelectorAll('.ship-tab').forEach(t=>t.classList.toggle('active', t.dataset.ship===tab));
-  // البحث يظهر في تبويب البري فقط
-  document.getElementById('cpSearch').style.display = tab==='land' ? 'flex' : 'none';
+  // البحث العام يبقى للتبويب البري فقط، وBSGT تستخدم بحث كل تبويب الموجود أصلاً.
+  document.getElementById('cpSearch').style.display = tab==='land' && currentCompanyScope!=='bsgt' ? 'flex' : 'none';
   const labels = {land:'الشحن البري', sea:'الشحن البحري', issued:'الصادرة', drafts:'المسودات'};
-  document.getElementById('crumbCurrent').textContent = 'الشحنات · ' + labels[tab];
+  document.getElementById('crumbCurrent').textContent = (currentCompanyScope==='bsgt' ? 'شحنات BSGT' : 'الشحنات') + ' · ' + labels[tab];
   if(tab==='land') render();
   if(tab==='sea') renderSea();
   if(tab==='issued') renderIssued();
