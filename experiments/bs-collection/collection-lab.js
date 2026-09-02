@@ -3,15 +3,15 @@ const SB_URL = 'https://vthcmqqiexaedukduquv.supabase.co';
 const SB_KEY = 'sb_publishable_kYEMmAQ2KTETIabDTMz2ig_fNB8vo02';
 const sb = supabase.createClient(SB_URL, SB_KEY, {auth:{storageKey:'shipdocs-auth',persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}});
 const $ = id => document.getElementById(id);
-const state = {shipments:[], payments:{}, selected:new Set(), overrides:{}, preview:'letter', convertToAed:false, exchangeRate:3.6725, settings:{collectionDate:new Date().toISOString().slice(0,10),remittingBank:'Abu Dhabi Islamic Bank',remittingBankLetterAddress:'Abu Dhabi, UAE',remittingBankAddress:'BANIYAS BRANCH BUILDING, 2ND FLOOR, BANIYAS EAST, P.O.BOX 313, ABU DHABI, UAE.',remittingBankAccountNo:'19567664',collectingBank:'SAUDI SUDANESE BANK',collectingBankAddress:'MAIN BRANCH, FREE ZONE AREA, PORT SUDAN, SUDAN',billOfLadingType:'Copy of Original Bill of Lading',billBy:'KINDLY SEND SWIFT MESSAGE TO COLLECTING BANK FOR DOCS AND SHARE SWIFT COPY WITH US.',term:'D/A 90 DAYS FROM BILL OF EXCHANGE DATE.',drawer:'BAHAR SWAKEN GENERAL TRADING L.L.C',authorizedPerson:'JAWAD ELMASRI',title:'Manager',draweeAddress:''}};
+const state = {shipments:[], payments:{}, selected:new Set(), overrides:{}, preview:'letter', convertToAed:false, exchangeRate:3.6725, settings:{collectionDate:new Date().toISOString().slice(0,10),remittingBank:'Abu Dhabi Islamic Bank',remittingBankLetterAddress:'Abu Dhabi, UAE',remittingBankAddress:'BANIYAS BRANCH BUILDING, 2ND FLOOR, BANIYAS EAST, P.O.BOX 313, ABU DHABI, UAE.',remittingBankAccountNo:'19567664',collectingBank:'SAUDI SUDANESE BANK',collectingBankAddress:'MAIN BRANCH, FREE ZONE AREA, PORT SUDAN, SUDAN',billOfLadingType:'Copy of  Original Bill of Lading',billBy:'KINDLY SEND SWIFT MESSAGE TO COLLECTING BANK FOR DOCS AND SHARE SWIFT COPY WITH US.',term:'D/A 90 DAYS FROM BILL OF EXCHANGE DATE.',drawer:'BAHAR SWAKEN GENERAL TRADING LLC',authorizedPerson:'JAWAD ELMASRI',title:'MANAGER',draweeAddress:''}};
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const collectionListStorageKey = 'bsCollectionDataLists';
 const collectionListFields = {
   remittingBank:{label:'البنك المُرسِل',defaults:['Abu Dhabi Islamic Bank']}, remittingBankLetterAddress:{label:'عنوان بنك الإرسال للخطاب',defaults:['Abu Dhabi, UAE']}, remittingBankAddress:{label:'عنوان بنك الإرسال للتعهد',defaults:['BANIYAS BRANCH BUILDING, 2ND FLOOR, BANIYAS EAST, P.O.BOX 313, ABU DHABI, UAE.']}, remittingBankAccountNo:{label:'رقم حساب بنك الإرسال',defaults:['19567664']}, collectingBank:{label:'بنك التحصيل',defaults:['SAUDI SUDANESE BANK']},
   collectingBankAddress:{label:'عنوان بنك التحصيل',defaults:['MAIN BRANCH, FREE ZONE AREA, PORT SUDAN, SUDAN']},
-  billOfLadingType:{label:'نوع بوليصة الشحن',defaults:['Copy of Original Bill of Lading']},
+  billOfLadingType:{label:'نوع بوليصة الشحن',defaults:['Copy of  Original Bill of Lading']},
   billBy:{label:'تعليمات Bill By',defaults:['Kindly send SWIFT message to collecting bank for docs and share SWIFT copy with us.']},
-  term:{label:'شرط الدفع',defaults:['D/A 90 DAYS FROM BILL OF EXCHANGE DATE']}, drawer:{label:'المُصدّر / Drawer',defaults:['BAHAR SWAKEN GENERAL TRADING L.L.C']},
+  term:{label:'شرط الدفع',defaults:['D/A 90 DAYS FROM BILL OF EXCHANGE DATE.']}, drawer:{label:'المُصدّر / Drawer',defaults:['BAHAR SWAKEN GENERAL TRADING LLC']},
   authorizedPerson:{label:'الشخص المفوض',defaults:['JAWAD ELMASRI']}, title:{label:'المنصب',defaults:['MANAGER']}, draweeAddress:{label:'عنوان المستورد',defaults:[]}
 };
 let collectionLists = {};
@@ -55,7 +55,7 @@ function amountWords(number){
 function collectionDateText(value){
   const parts=String(value||'').split('-'); if(parts.length!==3) return value||'';
   const months=['January','February','March','April','May','June','July','August','September','October','November','December'];
-  return `${parts[2]}-${months[Number(parts[1])-1]||parts[1]}-${parts[0]}`;
+  return `${parts[2]}-${months[Number(parts[1])-1]||parts[1]}- ${parts[0]}`;
 }
 function detected(){const rows=selectedShipments();const currencies=[...new Set(rows.map(r=>moneyInfo(r.totalAmount).currency).filter(c=>c!=='—'))];const consignees=[...new Set(rows.map(r=>r.consignee).filter(Boolean))];const totals={};rows.forEach(r=>{const m=moneyInfo(r.totalAmount);if(m.currency!=='—') totals[m.currency]=(totals[m.currency]||0)+m.number;});return {rows,currencies,consignees,totals};}
 function formatMoney(currency, value){return `${currency} ${value.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}`;}
@@ -210,7 +210,7 @@ function renderPreview(){
   const drawee=consignees.join(' / ')||'-';
   const draweeAddress=s.draweeAddress||rows[0].consigneeAddress||'-';
   const invoiceRefs=rows.map(r=>`${r.invoiceNo||'-'} dated ${r.invoiceDate||'-'}`).join('; ');
-  const undertakingRows=[...rows.map(r=>{const value=collectionMoney(r.totalAmount);return `<tr><td>${esc(r.invoiceNo||r.shipmentNo)}</td><td>${esc(r.billNo||'-')}</td><td>${esc(value.currency)}</td><td>${esc(value.number.toFixed(2))}</td></tr>`;}),...Array.from({length:Math.max(0,7-rows.length)},()=>'<tr><td>&nbsp;</td><td></td><td></td><td></td></tr>')].join('');
+  const undertakingRows=[...rows.slice(0,6).map(r=>{const value=collectionMoney(r.totalAmount);return `<tr><td>${esc(r.invoiceNo||r.shipmentNo)}</td><td>${esc(r.billNo||'0')}</td><td>${esc(value.currency)}</td><td>${esc(value.number.toFixed(2))}</td></tr>`;}),...Array.from({length:Math.max(0,6-rows.length)},()=>'<tr><td>0</td><td>0</td><td>AED</td><td>0.00</td></tr>')].join('');
   let body='';
   if(state.preview==='application'){
     body=`<article class="document-paper"><h2>COLLECTION APPLICATION</h2><p><b>REMITTING BANK:</b> ${esc(s.remittingBank)}<br><b>REMITTING BANK ADD:</b> ${esc(s.remittingBank)}<br><b>COLLECTING BANK:</b> ${esc(s.collectingBank)}<br><b>COLLECTING BANK ADD:</b> ${esc(s.collectingBankAddress||'-')}<br><b>Consignee:</b> ${esc(drawee)}<br><b>Con Address:</b> ${esc(draweeAddress)}</p><table><thead><tr><th>INVOICE NO.</th><th>DATE</th><th>B/L NO.</th><th>Total Amount</th></tr></thead><tbody>${docRows(rows)}</tbody></table><div class="document-total"><span>TOTAL AMOUNT</span><span>${esc(amount)}</span></div><h3>DOCUMENTS ENCLOSED</h3>${referenceDocumentsEnclosed()}<p><b>Bill of Lading Type:</b> ${esc(s.billOfLadingType)}<br><b>Bill By:</b> ${esc(s.billBy)}<br><b>Term Of Payment:</b> ${esc(s.term)}</p></article>`;
