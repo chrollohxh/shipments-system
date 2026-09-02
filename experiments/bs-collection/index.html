@@ -37,7 +37,11 @@
       <div class="section-heading"><div><span>03</span><h2>بيانات التحصيل</h2></div><p>مسودة محلية لهذه التجربة فقط، ولا يتم حفظها.</p></div>
       <form id="settingsForm" class="settings-grid" autocomplete="off">
         <label>تاريخ التحصيل<input name="collectionDate" type="date"></label>
+        <label>عملة التحصيل<button id="convertToAedBtn" type="button" class="collection-currency-btn">تحويل إلى AED</button></label>
+        <label>سعر الصرف إلى الدرهم<input id="collectionExchangeRate" type="number" min="0" step="0.0001" value="3.6725" disabled><small id="collectionConversionPreview">اختر شحنة لعرض التحويل.</small></label>
         <label>البنك المُرسِل<select name="remittingBank"></select></label>
+        <label>عنوان بنك الإرسال<select name="remittingBankAddress"></select></label>
+        <label>رقم حساب بنك الإرسال<select name="remittingBankAccountNo"></select></label>
         <label>بنك التحصيل<select name="collectingBank"></select></label>
         <label>عنوان بنك التحصيل<select name="collectingBankAddress"></select></label>
         <label class="span2">نوع بوليصة الشحن (Bill of Lading Type)<select name="billOfLadingType"></select></label>
@@ -57,7 +61,7 @@
 
     <section class="lab-section preview-section">
       <div class="section-heading"><div><span>04</span><h2>معاينة مستندات التحصيل</h2></div><p>تتحدث فوراً من مسودة التحصيل المحلية.</p></div>
-      <div class="preview-tools"><div class="preview-tabs" id="previewTabs"><button class="active" data-preview="application">Collection Application</button><button data-preview="letter">Collection Letter</button><button data-preview="undertaking">Undertaking Letter</button><button data-preview="exchange">Bill of Exchange</button></div><div class="preview-actions"><span class="stamp-hint">اسحب الختم داخل المعاينة لتحريكه</span><button id="resetStampBtn" class="text-btn" type="button"><i class="bx bx-reset"></i> استرجاع موضع الختم</button><button id="printAllBtn" class="btn btn-primary" type="button"><i class="bx bx-printer"></i> طباعة الحزمة كاملة (4 مستندات)</button></div></div>
+      <div class="preview-tools"><div class="preview-tabs" id="previewTabs"><button class="active" data-preview="letter">Collection Letter</button><button data-preview="undertaking">Undertaking Letter</button><button data-preview="exchange">Bill of Exchange</button></div><div class="preview-actions"><span class="stamp-hint">اسحب الختم داخل المعاينة لتحريكه</span><button id="resetStampBtn" class="text-btn" type="button"><i class="bx bx-reset"></i> استرجاع موضع الختم</button><button id="printAllBtn" class="btn btn-primary" type="button"><i class="bx bx-printer"></i> طباعة الحزمة كاملة (3 مستندات)</button></div></div>
       <div id="documentPreview" class="document-preview"><div class="empty-state">اختر شحنات لعرض المستند التجريبي.</div></div>
     </section>
 

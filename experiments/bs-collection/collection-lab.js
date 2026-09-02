@@ -3,11 +3,11 @@ const SB_URL = 'https://vthcmqqiexaedukduquv.supabase.co';
 const SB_KEY = 'sb_publishable_kYEMmAQ2KTETIabDTMz2ig_fNB8vo02';
 const sb = supabase.createClient(SB_URL, SB_KEY, {auth:{storageKey:'shipdocs-auth',persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}});
 const $ = id => document.getElementById(id);
-const state = {shipments:[], payments:{}, selected:new Set(), overrides:{}, preview:'application', settings:{collectionDate:new Date().toISOString().slice(0,10),remittingBank:'ADIB',collectingBank:'SAUDI SUDANESE BANK',collectingBankAddress:'MAIN BRANCH, FREE ZONE AREA, PORT SUDAN, SUDAN',billOfLadingType:'Copy of Original Bill of Lading',billBy:'Kindly send SWIFT message to collecting bank for docs and share SWIFT copy with us.',term:'D/A 90 DAYS FROM BILL OF EXCHANGE DATE',drawer:'BAHAR SWAKEN GENERAL TRADING L.L.C',authorizedPerson:'JAWAD ELMASRI',title:'MANAGER',draweeAddress:''}};
+const state = {shipments:[], payments:{}, selected:new Set(), overrides:{}, preview:'letter', convertToAed:false, exchangeRate:3.6725, settings:{collectionDate:new Date().toISOString().slice(0,10),remittingBank:'Abu Dhabi Islamic Bank',remittingBankAddress:'Abu Dhabi, UAE',remittingBankAccountNo:'19567664',collectingBank:'SAUDI SUDANESE BANK',collectingBankAddress:'MAIN BRANCH, FREE ZONE AREA, PORT SUDAN, SUDAN',billOfLadingType:'Copy of Original Bill of Lading',billBy:'KINDLY SEND SWIFT MESSAGE TO COLLECTING BANK FOR DOCS AND SHARE SWIFT COPY WITH US.',term:'D/A 90 DAYS FROM BILL OF EXCHANGE DATE.',drawer:'BAHAR SWAKEN GENERAL TRADING L.L.C',authorizedPerson:'JAWAD ELMASRI',title:'Manager',draweeAddress:''}};
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const collectionListStorageKey = 'bsCollectionDataLists';
 const collectionListFields = {
-  remittingBank:{label:'البنك المُرسِل',defaults:['ADIB']}, collectingBank:{label:'بنك التحصيل',defaults:['SAUDI SUDANESE BANK']},
+  remittingBank:{label:'البنك المُرسِل',defaults:['Abu Dhabi Islamic Bank']}, remittingBankAddress:{label:'عنوان بنك الإرسال',defaults:['Abu Dhabi, UAE']}, remittingBankAccountNo:{label:'رقم حساب بنك الإرسال',defaults:['19567664']}, collectingBank:{label:'بنك التحصيل',defaults:['SAUDI SUDANESE BANK']},
   collectingBankAddress:{label:'عنوان بنك التحصيل',defaults:['MAIN BRANCH, FREE ZONE AREA, PORT SUDAN, SUDAN']},
   billOfLadingType:{label:'نوع بوليصة الشحن',defaults:['Copy of Original Bill of Lading']},
   billBy:{label:'تعليمات Bill By',defaults:['Kindly send SWIFT message to collecting bank for docs and share SWIFT copy with us.']},
@@ -52,8 +52,33 @@ function amountWords(number){
   const parts=[[1000000000,'BILLION'],[1000000,'MILLION'],[1000,'THOUSAND'],[1,'']]; let left=Math.round(number*100)/100, whole=Math.floor(left), out=[];
   parts.forEach(([size,label])=>{if(whole>=size){const n=Math.floor(whole/size);out.push(chunk(n)+(label?' '+label:''));whole%=size;}}); if(left%1) out.push('AND '+Math.round((left%1)*100)+'/100'); return out.join(' ');
 }
+function collectionDateText(value){
+  const parts=String(value||'').split('-'); if(parts.length!==3) return value||'';
+  const months=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  return `${parts[2]}-${months[Number(parts[1])-1]||parts[1]}-${parts[0]}`;
+}
 function detected(){const rows=selectedShipments();const currencies=[...new Set(rows.map(r=>moneyInfo(r.totalAmount).currency).filter(c=>c!=='—'))];const consignees=[...new Set(rows.map(r=>r.consignee).filter(Boolean))];const totals={};rows.forEach(r=>{const m=moneyInfo(r.totalAmount);if(m.currency!=='—') totals[m.currency]=(totals[m.currency]||0)+m.number;});return {rows,currencies,consignees,totals};}
 function formatMoney(currency, value){return `${currency} ${value.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}`;}
+function collectionMoney(value){
+  const source=moneyInfo(value), rate=Number(state.exchangeRate)||0;
+  if(state.convertToAed&&source.currency!=='AED'&&rate>0) return {source,currency:'AED',number:source.number*rate,converted:true,rate};
+  return {source,currency:source.currency,number:source.number,converted:false,rate};
+}
+function collectionTotal(rows){
+  const sourceCurrency=moneyInfo(rows[0]?.totalAmount).currency;
+  const sourceTotal=rows.reduce((sum,row)=>sum+moneyInfo(row.totalAmount).number,0);
+  return collectionMoney(`${sourceCurrency} ${sourceTotal}`);
+}
+function updateConversionControls(){
+  const button=$('convertToAedBtn'), rate=$('collectionExchangeRate'), preview=$('collectionConversionPreview');
+  if(!button||!rate||!preview)return;
+  button.classList.toggle('is-active',state.convertToAed); button.textContent=state.convertToAed?'التحصيل بالدرهم AED':'تحويل إلى AED';
+  rate.disabled=!state.convertToAed; rate.value=state.exchangeRate||'';
+  const rows=selectedShipments();
+  if(!rows.length){ preview.textContent='اختر شحنة لعرض التحويل.'; return; }
+  const result=collectionTotal(rows);
+  preview.textContent=result.converted?`${formatMoney(result.source.currency,result.source.number)} × ${result.rate} = ${formatMoney('AED',result.number)}`:state.convertToAed?'الشحنة بعملة AED بالفعل.':'يظهر التحويل هنا بعد التفعيل.';
+}
 function renderPicker(){
   const search=$('searchInput').value.trim().toLowerCase(), cur=$('currencyFilter').value, consignee=$('consigneeFilter').value;
   const list=state.shipments.filter(s=>{const m=moneyInfo(s.totalAmount);const hay=[s.shipmentNo,s.itemDesc,s.invoiceNo,s.billNo,s.consignee].join(' ').toLowerCase();return (!search||hay.includes(search))&&(!cur||m.currency===cur)&&(!consignee||s.consignee===consignee);});
@@ -65,12 +90,14 @@ function renderDraft(){
   const {rows,currencies,consignees,totals}=detected(); $('selectionHint').textContent=rows.length?`${rows.length} شحنة مختارة في المسودة المحلية.`:'اختر شحنة واحدة أو أكثر لبدء المعاينة.';
   $('warnings').innerHTML=(currencies.length>1?'<div class="warning currency">الشحنات المختارة تحتوي على أكثر من عملة. لا يمكن إنشاء حزمة تحصيل واحدة متعددة العملات؛ أنشئ حزمة منفصلة لكل عملة.</div>':'')+(consignees.length>1?'<div class="warning consignee">الشحنات المختارة تحتوي على أكثر من مستورد / Drawee. المعاينة متاحة، لكن مستندات التحصيل عادة تحتاج مستورداً واحداً داخل الحزمة.</div>':'');
   $('selectedTableWrap').innerHTML=rows.length?`<table class="draft-table"><thead><tr><th>Shipment</th><th>Invoice No</th><th>Invoice Date</th><th>B/L No</th><th>Consignee</th><th>Currency</th><th>Amount</th><th></th></tr></thead><tbody>${rows.map(r=>{const original=state.shipments.find(s=>s.id===r.id),changed=state.overrides[r.id]||{},m=moneyInfo(r.totalAmount);return `<tr><td>${esc(r.shipmentNo)}</td>${['invoiceNo','invoiceDate','billNo','totalAmount'].map(key=>`<td class="${changed[key]!==undefined?'changed':''}">${esc(valueOrDash(r[key]))}${changed[key]!==undefined?'<span class="override-tag">قيمة معدلة للمعاينة فقط</span>':''}</td>`).join('')}<td>${esc(valueOrDash(r.consignee))}</td><td>${esc(m.currency)}</td><td>${esc(formatMoney(m.currency,m.number))}</td><td><button class="mini-btn" data-edit="${esc(r.id)}">تعديل لهذا التحصيل فقط</button></td></tr>${changed._editing?`<tr><td colspan="8"><div class="edit-grid"><label>Invoice No <input data-override="invoiceNo" data-id="${esc(r.id)}" value="${esc(r.invoiceNo||'')}"></label> <label>Invoice Date <input type="date" data-override="invoiceDate" data-id="${esc(r.id)}" value="${esc(r.invoiceDate||'')}"></label> <label>B/L No <input data-override="billNo" data-id="${esc(r.id)}" value="${esc(r.billNo||'')}"></label> <label>Amount <input data-override="totalAmount" data-id="${esc(r.id)}" value="${esc(r.totalAmount||'')}"></label></div></td></tr>`:''}`}).join('')}</tbody></table>`:'<div class="empty-state">لا توجد شحنات مختارة بعد.</div>';
-  $('totalsBar').innerHTML=Object.entries(totals).map(([c,n])=>`<div class="total-card"><span>${currencies.length===1?'TOTAL COLLECTION AMOUNT':c+' Total'}</span><strong>${esc(formatMoney(c,n))}</strong><span>${esc(amountWords(n))} ONLY</span></div>`).join('');
+  const converted=currencies.length===1&&rows.length?collectionTotal(rows):null;
+  const conversionCard=converted?.converted?`<div class="total-card"><span>إجمالي التحصيل بالدرهم (${converted.source.currency} × ${converted.rate})</span><strong>${esc(formatMoney('AED',converted.number))}</strong><span>قيمة التحصيل الفعلية</span></div>`:'';
+  $('totalsBar').innerHTML=Object.entries(totals).map(([c,n])=>`<div class="total-card"><span>${currencies.length===1?'TOTAL COLLECTION AMOUNT':c+' Total'}</span><strong>${esc(formatMoney(c,n))}</strong><span>${esc(amountWords(n))} ONLY</span></div>`).join('')+conversionCard;
   $('groupByConsignee').hidden=consignees.length<2;$('consigneeGroups').hidden=true;
   document.querySelectorAll('[data-edit]').forEach(btn=>btn.addEventListener('click',()=>{const id=btn.dataset.edit;state.overrides[id]=Object.assign({},state.overrides[id],{_editing:!state.overrides[id]?true:!state.overrides[id]._editing});renderAll();}));
   document.querySelectorAll('[data-override]').forEach(input=>input.addEventListener('input',()=>{const id=input.dataset.id;state.overrides[id]=Object.assign({},state.overrides[id],{[input.dataset.override]:input.value,_editing:true});renderAll();}));
 }
-function docRows(rows){return rows.map(r=>{const m=moneyInfo(r.totalAmount);return `<tr><td>${esc(valueOrDash(r.invoiceNo))}</td><td>${esc(valueOrDash(r.invoiceDate))}</td><td>${esc(valueOrDash(r.billNo))}</td><td>${esc(formatMoney(m.currency,m.number))}</td></tr>`}).join('');}
+function docRows(rows){return rows.map(r=>{const m=collectionMoney(r.totalAmount);return `<tr><td>${esc(valueOrDash(r.invoiceNo))}</td><td>${esc(valueOrDash(r.invoiceDate))}</td><td>${esc(valueOrDash(r.billNo))}</td><td>${esc(formatMoney(m.currency,m.number))}</td></tr>`}).join('');}
 function renderPreview(){
   const {rows,currencies,consignees,totals}=detected(), s=state.settings, c=currencies[0]||'—', n=totals[c]||0, amount=formatMoney(c,n), words=`${c} ${amountWords(n)} ONLY`, drawee=consignees.join(' / ')||'-', refs=rows.map(r=>`${r.invoiceNo||'-'} (${r.invoiceDate||'-'})`).join(', ')||'-';
   let body='';
@@ -82,20 +109,25 @@ function renderPreview(){
   $('documentPreview').innerHTML=body;
 }
 function renderDebug(){const d=detected();$('debugOutput').textContent=JSON.stringify({selectedShipmentIds:[...state.selected],originalValues:state.shipments.filter(s=>state.selected.has(s.id)),overrides:state.overrides,totals:d.totals,detectedCurrency:d.currencies,detectedConsignee:d.consignees},null,2);}
-function renderAll(){renderPicker();renderDraft();renderPreview();renderDebug();}
+function renderAll(){renderPicker();renderDraft();renderPreview();updateConversionControls();renderDebug();}
 function fillFilters(){const currencies=[...new Set(state.shipments.map(s=>moneyInfo(s.totalAmount).currency).filter(c=>c!=='—'))].sort(), consignees=[...new Set(state.shipments.map(s=>s.consignee).filter(Boolean))].sort();$('currencyFilter').innerHTML='<option value="">كل العملات</option>'+currencies.map(v=>`<option>${esc(v)}</option>`).join('');$('consigneeFilter').innerHTML='<option value="">كل المستوردين</option>'+consignees.map(v=>`<option>${esc(v)}</option>`).join('');}
 async function recordCollection(){
   const rows=selectedShipments();
   const eligible=rows.filter(row=>moneyInfo(row.totalAmount).number>0&&remainingOf(row)>.01);
   if(!eligible.length){ alert('كل الشحنات المختارة مسجلة كمحصلة بالفعل، أو لا تحتوي على مبلغ صالح للتحصيل.'); return; }
+  const currencies=[...new Set(eligible.map(row=>moneyInfo(row.totalAmount).currency))];
+  if(currencies.length!==1){ alert('سجل التحصيل لكل عملة في حزمة منفصلة حتى تكون قيمة التحويل صحيحة.'); return; }
+  if(state.convertToAed&&currencies[0]!=='AED'&&!(Number(state.exchangeRate)>0)){ alert('أدخل سعر صرف صحيحاً قبل التحويل إلى AED.'); return; }
   const totalByCurrency={}; eligible.forEach(row=>{const info=moneyInfo(row.totalAmount);totalByCurrency[info.currency]=(totalByCurrency[info.currency]||0)+remainingOf(row);});
-  const summary=Object.entries(totalByCurrency).map(([currency,total])=>formatMoney(currency,total)).join('\n');
+  const sourceSummary=Object.entries(totalByCurrency).map(([currency,total])=>formatMoney(currency,total)).join('\n');
+  const convertedTotal=collectionTotal(eligible);
+  const summary=convertedTotal.converted?`${sourceSummary}\n= ${formatMoney('AED',convertedTotal.number)} بسعر ${convertedTotal.rate}`:sourceSummary;
   if(!confirm(`سيتم تسجيل التحصيل الكامل المتبقي لـ ${eligible.length} شحنة:\n${summary}\n\nهل تؤكد تسجيل التحصيل؟`)) return;
   const button=$('recordCollectionBtn'), original=button.innerHTML;
   button.disabled=true; button.textContent='جارٍ تسجيل التحصيل...';
   try{
     const paidOn=state.settings.collectionDate||new Date().toISOString().slice(0,10);
-    const rowsToInsert=eligible.map(row=>({shipment_id:row.id,amount:remainingOf(row),currency:moneyInfo(row.totalAmount).currency,paid_on:paidOn,method:'تحصيل مستندات BSGT',reference:row.invoiceNo||row.shipmentNo,note:'تم التسجيل من بوابة مستندات التحصيل - بحر سواكن'}));
+    const rowsToInsert=eligible.map(row=>{const source=moneyInfo(row.totalAmount), converted=collectionMoney(`${source.currency} ${remainingOf(row)}`); return {shipment_id:row.id,amount:remainingOf(row),currency:source.currency,paid_on:paidOn,method:'تحصيل مستندات BSGT',reference:row.invoiceNo||row.shipmentNo,note:`تم التسجيل من بوابة مستندات التحصيل - بحر سواكن${converted.converted?` | تم التحصيل فعلياً: ${formatMoney('AED',converted.number)} بسعر صرف ${converted.rate}`:''}`};});
     const {data,error}=await sb.from('payments').insert(rowsToInsert).select();
     if(error) throw error;
     (data||[]).forEach(payment=>(state.payments[payment.shipment_id]??=[]).push(payment));
@@ -118,6 +150,8 @@ async function init(){
 ['searchInput','currencyFilter','consigneeFilter'].forEach(id=>$(id).addEventListener('input',renderPicker));
 $('settingsForm').addEventListener('input',event=>{if(!event.target.name)return;state.settings[event.target.name]=event.target.value;renderPreview();renderDebug();});
 $('settingsForm').addEventListener('change',event=>{if(!event.target.name)return;state.settings[event.target.name]=event.target.value;renderPreview();renderDebug();});
+$('convertToAedBtn').addEventListener('click',()=>{state.convertToAed=!state.convertToAed;renderAll();});
+$('collectionExchangeRate').addEventListener('input',event=>{state.exchangeRate=Number(event.target.value)||0;renderAll();});
 $('collectionListField').addEventListener('change',renderCollectionListManager);
 $('addCollectionListValue').addEventListener('click',()=>{
   const key=$('collectionListField').value, input=$('collectionListValue'), value=input.value.trim();
@@ -134,7 +168,7 @@ $('collectionListValues').addEventListener('click',event=>{
 });
 $('previewTabs').addEventListener('click',event=>{const button=event.target.closest('[data-preview]');if(!button)return;state.preview=button.dataset.preview;document.querySelectorAll('[data-preview]').forEach(b=>b.classList.toggle('active',b===button));renderPreview();});
 $('groupByConsignee').addEventListener('click',()=>{const groups={};selectedShipments().forEach(r=>(groups[r.consignee||'غير محدد']??=[]).push(r));$('consigneeGroups').hidden=false;$('consigneeGroups').innerHTML=Object.entries(groups).map(([name,rows])=>`<b>${esc(name)}</b>: ${rows.map(r=>esc(r.shipmentNo)).join('، ')}`).join('<br>');});
-$('resetBtn').addEventListener('click',()=>{state.selected.clear();state.overrides={};$('settingsForm').reset();Object.assign(state.settings,{collectionDate:new Date().toISOString().slice(0,10),remittingBank:'ADIB',collectingBank:'SAUDI SUDANESE BANK',collectingBankAddress:'MAIN BRANCH, FREE ZONE AREA, PORT SUDAN, SUDAN',billOfLadingType:'Copy of Original Bill of Lading',billBy:'Kindly send SWIFT message to collecting bank for docs and share SWIFT copy with us.',term:'D/A 90 DAYS FROM BILL OF EXCHANGE DATE',drawer:'BAHAR SWAKEN GENERAL TRADING L.L.C',authorizedPerson:'JAWAD ELMASRI',title:'MANAGER',draweeAddress:''});populateCollectionSelects();Object.entries(state.settings).forEach(([key,value])=>{const input=$('settingsForm').elements[key];if(input)input.value=value;});renderAll();});
+$('resetBtn').addEventListener('click',()=>{state.selected.clear();state.overrides={};$('settingsForm').reset();Object.assign(state.settings,{collectionDate:new Date().toISOString().slice(0,10),remittingBank:'Abu Dhabi Islamic Bank',remittingBankAddress:'Abu Dhabi, UAE',remittingBankAccountNo:'19567664',collectingBank:'SAUDI SUDANESE BANK',collectingBankAddress:'MAIN BRANCH, FREE ZONE AREA, PORT SUDAN, SUDAN',billOfLadingType:'Copy of Original Bill of Lading',billBy:'KINDLY SEND SWIFT MESSAGE TO COLLECTING BANK FOR DOCS AND SHARE SWIFT COPY WITH US.',term:'D/A 90 DAYS FROM BILL OF EXCHANGE DATE.',drawer:'BAHAR SWAKEN GENERAL TRADING L.L.C',authorizedPerson:'JAWAD ELMASRI',title:'Manager',draweeAddress:''});populateCollectionSelects();Object.entries(state.settings).forEach(([key,value])=>{const input=$('settingsForm').elements[key];if(input)input.value=value;});renderAll();});
 $('printBtn').addEventListener('click',()=>window.print());
 $('recordCollectionBtn').addEventListener('click',recordCollection);
 $('printAllBtn').addEventListener('click', printAllCollectionDocuments);
@@ -143,7 +177,7 @@ $('resetStampBtn').addEventListener('click',()=>{ try { localStorage.removeItem(
 function printAllCollectionDocuments(){
   if(!selectedShipments().length){ alert('اختر شحنة واحدة على الأقل قبل طباعة المستندات.'); return; }
   const originalPreview = state.preview;
-  const previews = ['application','letter','undertaking','exchange'].map(kind=>{
+  const previews = ['letter','undertaking','exchange'].map(kind=>{
     state.preview = kind;
     renderPreview();
     return $('documentPreview').innerHTML;
@@ -154,7 +188,7 @@ function printAllCollectionDocuments(){
   const popup = window.open('', '_blank');
   if(!popup){ alert('المتصفح منع نافذة الطباعة. اسمح بالنوافذ المنبثقة ثم حاول مرة أخرى.'); return; }
   popup.opener = null;
-  popup.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>BSGT Collection Documents</title><link rel="stylesheet" href="/experiments/bs-collection/collection-lab.css"><style>${brandCss}.print-page{break-after:page;page-break-after:always}.print-page:last-child{break-after:auto;page-break-after:auto}@media screen{body{background:#eaf0f6}.print-page{padding:12mm 0}}</style></head><body>${previews.map(page=>`<section class="print-page">${page}</section>`).join('')}</body></html>`);
+  popup.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>BSGT Collection Documents</title><link rel="stylesheet" href="/experiments/bs-collection/collection-lab.css"><link rel="stylesheet" href="/experiments/bs-collection/collection-lists.css"><style>${brandCss}.print-page{break-after:page;page-break-after:always}.print-page:last-child{break-after:auto;page-break-after:auto}@media screen{body{background:#eaf0f6}.print-page{padding:12mm 0}}</style></head><body>${previews.map(page=>`<section class="print-page">${page}</section>`).join('')}</body></html>`);
   popup.document.close();
   popup.onload = ()=>setTimeout(()=>popup.print(), 450);
 }
@@ -172,7 +206,7 @@ function renderPreview(){
   const s=state.settings;
   if(!rows.length){ $('documentPreview').innerHTML='<div class="empty-state">اختر شحنات أولاً لعرض مستندات التحصيل.</div>'; return; }
   if(currencies.length!==1){ $('documentPreview').innerHTML='<div class="empty-state">لا يمكن إنشاء معاينة موحدة لمستند تحصيل متعدد العملات. اختر شحنات بعملة واحدة.</div>'; return; }
-  const currency=currencies[0], total=totals[currency]||0, amount=formatMoney(currency,total), words=`${currency} ${amountWords(total)} ONLY`;
+  const collection=collectionTotal(rows), currency=collection.currency, total=collection.number, amount=formatMoney(currency,total), words=`${currency} ${amountWords(total)} ONLY`;
   const drawee=consignees.join(' / ')||'-';
   const draweeAddress=s.draweeAddress||rows[0].consigneeAddress||'-';
   const invoiceRefs=rows.map(r=>`${r.invoiceNo||'-'} dated ${r.invoiceDate||'-'}`).join('; ');
@@ -180,9 +214,9 @@ function renderPreview(){
   if(state.preview==='application'){
     body=`<article class="document-paper"><h2>COLLECTION APPLICATION</h2><p><b>REMITTING BANK:</b> ${esc(s.remittingBank)}<br><b>REMITTING BANK ADD:</b> ${esc(s.remittingBank)}<br><b>COLLECTING BANK:</b> ${esc(s.collectingBank)}<br><b>COLLECTING BANK ADD:</b> ${esc(s.collectingBankAddress||'-')}<br><b>Consignee:</b> ${esc(drawee)}<br><b>Con Address:</b> ${esc(draweeAddress)}</p><table><thead><tr><th>INVOICE NO.</th><th>DATE</th><th>B/L NO.</th><th>Total Amount</th></tr></thead><tbody>${docRows(rows)}</tbody></table><div class="document-total"><span>TOTAL AMOUNT</span><span>${esc(amount)}</span></div><h3>DOCUMENTS ENCLOSED</h3>${referenceDocumentsEnclosed()}<p><b>Bill of Lading Type:</b> ${esc(s.billOfLadingType)}<br><b>Bill By:</b> ${esc(s.billBy)}<br><b>Term Of Payment:</b> ${esc(s.term)}</p></article>`;
   }else if(state.preview==='letter'){
-    body=`<article class="document-paper"><p>Date: ${esc(s.collectionDate)}<br><br>The Manager<br>Abu Dhabi Islamic Bank<br>Trade Finance Department<br>Abu Dhabi, UAE</p><p>Dear Sir,</p><p>We enclose herewith the following documents and request you to forward the same to collecting bank without any responsibility on your part, requesting them to release the documents to drawee only against their acceptance for payment on due date and only upon receipt of funds from them. Please credit the proceeds to our account held with you after deduction of your charges under advice to us.</p><p>All bank charges outside UAE are to be collected from buyer/drawee.</p><h3>COLLECTION DOCUMENTS for:</h3><p><b>Amount:</b> ${esc(amount)}<br><b>SAY:</b> ${esc(words)}<br><b>Tenor:</b> ${esc(s.term)}<br><b>COLLECTING BANK:</b> ${esc(s.collectingBank)}<br>${esc(s.collectingBankAddress||'')}<br><b>DRAWEE:</b> ${esc(drawee)}<br>${esc(draweeAddress)}</p><h3>DOCUMENTS ENCLOSED:</h3>${referenceDocumentsEnclosed()}<p><b>${esc(s.billBy)}</b></p><div class="signature">Yours faithfully,<br>For and on behalf of<br>${esc(s.drawer)}<br>${esc(s.authorizedPerson)}<br>${esc(s.title)}</div></article>`;
+    body=`<article class="document-paper word-page-1"><p class="word-date">Date: <b>${esc(collectionDateText(s.collectionDate))}</b></p><p class="word-recipient">The Manager<br>${esc(s.remittingBank)}<br>Trade Finance Department<br>${esc(s.remittingBankAddress)}</p><p>Dear sir,</p><p>We enclose herewith the following documents and request you to forward the same to collecting bank without any responsibility on your part requesting them to release the documents to drawee only against their <b>acceptance for payment on due date</b> without any responsibility on collecting bank and ${esc(s.remittingBank)}’s part and only upon receipt of funds from them, please credit the <b>proceeds</b> to our account no <b>${esc(s.remittingBankAccountNo)}</b> held with you after deduction of your charges under advice to us.</p><p><b>All bank charges outside UAE are to be collected from buyer/drawee</b></p><p class="word-collection-title">COLLECTION DOCUMENTS for:</p><p class="word-collection-data">Amount: <b>${esc(amount)}</b> SAY: <b>${esc(words)}</b></p><p>Tenor: <b>${esc(s.term)}</b></p><p class="word-bank-label">COLLECTING BANK<br><b>${esc(s.collectingBank)}</b><br><i>${esc(s.collectingBankAddress||'')}</i></p><p class="word-drawee">DRAWEE.<br><b>${esc(drawee)}</b><br><i>${esc(draweeAddress)}</i></p><p class="word-docs-title">DOCUMENTS ENCLOSED:</p><table class="word-documents"><thead><tr><th>No</th><th>Type of Document</th><th>Original</th><th>Duplicate</th></tr></thead><tbody><tr><td>1</td><td>BILL OF EXCHANGE</td><td>1</td><td>0</td></tr><tr><td>2</td><td>COMMERCIAL INVOICE</td><td>2</td><td>0</td></tr><tr><td>3</td><td>COPY B/L</td><td>0</td><td>2</td></tr><tr><td>4</td><td>Certificate of Origin</td><td>2</td><td>0</td></tr></tbody></table><p class="word-bill-by"><b>${esc(s.billBy)}</b></p><div class="word-signature">Yours faithfully,<br><br>For and on behalf of<br>${esc(s.drawer)}<br><br><b>${esc(s.authorizedPerson)}</b><br><b>${esc(s.title)}</b></div></article>`;
   }else if(state.preview==='undertaking'){
-    body=`<article class="document-paper"><p>THE MANAGER<br>TRADE FINANCE DEPARTMENT<br>ABU DHABI ISLAMIC BANK<br>BANIYAS BRANCH BUILDING, 2ND FLOOR, BANIYAS EAST, P.O.BOX 313, ABU DHABI, UAE.</p><h2>UNDERTAKING LETTER UNDER EXPORT COLLECTION DOCS</h2><table><thead><tr><th>REF #</th><th>B/L No</th><th>Currency</th><th>Amount</th></tr></thead><tbody>${rows.map(r=>{const m=moneyInfo(r.totalAmount);return `<tr><td>${esc(r.invoiceNo||r.shipmentNo)}</td><td>${esc(r.billNo||'-')}</td><td>${esc(m.currency)}</td><td>${esc(formatMoney(m.currency,m.number))}</td></tr>`}).join('')}</tbody></table><p>Dear Sir / Madam,</p><p>We hereby certify to Abu Dhabi Islamic Bank PJSC that all enclosed Documents and any other document in relation to the underlying shipment or goods as described in the enclosed documents are accurate, correct and complete documents in full force and effect at the date of this letter.</p><p>We acknowledge that the Bank is the only bank handling the collection as the remitting bank and that the documents will not be submitted as a duplicate presentation to any other bank.</p><p>The Bank shall be under no obligation to make any payment to us as seller/exporter/drawer in respect of the collection until it has received full payment from the collecting/presenting bank. The collection documents will be handled in accordance with the Uniform Rules for Collections, ICC publication number 522 (URC 522).</p><div class="signature">Sincerely,<br>For and on behalf of:<br>${esc(s.drawer)}<br>Name: ${esc(s.authorizedPerson)}<br>Title: ${esc(s.title)}<br><br>Signature:</div></article>`;
+    body=`<article class="document-paper"><p>THE MANAGER<br>TRADE FINANCE DEPARTMENT<br>ABU DHABI ISLAMIC BANK<br>BANIYAS BRANCH BUILDING, 2ND FLOOR, BANIYAS EAST, P.O.BOX 313, ABU DHABI, UAE.</p><h2>UNDERTAKING LETTER UNDER EXPORT COLLECTION DOCS</h2><table><thead><tr><th>REF #</th><th>B/L No</th><th>Currency</th><th>Amount</th></tr></thead><tbody>${rows.map(r=>{const m=collectionMoney(r.totalAmount);return `<tr><td>${esc(r.invoiceNo||r.shipmentNo)}</td><td>${esc(r.billNo||'-')}</td><td>${esc(m.currency)}</td><td>${esc(formatMoney(m.currency,m.number))}</td></tr>`}).join('')}</tbody></table><p>Dear Sir / Madam,</p><p>We hereby certify to Abu Dhabi Islamic Bank PJSC that all enclosed Documents and any other document in relation to the underlying shipment or goods as described in the enclosed documents are accurate, correct and complete documents in full force and effect at the date of this letter.</p><p>We acknowledge that the Bank is the only bank handling the collection as the remitting bank and that the documents will not be submitted as a duplicate presentation to any other bank.</p><p>The Bank shall be under no obligation to make any payment to us as seller/exporter/drawer in respect of the collection until it has received full payment from the collecting/presenting bank. The collection documents will be handled in accordance with the Uniform Rules for Collections, ICC publication number 522 (URC 522).</p><div class="signature">Sincerely,<br>For and on behalf of:<br>${esc(s.drawer)}<br>Name: ${esc(s.authorizedPerson)}<br>Title: ${esc(s.title)}<br><br>Signature:</div></article>`;
   }else{
     body=`<article class="document-paper"><h2>BILL OF EXCHANGE</h2><p><b>Amount:</b> ${esc(amount)}<br><b>DATED:</b> ${esc(s.collectionDate)}</p><p>AT ${esc(s.term)} PAY TO THE ORDER OF <b>${esc(s.remittingBank)}, ABU DHABI - UAE</b> A SUM OF <b>${esc(amount)}</b>.</p><p><b>${esc(words)}</b> BEING VALUE DRAWN UNDER INVOICE # ${esc(invoiceRefs)}</p><p><b>Drawn On:</b> ${esc(drawee)}<br>${esc(draweeAddress)}</p><div class="signature">Drawer<br>${esc(s.drawer)}<br>${esc(s.authorizedPerson)}<br>${esc(s.title)}</div></article>`;
   }
