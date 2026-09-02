@@ -92,6 +92,36 @@ function renderPreview(){
     body=`<article class="document-paper"><h2>BILL OF EXCHANGE</h2><p><b>Amount:</b> ${esc(amount)}<br><b>DATED:</b> ${esc(s.collectionDate)}</p><p>AT ${esc(s.term)} PAY TO THE ORDER OF <b>${esc(s.remittingBank)}, ABU DHABI - UAE</b> A SUM OF <b>${esc(amount)}</b>.</p><p><b>${esc(words)}</b> BEING VALUE DRAWN UNDER INVOICE # ${esc(invoiceRefs)}</p><p><b>Drawn On:</b> ${esc(drawee)}<br>${esc(draweeAddress)}</p><div class="signature">Drawer<br>${esc(s.drawer)}<br>${esc(s.authorizedPerson)}<br>${esc(s.title)}</div></article>`;
   }
   $('documentPreview').innerHTML=body;
+  applyCollectionBranding();
+}
+
+function collectionBrandingSettings(){
+  try { return JSON.parse(localStorage.getItem('baharSwakenInvoicePreviewSettings') || '{}'); }
+  catch (_) { return {}; }
+}
+
+function applyCollectionBranding(){
+  const paper = document.querySelector('#documentPreview .document-paper');
+  if(!paper) return;
+  const settings = collectionBrandingSettings();
+  const stamp = settings.showStamp === false ? '' : (settings.stamp || '');
+  const signature = settings.signature || '';
+  const stampPos = Object.assign({xPercent:78,yPercent:78,widthPercent:13,rotate:0}, settings.stampPosition || {});
+  const signaturePos = Object.assign({xPercent:10,yPercent:81,widthPercent:23,rotate:0}, settings.signaturePosition || {});
+  if(!document.getElementById('collectionBrandStyle')){
+    document.head.insertAdjacentHTML('beforeend', `<style id="collectionBrandStyle">
+      .collection-a4{position:relative;isolation:isolate;width:210mm!important;min-height:297mm!important;overflow:hidden!important}
+      .collection-a4>.collection-brand-layer{position:absolute;display:block;pointer-events:none}
+      .collection-a4>.collection-brand-bg{inset:0;width:100%;height:100%;object-fit:fill;z-index:0}
+      .collection-a4>.collection-brand-stamp,.collection-a4>.collection-brand-signature{z-index:3;object-fit:contain;transform-origin:center}
+      .collection-a4> :not(.collection-brand-layer){position:relative;z-index:1}
+      @media print{@page{size:A4;margin:0}.collection-a4{width:210mm!important;min-height:297mm!important;margin:0!important;box-shadow:none!important}}
+    </style>`);
+  }
+  paper.classList.add('collection-a4');
+  const layer = (className, source, position) => source ? `<img class="collection-brand-layer ${className}" src="${esc(source)}" alt="" style="left:${Number(position.xPercent)||0}%;top:${Number(position.yPercent)||0}%;width:${Number(position.widthPercent)||0}%;transform:translate(-50%,-50%) rotate(${Number(position.rotate)||0}deg)">` : '';
+  const background = settings.background ? `<img class="collection-brand-layer collection-brand-bg" src="${esc(settings.background)}" alt="">` : '';
+  paper.insertAdjacentHTML('afterbegin', background + layer('collection-brand-stamp', stamp, stampPos) + layer('collection-brand-signature', signature, signaturePos));
 }
 
 init();
