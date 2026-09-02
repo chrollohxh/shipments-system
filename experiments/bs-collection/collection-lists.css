@@ -19,6 +19,17 @@
 .collection-a4 .word-page-1 .word-documents th:nth-child(3), .collection-a4 .word-page-1 .word-documents td:nth-child(3), .collection-a4 .word-page-1 .word-documents th:nth-child(4), .collection-a4 .word-page-1 .word-documents td:nth-child(4) { text-align: center; }
 .collection-a4 .word-page-1 .word-bill-by { margin-top: 4px; margin-bottom: 4px; font-family: Arial, sans-serif; font-size: 10px; background: #ffff00; display: inline-block; }
 .collection-a4 .word-page-1 .word-signature { margin-top: 0; font-size: 13px; line-height: 1.15; }
+.collection-a4 .word-page-2 { font-family: Georgia, 'Times New Roman', serif; color: #000; font-size: 10.8px; line-height: 1.1; }
+.collection-a4 .word-page-2 .undertaking-head { display: flex; justify-content: space-between; gap: 20px; font-size: 10.8px; line-height: 1.25; }
+.collection-a4 .word-page-2 h2 { margin: 13px 0 2px; font-family: Georgia, 'Times New Roman', serif; font-size: 11.5px; text-align: center; }
+.collection-a4 .word-page-2 .undertaking-refs { width: 48%; margin: 0 auto 24px; border-collapse: collapse; font-size: 11.5px; font-weight: 700; }
+.collection-a4 .word-page-2 .undertaking-refs th, .collection-a4 .word-page-2 .undertaking-refs td { padding: 0 8px 1px 0; border: 0 !important; background: transparent !important; font-family: Georgia, 'Times New Roman', serif; }
+.collection-a4 .word-page-2 .undertaking-refs td:nth-child(2), .collection-a4 .word-page-2 .undertaking-refs td:nth-child(3), .collection-a4 .word-page-2 .undertaking-refs td:nth-child(4) { text-align: center; }
+.collection-a4 .word-page-2 .undertaking-dear { margin: 0 0 16px; font-size: 11px; }
+.collection-a4 .word-page-2 .undertaking-terms { margin: 0; padding-left: 18px; font-size: 10.6px; line-height: 1.16; }
+.collection-a4 .word-page-2 .undertaking-terms li { margin-bottom: 3px; padding-left: 6px; }
+.collection-a4 .word-page-2 mark { background: #ffff00; padding: 0 2px; }
+.collection-a4 .word-page-2 .undertaking-signature { margin-top: 12px; font-size: 10.8px; line-height: 1.18; }
 .collection-lists { display: grid; gap: 10px; padding: 14px; border: 1px dashed #b9d2ea; border-radius: 10px; background: #fbfdff; }
 .collection-lists strong, .collection-lists small { display: block; }
 .collection-lists small { margin-top: 3px; color: var(--muted); font-size: 9.5px; }
