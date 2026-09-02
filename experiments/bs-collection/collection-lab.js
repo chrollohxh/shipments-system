@@ -110,18 +110,27 @@ function applyCollectionBranding(){
   const signaturePos = Object.assign({xPercent:10,yPercent:81,widthPercent:23,rotate:0}, settings.signaturePosition || {});
   if(!document.getElementById('collectionBrandStyle')){
     document.head.insertAdjacentHTML('beforeend', `<style id="collectionBrandStyle">
-      .collection-a4{position:relative;isolation:isolate;width:210mm!important;min-height:297mm!important;overflow:hidden!important}
+      .collection-a4{position:relative;isolation:isolate;width:210mm!important;min-height:297mm!important;padding:0!important;overflow:visible!important}
       .collection-a4>.collection-brand-layer{position:absolute;display:block;pointer-events:none}
       .collection-a4>.collection-brand-bg{inset:0;width:100%;height:100%;object-fit:fill;z-index:0}
-      .collection-a4>.collection-brand-stamp,.collection-a4>.collection-brand-signature{z-index:3;object-fit:contain;transform-origin:center}
-      .collection-a4> :not(.collection-brand-layer){position:relative;z-index:1}
-      @media print{@page{size:A4;margin:0}.collection-a4{width:210mm!important;min-height:297mm!important;margin:0!important;box-shadow:none!important}}
+      .collection-a4>.collection-page-content{position:relative;z-index:1;display:flex;flex-direction:column;min-height:297mm;padding:45mm 17mm 39mm;overflow-wrap:anywhere}
+      .collection-a4 .collection-flow-seals{display:flex;align-items:flex-end;justify-content:space-between;gap:16mm;min-height:30mm;margin-top:auto;padding-top:8mm}
+      .collection-a4 .collection-flow-seals img{display:block;object-fit:contain;max-height:31mm;transform-origin:center}
+      .collection-a4 .collection-flow-stamp{margin-inline-start:auto}
+      @media print{@page{size:A4;margin:0}.collection-a4{width:210mm!important;min-height:297mm!important;margin:0!important;box-shadow:none!important}.collection-a4>.collection-page-content{min-height:297mm;padding:45mm 17mm 39mm}}
     </style>`);
   }
   paper.classList.add('collection-a4');
-  const layer = (className, source, position) => source ? `<img class="collection-brand-layer ${className}" src="${esc(source)}" alt="" style="left:${Number(position.xPercent)||0}%;top:${Number(position.yPercent)||0}%;width:${Number(position.widthPercent)||0}%;transform:translate(-50%,-50%) rotate(${Number(position.rotate)||0}deg)">` : '';
+  const content = document.createElement('div');
+  content.className = 'collection-page-content';
+  Array.from(paper.childNodes).forEach(node=>content.append(node));
+  const flowImage = (className, source, position) => source ? `<img class="${className}" src="${esc(source)}" alt="" style="width:${Math.max(10,Math.min(Number(position.widthPercent)||16,35))}%;transform:rotate(${Number(position.rotate)||0}deg)">` : '';
+  if(stamp || signature){
+    content.insertAdjacentHTML('beforeend', `<div class="collection-flow-seals">${flowImage('collection-flow-signature', signature, signaturePos)}${flowImage('collection-flow-stamp', stamp, stampPos)}</div>`);
+  }
+  paper.append(content);
   const background = settings.background ? `<img class="collection-brand-layer collection-brand-bg" src="${esc(settings.background)}" alt="">` : '';
-  paper.insertAdjacentHTML('afterbegin', background + layer('collection-brand-stamp', stamp, stampPos) + layer('collection-brand-signature', signature, signaturePos));
+  paper.insertAdjacentHTML('afterbegin', background);
 }
 
 init();
