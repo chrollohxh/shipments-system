@@ -361,6 +361,75 @@ body{padding-right:230px;}
 .bsgt-new-btn:hover{background:#6e1319;box-shadow:0 10px 24px rgba(134,25,31,.42);transform:translateY(-2px);}
 .bsgt-new-btn:active{transform:translateY(0) scale(.97);}
 
+/* BSGT shipment form: compact desktop layout without changing its bindings. */
+#bsgtShipOverlay{padding:4vh 3vw;align-items:center;justify-content:center;}
+#bsgtShipOverlay .bsgt-ship-card{
+  width:min(94vw,1500px);max-width:1500px!important;max-height:92vh;
+  display:flex;flex-direction:column;overflow:hidden;border-radius:16px;
+  background:#fff;box-shadow:0 12px 34px rgba(22,50,88,.14);
+}
+#bsgtShipOverlay .dh{padding:18px 26px 14px;flex:none;border-bottom:1px solid #e5edf8;}
+#bsgtShipOverlay .dh h2{font-size:20px;font-weight:700;color:#193253;}
+#bsgtShipOverlay .dh h2+div{font-size:11.5px!important;color:#71829a!important;margin-top:3px!important;}
+#bsgtShipOverlay .close-x{width:32px;height:32px;border-color:#dce7f5;color:#55708e;}
+#bsgtShipOverlay .bsgt-ship-body{padding:14px 26px 18px!important;overflow:auto;}
+#bsgtShipOverlay .section-title{
+  margin:14px 0 10px;padding-inline-start:10px;border-inline-start:3px solid #1b63b7;
+  background:transparent;font-size:13px;font-weight:700;color:#1c3656;
+}
+#bsgtShipOverlay .section-title:first-child{margin-top:0;}
+#bsgtShipOverlay .grid{gap:12px 14px;}
+#bsgtShipOverlay .bsgt-item-grid{grid-template-columns:repeat(4,minmax(0,1fr));}
+#bsgtShipOverlay .bsgt-party-grid{grid-template-columns:repeat(3,minmax(0,1fr));}
+#bsgtShipOverlay .bsgt-party-grid .span2{grid-column:span 1;}
+#bsgtShipOverlay .bsgt-invoice-grid{grid-template-columns:repeat(4,minmax(0,1fr));}
+#bsgtShipOverlay .bsgt-terms-grid{grid-template-columns:repeat(5,minmax(0,1fr));}
+#bsgtShipOverlay .bsgt-notes-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+#bsgtShipOverlay .field{min-width:0;margin:0;}
+#bsgtShipOverlay .field label{margin-bottom:5px;font-size:11.5px;font-weight:600;color:#314a6a;line-height:1.25;}
+#bsgtShipOverlay input,
+#bsgtShipOverlay select,
+#bsgtShipOverlay textarea{
+  min-height:40px;border:1px solid #d9e4f2;border-radius:8px;padding-inline:12px;
+  background:#fff;font-size:12.5px;box-shadow:none;
+}
+#bsgtShipOverlay textarea{min-height:72px;padding-block:10px;resize:vertical;}
+#bsgtShipOverlay input:focus,
+#bsgtShipOverlay select:focus,
+#bsgtShipOverlay textarea:focus{border-color:#2676d9;box-shadow:0 0 0 3px rgba(38,118,217,.10);outline:none;}
+#bsgtShipOverlay input[readonly]{background:#f6f9fd!important;color:#6a7d94!important;}
+#bsgtShipOverlay .field small{display:block;margin-top:4px;font-size:10.5px;line-height:1.25;}
+#bsgtShipOverlay #bsgt_aedToggle,
+#bsgtShipOverlay #bsgt_weightToggle{height:40px;padding:0 11px!important;border-radius:8px;font-size:11px;}
+#bsgtShipOverlay .bsgt-item-mode{margin:12px 0!important;padding:10px 0 12px;border-bottom:1px solid #e5edf8;}
+#bsgtShipOverlay .bsgt-item-mode > div{gap:6px!important;}
+#bsgtShipOverlay .bsgt-item-mode .btn{height:34px;padding:0 14px;border-radius:8px;font-size:12px;}
+#bsgtShipOverlay #bsgtMultipleItemsArea{margin-top:10px;}
+#bsgtShipOverlay #bsgtDistributionArea{
+  grid-template-columns:repeat(4,minmax(0,1fr));margin:12px 0 10px!important;padding:12px!important;
+  border-color:#dbe7f5!important;border-radius:10px!important;background:#f8fbff!important;
+}
+#bsgtShipOverlay #bsgtDistributionArea .btn{height:40px;font-size:11.5px;padding-inline:10px;}
+#bsgtShipOverlay .bsgt-extra-item{margin-top:10px!important;padding:12px!important;border-color:#dbe7f5!important;border-radius:10px!important;background:#f8fbff!important;}
+#bsgtShipOverlay .bsgt-extra-item .grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:10px 12px;}
+#bsgtShipOverlay .bsgt-extra-item .span2{grid-column:span 2;}
+#bsgtShipOverlay .bsgt-ship-actions{flex:none;margin:0;padding:13px 26px 16px;border-top:1px solid #e5edf8;gap:8px;}
+#bsgtShipOverlay .bsgt-ship-actions .btn{height:40px;padding:0 20px;border-radius:8px;font-size:12.5px;font-weight:600;}
+#bsgtShipOverlay .bsgt-ship-actions .btn-primary{background:#1657a8;border-color:#1657a8;}
+
+@media (max-width:1100px){
+  #bsgtShipOverlay .bsgt-item-grid,#bsgtShipOverlay .bsgt-invoice-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+  #bsgtShipOverlay .bsgt-terms-grid{grid-template-columns:repeat(3,minmax(0,1fr));}
+  #bsgtShipOverlay #bsgtDistributionArea{grid-template-columns:repeat(2,minmax(0,1fr));}
+}
+@media (max-width:720px){
+  #bsgtShipOverlay{padding:0;align-items:stretch;}
+  #bsgtShipOverlay .bsgt-ship-card{width:100%;max-height:100vh;border-radius:0;}
+  #bsgtShipOverlay .dh,#bsgtShipOverlay .bsgt-ship-body,#bsgtShipOverlay .bsgt-ship-actions{padding-inline:16px!important;}
+  #bsgtShipOverlay .bsgt-item-grid,#bsgtShipOverlay .bsgt-party-grid,#bsgtShipOverlay .bsgt-invoice-grid,#bsgtShipOverlay .bsgt-terms-grid,#bsgtShipOverlay .bsgt-notes-grid,#bsgtShipOverlay #bsgtDistributionArea,#bsgtShipOverlay .bsgt-extra-item .grid{grid-template-columns:1fr;}
+  #bsgtShipOverlay .bsgt-item-grid .span2,#bsgtShipOverlay .bsgt-extra-item .span2{grid-column:span 1;}
+}
+
 /* ===== شارات ===== */
 .docpills{display:flex;gap:6px;flex-wrap:wrap;}
 .pill{
@@ -4758,16 +4827,16 @@ SWIFT: NBEGEGCX"></textarea>
 </div>
 
 <div class="overlay" id="bsgtShipOverlay">
-  <div class="detail-card" style="max-width:780px;">
+  <div class="detail-card bsgt-ship-card" style="max-width:780px;">
     <div class="dh">
       <div><h2 id="bsgtShipTitle">شحنة جديدة — بحر سواكن</h2>
         <div style="font-size:12px;color:var(--muted);margin-top:3px;">قائمة إدخال مختصرة خاصة بشحنات بحر سواكن فقط</div>
       </div>
       <button class="close-x" id="bsgtShipCloseX" data-ic="close"></button>
     </div>
-    <div style="padding:0 26px;">
+    <div class="bsgt-ship-body" style="padding:0 26px;">
       <div class="section-title">الصنف والسعر</div>
-      <div class="grid">
+      <div class="grid bsgt-item-grid">
         <div class="field span2"><label>وصف الصنف</label><input type="text" id="bsgt_itemDesc" placeholder="مثال: Ceramic"></div>
         <div class="field"><label>الكمية</label><input type="text" id="bsgt_qty" placeholder="مثال: 1053"></div>
         <div class="field"><label>نوع التعبئة</label><select class="lookup-sel" id="bsgt_qtyUnit"></select></div>
@@ -4792,7 +4861,7 @@ SWIFT: NBEGEGCX"></textarea>
         </div>
         <div class="field"><label>رمز HS Code</label><input type="text" id="bsgt_hsCode" placeholder="مثال: 960321"></div>
       </div>
-      <div class="field" style="margin:8px 0 14px;">
+      <div class="field bsgt-item-mode" style="margin:8px 0 14px;">
         <label>طريقة إدخال الأصناف</label>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <button type="button" class="btn btn-primary btn-small" id="bsgtSingleItemModeBtn">صنف واحد</button>
@@ -4814,31 +4883,31 @@ SWIFT: NBEGEGCX"></textarea>
         <div class="field" style="display:flex;align-items:end"><button type="button" class="btn btn-primary" id="bsgtDistributeAmountBtn" style="width:100%">توزيع المبلغ على الأصناف</button></div>
       </div>
       <div class="section-title">جهة الوصول والمرسل إليه</div>
-      <div class="grid">
+      <div class="grid bsgt-party-grid">
         <div class="field"><label>جهة الوصول (تظهر في الفاتورة المبدئية والنهائية)</label><select class="lookup-sel" id="bsgt_portDischarge"></select></div>
         <div class="field"><label>المرسل إليه (Consignee)</label><select class="lookup-sel" id="bsgt_consignee"></select></div>
         <div class="field span2"><label>عنوان المرسل إليه</label><select class="lookup-sel" id="bsgt_consigneeAddress"></select></div>
       </div>
       <div class="section-title">الفواتير</div>
-      <div class="grid">
+      <div class="grid bsgt-invoice-grid">
         <div class="field"><label>رقم الفاتورة المبدئية (Proforma)</label><input type="text" id="bsgt_proformaNo"></div>
         <div class="field"><label>تاريخ الفاتورة المبدئية <small style="font-weight:400;color:var(--muted);">(تلقائي: قبل أسبوع من النهائية)</small></label><input type="date" id="bsgt_proformaDate"></div>
         <div class="field"><label>رقم الفاتورة النهائية</label><input type="text" id="bsgt_invoiceNo"></div>
         <div class="field"><label>تاريخ الفاتورة النهائية</label><input type="date" id="bsgt_invoiceDate"></div>
       </div>
       <div class="section-title">شروط الشحن والدفع</div>
-      <div class="grid">
+      <div class="grid bsgt-terms-grid">
         <div class="field"><label>نوع التأمين (Incoterm)</label><select class="lookup-sel" id="bsgt_incoterm"></select></div>
         <div class="field"><label>بلد المنشأ (Country of Origin)</label><select class="lookup-sel" id="bsgt_countryOrigin"></select></div>
         <div class="field"><label>شروط الدفع</label><select class="lookup-sel" id="bsgt_paymentTerm"></select></div>
         <div class="field"><label>البنك المرسل إليه (للفرز والترتيب)</label><select class="lookup-sel" id="bsgt_destBank"></select></div>
         <div class="field"><label>العنوان البنكي</label><select class="lookup-sel" id="bsgt_bankPick"></select></div>
       </div>
-      <div class="grid">
+      <div class="grid bsgt-notes-grid">
         <div class="field span2"><label>ملاحظات</label><textarea id="bsgt_notes" rows="3"></textarea></div>
       </div>
     </div>
-    <div class="detail-actions">
+    <div class="detail-actions bsgt-ship-actions">
       <button class="btn btn-primary" id="bsgtShipSaveBtn">حفظ الشحنة</button>
       <button class="btn btn-ghost" id="bsgtShipCancelBtn">إلغاء</button>
     </div>
