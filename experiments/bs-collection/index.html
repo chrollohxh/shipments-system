@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>مختبر مستندات التحصيل - بحر سواكن</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;700&family=Noto+Kufi+Arabic:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="collection-lab.css">
+</head>
+<body>
+  <header class="lab-header">
+    <div><span class="lab-kicker">BSGT / EXPERIMENTAL</span><h1>مختبر مستندات التحصيل - بحر سواكن</h1><p>بوابة تجريبية للقراءة فقط. لا تؤثر على الشحنات أو المستندات الحالية.</p></div>
+    <div class="lab-actions"><button id="resetBtn" class="btn btn-secondary"><i class="bx bx-reset"></i> إعادة تعيين التجربة</button><button id="printBtn" class="btn btn-primary"><i class="bx bx-printer"></i> معاينة الطباعة</button></div>
+  </header>
+
+  <main class="lab-shell">
+    <section class="lab-section picker-section">
+      <div class="section-heading"><div><span>01</span><h2>اختيار الشحنات</h2></div><p id="shipmentCount">جاري تحميل شحنات بحر سواكن...</p></div>
+      <div class="filters"><label><i class="bx bx-search"></i><input id="searchInput" type="search" placeholder="ابحث برقم الشحنة أو الصنف أو الفاتورة أو البوليصة أو المستورد"></label><select id="currencyFilter"><option value="">كل العملات</option></select><select id="consigneeFilter"><option value="">كل المستوردين</option></select></div>
+      <div id="shipmentList" class="shipment-list"><div class="empty-state">جاري جلب البيانات للقراءة فقط...</div></div>
+    </section>
+
+    <section class="lab-section draft-section">
+      <div class="section-heading"><div><span>02</span><h2>مسودة التحصيل</h2></div><p id="selectionHint">اختر شحنة واحدة أو أكثر لبدء المعاينة.</p></div>
+      <div id="warnings"></div>
+      <div id="selectedTableWrap" class="table-wrap"><div class="empty-state">لا توجد شحنات مختارة بعد.</div></div>
+      <div id="totalsBar" class="totals-bar"></div>
+      <button id="groupByConsignee" class="text-btn" type="button" hidden><i class="bx bx-group"></i> عرض التقسيم المقترح حسب المستورد</button>
+      <div id="consigneeGroups" class="consignee-groups" hidden></div>
+    </section>
+
+    <section class="lab-section settings-section">
+      <div class="section-heading"><div><span>03</span><h2>بيانات التحصيل</h2></div><p>مسودة محلية لهذه التجربة فقط، ولا يتم حفظها.</p></div>
+      <form id="settingsForm" class="settings-grid" autocomplete="off">
+        <label>تاريخ التحصيل<input name="collectionDate" type="date"></label>
+        <label>البنك المُرسِل<input name="remittingBank" value="ADIB"></label>
+        <label>بنك التحصيل<input name="collectingBank" value="SAUDI SUDANESE BANK"></label>
+        <label>عنوان بنك التحصيل<input name="collectingBankAddress" placeholder="يُدخل عند توفره"></label>
+        <label class="span2">شرط الدفع<input name="term" value="D/A 90 DAYS FROM BILL OF EXCHANGE DATE"></label>
+        <label>المُصدّر / Drawer<input name="drawer" value="BAHAR SWAKEN GENERAL TRADING L.L.C"></label>
+        <label>الشخص المفوض<input name="authorizedPerson" value="JAWAD ELMASRI"></label>
+        <label>المنصب<input name="title" value="MANAGER"></label>
+        <label>عنوان المستورد<input name="draweeAddress" placeholder="يُستدعى من الشحنة عند توفره"></label>
+      </form>
+    </section>
+
+    <section class="lab-section preview-section">
+      <div class="section-heading"><div><span>04</span><h2>معاينة مستندات التحصيل</h2></div><p>تتحدث فوراً من مسودة التحصيل المحلية.</p></div>
+      <div class="preview-tabs" id="previewTabs"><button class="active" data-preview="application">Collection Application</button><button data-preview="letter">Collection Letter</button><button data-preview="undertaking">Undertaking Letter</button><button data-preview="exchange">Bill of Exchange</button></div>
+      <div id="documentPreview" class="document-preview"><div class="empty-state">اختر شحنات لعرض المستند التجريبي.</div></div>
+    </section>
+
+    <details class="debug-panel"><summary><i class="bx bx-code-alt"></i> بيانات التجربة</summary><pre id="debugOutput"></pre></details>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="collection-lab.js"></script>
+</body>
+</html>
