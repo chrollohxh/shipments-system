@@ -5004,6 +5004,7 @@ SWIFT: NBEGEGCX"></textarea>
         <div class="field"><label>تاريخ الفاتورة المبدئية <small style="font-weight:400;color:var(--muted);">(تلقائي: قبل أسبوع من النهائية)</small></label><input type="date" id="bsgt_proformaDate"></div>
         <div class="field"><label>رقم الفاتورة النهائية</label><input type="text" id="bsgt_invoiceNo"></div>
         <div class="field"><label>تاريخ الفاتورة النهائية</label><input type="date" id="bsgt_invoiceDate"></div>
+        <div class="field"><label>رقم البوليصة</label><input type="text" id="bsgt_billNo" dir="ltr" placeholder="B/L No."></div>
       </div>
       <div class="section-title">شروط الشحن والدفع</div>
       <div class="grid bsgt-terms-grid">
@@ -7574,6 +7575,7 @@ function bsgtShipmentCard(r, index, isDraft, missingHtml){
       <span>${icon('calendarIcon',13)} ${escapeHtml(String(fmtDate(r.invoiceDate||'') || 'بدون تاريخ'))}</span>
       ${shownQuantity ? `<span>${icon('box',13)} ${escapeHtml(shownQuantity)}</span>` : ''}
       <span>${icon('invoice',13)} ${escapeHtml(invoice)}</span>
+      ${r.billNo ? `<span>${icon('ship',13)} ${escapeHtml(r.billNo)}</span>` : ''}
     </div>
     <div class="bsgt-card-docs">${docs}</div>
     <div class="bsgt-card-footer">
@@ -13046,6 +13048,7 @@ function openBsgtShipForm(id){
   document.getElementById('bsgt_proformaDate').value = r?.proformaDate || '';
   document.getElementById('bsgt_invoiceNo').value = r?.invoiceNo || '';
   document.getElementById('bsgt_invoiceDate').value = r?.invoiceDate || '';
+  document.getElementById('bsgt_billNo').value = r?.billNo || '';
   setLookupValue(document.getElementById('bsgt_incoterm'), r?.incoterm || '');
   setLookupValue(document.getElementById('bsgt_countryOrigin'), r?.countryOrigin || '');
   setLookupValue(document.getElementById('bsgt_paymentTerm'), r?.paymentTerm || '');
@@ -13106,6 +13109,7 @@ async function saveBsgtShipment(){
     proformaDate: document.getElementById('bsgt_proformaDate').value,
     invoiceNo: document.getElementById('bsgt_invoiceNo').value,
     invoiceDate: document.getElementById('bsgt_invoiceDate').value,
+    billNo: document.getElementById('bsgt_billNo').value.trim(),
     incoterm: document.getElementById('bsgt_incoterm').value,
     countryOrigin: document.getElementById('bsgt_countryOrigin').value,
     paymentTerm: document.getElementById('bsgt_paymentTerm').value,
