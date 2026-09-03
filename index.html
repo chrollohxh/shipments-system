@@ -1864,6 +1864,10 @@ body:has(#viewRecords.bsgt-shipment-view) .ship-tab.active .st-badge{background:
 .bsgt-card-number{font:700 12px 'IBM Plex Mono',monospace;color:#6e829a;min-width:24px;}
 .bsgt-card-icon{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:11px;background:#eaf3ff;color:#1657a8;}
 .bsgt-card-kind{font-size:11px;font-weight:700;color:#71839a;margin-inline-start:auto;}
+.bsgt-card-collection-status{display:inline-flex;align-items:center;gap:4px;padding:3px 7px;border:1px solid;border-radius:999px;font-size:9.5px;font-weight:700;white-space:nowrap;}
+.bsgt-card-collection-status .ic{font-size:12px!important;}
+.bsgt-card-collection-status.sent{border-color:#efd7a8;background:#fff8e9;color:#9a6400;}
+.bsgt-card-collection-status.collected{border-color:#b9e2c6;background:#ecf9ef;color:#167a48;}
 .bsgt-card-arrow{color:#91a5bd;font-size:20px;line-height:1;}
 .bsgt-shipment-card h3{margin:0 0 5px;font-size:16px;line-height:1.35;color:#183652;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .bsgt-card-consignee{margin:0;color:#637991;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -7597,11 +7601,26 @@ function getShipmentIcon(description, record){
   return 'box';
 }
 
+const BSGT_REMITTING_SUBMISSIONS_KEY = 'bsCollectionRemittingSubmissions';
+function bsgtRemittingShipmentIds(){
+  try{
+    return new Set((JSON.parse(localStorage.getItem(BSGT_REMITTING_SUBMISSIONS_KEY)||'[]')||[])
+      .flatMap(batch=>Array.isArray(batch.shipmentIds)?batch.shipmentIds:[])
+      .map(String));
+  }catch(_){ return new Set(); }
+}
+function bsgtCollectionStatus(r){
+  const total=amountOf(r), paid=paidOf(r.id);
+  if(total>0 && paid>=total-.01) return {kind:'collected',label:'تم التحصيل',icon:'checkCircle'};
+  if(bsgtRemittingShipmentIds().has(String(r.id))) return {kind:'sent',label:'مرسلة للتحصيل',icon:'mail'};
+  return null;
+}
 function bsgtShipmentCard(r, index, isDraft, missingHtml){
   const quantity = String(r.totalQty || r.qty || r.numberOfPackages || '').trim();
   const unit = String(r.qtyUnit || '').trim();
   const shownQuantity = quantity && unit && !quantity.toLowerCase().includes(unit.toLowerCase()) ? `${quantity} ${unit}` : quantity;
   const invoice = r.invoiceNo || r.proformaNo || 'بدون رقم فاتورة';
+  const collectionStatus = !isDraft ? bsgtCollectionStatus(r) : null;
   const docs = isDraft ? (missingHtml || '<span class="miss-none">جاهزة للإرسال</span>') : `
     <div class="docpills">
       <span class="pill ${r.proformaNo?'ready':''}">بروفورما</span>
@@ -7614,6 +7633,7 @@ function bsgtShipmentCard(r, index, isDraft, missingHtml){
       <span class="bsgt-card-number">${String(index).padStart(2,'0')}</span>
       <span class="bsgt-card-icon">${icon(getShipmentIcon(r.itemDesc||'', r),21)}</span>
       <span class="bsgt-card-kind">${isDraft?'مسودة':'صادرة'}</span>
+      ${collectionStatus?`<span class="bsgt-card-collection-status ${collectionStatus.kind}" title="${collectionStatus.label}">${icon(collectionStatus.icon,12)}${collectionStatus.label}</span>`:''}
       <span class="bsgt-card-arrow" aria-hidden="true">‹</span>
     </div>
     <h3 title="${escapeHtml(r.itemDesc||'(بدون وصف)')}">${escapeHtml(r.itemDesc||'(بدون وصف)')}</h3>
