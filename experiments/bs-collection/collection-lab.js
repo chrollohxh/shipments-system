@@ -90,6 +90,19 @@ function prepareTextBlocks(content){
     block.style.transform=`translate(${offset.x}px, ${offset.y}px)`;
     block.classList.toggle('is-text-block-selected',selectedTextBlock?.preview===state.preview&&selectedTextBlock.index===index);
     applyTextStyle(block);
+    const textNodes=[];
+    const walker=document.createTreeWalker(block,NodeFilter.SHOW_TEXT,{acceptNode(node){
+      const styledParent=node.parentElement?.closest('[data-text-style-id]');
+      if(!node.nodeValue.trim()||(styledParent&&styledParent!==block)) return NodeFilter.FILTER_REJECT;
+      return NodeFilter.FILTER_ACCEPT;
+    }});
+    while(walker.nextNode()) textNodes.push(walker.currentNode);
+    textNodes.forEach((node,textIndex)=>{
+      const segment=document.createElement('span');
+      segment.dataset.textStyleId=`block-${index}-text-${textIndex}`;
+      node.parentNode.replaceChild(segment,node);
+      segment.append(node);
+    });
     block.querySelectorAll('[data-text-style-id]').forEach(node=>{
       applyTextStyle(node);
       node.classList.toggle('is-text-style-selected',selectedTextStyle?.preview===state.preview&&selectedTextStyle.id===node.dataset.textStyleId);

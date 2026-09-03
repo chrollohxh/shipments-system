@@ -81,6 +81,7 @@
 .text-format-actions button:hover:not(:disabled) { border-color: #1768bd; background: #edf6ff; }
 .text-format-actions button:disabled { cursor: not-allowed; opacity: .4; }
 .collection-page-content.is-text-layout-editing [data-text-block] { cursor: move; outline: 1px dashed rgba(23, 104, 189, .45); outline-offset: 3px; }
+.collection-page-content.is-text-layout-editing [data-text-style-id] { cursor: move; }
 .collection-page-content.is-text-layout-editing [data-text-block]:hover { background: rgba(23, 104, 189, .06); }
 .collection-page-content.is-text-layout-editing [data-text-block].is-text-block-selected { outline: 2px solid var(--blue); background: rgba(23, 104, 189, .1); }
 .collection-page-content.is-text-layout-editing .is-text-style-selected { outline: 1px solid #1768bd; outline-offset: 2px; background: rgba(23, 104, 189, .12); }
