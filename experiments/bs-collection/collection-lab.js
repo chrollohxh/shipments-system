@@ -614,7 +614,7 @@ function applyCollectionBranding(){
       .collection-a4 .collection-flow-seals{display:flex;align-items:flex-end;justify-content:space-between;gap:16mm;min-height:30mm;margin-top:auto;padding-top:8mm}
       .collection-a4 .collection-flow-seals img{position:relative;display:block;object-fit:contain;max-height:31mm;transform-origin:center}
       .collection-a4 .collection-flow-stamp{position:relative;display:block;flex:0 0 auto;margin-inline-start:auto;pointer-events:auto!important;cursor:grab;touch-action:none;transform-origin:center}
-      .collection-a4 .collection-flow-stamp>img{width:100%;height:auto;max-height:31mm;pointer-events:none}
+      .collection-a4 .collection-flow-stamp>img{width:100%;height:auto;max-height:none!important;pointer-events:none}
       .collection-a4 .collection-flow-stamp:active{cursor:grabbing}
       .collection-a4 .collection-flow-stamp.is-selected{outline:1px dashed #1768bd;outline-offset:4px}
       .collection-a4 .stamp-resize-handle{display:none;position:absolute;width:8px;height:8px;border:1px solid #1768bd;border-radius:2px;background:#fff;z-index:3}
@@ -687,7 +687,7 @@ function wireCollectionStampDrag(paper){
         const horizontal=handle.includes('e')||handle.includes('w');
         const vertical=handle.includes('n')||handle.includes('s');
         const delta=horizontal ? (handle.includes('e')?dx:-dx) : (handle.includes('s')?dy:-dy)*(baseWidth/baseHeight);
-        saved.scale=Math.max(.35,Math.min(2.5,start.baseScale+(delta/baseWidth)));
+        saved.scale=Math.max(.2,Math.min(5.5,start.baseScale+(delta/baseWidth)));
         if(horizontal&&handle.includes('w')) saved.x=start.baseX+(baseWidth*start.baseScale-baseWidth*saved.scale);
         if(vertical&&handle.includes('n')) saved.y=start.baseY+(baseHeight*start.baseScale-baseHeight*saved.scale);
       }
