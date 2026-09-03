@@ -1,3 +1,5 @@
+@font-face { font-family: 'IBM Plex Sans Arabic'; src: url('assets/IBMPlexSansArabic-Regular.ttf') format('truetype'); font-style: normal; font-weight: 400; font-display: swap; }
+body, .lab-header, .lab-shell, button, input, select, textarea { font-family: 'IBM Plex Sans Arabic', sans-serif; }
 .span-all { grid-column: 1 / -1; }
 .lab-header { min-height: 106px; padding-block: 22px; background: linear-gradient(118deg, #071f49, #0f4b8f); }
 .lab-header h1 { font-size: 21px; }
@@ -8,7 +10,7 @@
 .lab-site-logo i { font-size: 27px; }
 .lab-header-side { display: flex; flex: 0 1 660px; align-items: center; justify-content: flex-start; gap: 9px; flex-wrap: wrap; }
 .lab-quick-nav { display: flex; align-items: center; gap: 5px; }
-.lab-quick-nav a, .lab-quick-nav button { display: inline-flex; align-items: center; gap: 5px; min-height: 32px; padding: 6px 8px; border: 1px solid rgba(255,255,255,.3); border-radius: 8px; background: rgba(3,24,59,.16); color: #e6f2ff; cursor: pointer; font: 700 9px 'Noto Kufi Arabic', sans-serif; text-decoration: none; }
+.lab-quick-nav a, .lab-quick-nav button { display: inline-flex; align-items: center; gap: 5px; min-height: 32px; padding: 6px 8px; border: 1px solid rgba(255,255,255,.3); border-radius: 8px; background: rgba(3,24,59,.16); color: #e6f2ff; cursor: pointer; font: 700 9px 'IBM Plex Sans Arabic', sans-serif; text-decoration: none; }
 .lab-quick-nav a:hover, .lab-quick-nav button:hover { border-color: rgba(255,255,255,.72); background: rgba(255,255,255,.14); }
 .lab-quick-nav button:disabled { cursor: wait; opacity: .6; }
 .lab-quick-nav i { font-size: 15px; }
@@ -129,7 +131,7 @@
 .collection-lists strong, .collection-lists small { display: block; }
 .collection-lists small { margin-top: 3px; color: var(--muted); font-size: 9.5px; }
 .text-position-controls { position: relative; direction: rtl; }
-.text-position-controls summary { cursor: pointer; color: var(--blue); font: 700 10px 'Noto Kufi Arabic', sans-serif; }
+.text-position-controls summary { cursor: pointer; color: var(--blue); font: 700 10px 'IBM Plex Sans Arabic', sans-serif; }
 .text-position-controls > div { position: absolute; z-index: 20; top: 24px; inset-inline-end: 0; display: grid; gap: 8px; width: 265px; padding: 11px; border: 1px solid var(--line); border-radius: 9px; background: #fff; box-shadow: 0 8px 20px rgba(35, 62, 90, .15); }
 .text-position-controls label { display: grid; grid-template-columns: 72px 1fr 42px; align-items: center; gap: 7px; color: var(--ink); font-size: 9px; }
 .text-position-controls input { width: 100%; accent-color: var(--blue); }
