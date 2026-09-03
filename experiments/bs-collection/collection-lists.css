@@ -34,15 +34,15 @@
 .pending-status i { display: grid; place-items: center; width: 19px; height: 19px; border-radius: 50%; background: #fff2ce; color: #9a6400; font-size: 12px; }
 .pending-collect-btn { flex: 0 0 auto; padding: 8px 10px; border: 1px solid #9bc5ec; border-radius: 8px; background: #edf6ff; color: #1768bd; }
 @media (max-width: 640px) { .pending-collection-card { align-items: flex-start; flex-direction: column; } }
-.preview-heading-title { gap: 9px !important; }
-.preview-collapse-btn { display: grid; flex: 0 0 auto; place-items: center; width: 33px; height: 33px; padding: 0; border: 0; border-radius: 50%; background: #163d6d; box-shadow: 0 3px 9px rgba(22, 61, 109, .2); color: #fff; cursor: pointer; transition: .18s ease; }
-.preview-collapse-btn span { display: none; }
-.preview-collapse-btn i { font-size: 21px; line-height: 1; }
-.preview-collapse-btn:hover { background: #1768bd; box-shadow: 0 6px 14px rgba(23, 104, 189, .25); transform: translateY(-1px); }
-.preview-is-collapsed { padding-bottom: 14px; }
-.preview-is-collapsed > :not(.section-heading) { display: none; }
-@media print { .preview-is-collapsed > .document-preview { display: block !important; } .preview-is-collapsed > .preview-tools, .preview-collapse-btn { display: none !important; } }
-@media (max-width: 640px) { .preview-heading-title { flex-wrap: wrap; } }
+.collapsible-heading-title { gap: 9px !important; }
+.section-collapse-btn { display: grid; flex: 0 0 auto; place-items: center; width: 33px; height: 33px; padding: 0; border: 0; border-radius: 50%; background: #163d6d; box-shadow: 0 3px 9px rgba(22, 61, 109, .2); color: #fff; cursor: pointer; transition: .18s ease; }
+.section-collapse-btn span { display: none; }
+.section-collapse-btn i { font-size: 21px; line-height: 1; }
+.section-collapse-btn:hover { background: #1768bd; box-shadow: 0 6px 14px rgba(23, 104, 189, .25); transform: translateY(-1px); }
+.section-is-collapsed { padding-bottom: 14px; }
+.section-is-collapsed > :not(.section-heading) { display: none; }
+@media print { .section-is-collapsed > .document-preview { display: block !important; } .section-is-collapsed > .preview-tools, .section-collapse-btn { display: none !important; } .collection-portal-section { display: none !important; } }
+@media (max-width: 640px) { .collapsible-heading-title { flex-wrap: wrap; } }
 .collection-a4 .word-page-1 { font-family: Georgia, 'Times New Roman', serif; color: #000; font-size: 13px; line-height: 1.22; }
 .collection-a4 .word-page-1 p { margin: 0 0 13px; font-size: 13px; line-height: 1.22; }
 .collection-a4 .word-page-1 .word-date { margin-bottom: 23px; }

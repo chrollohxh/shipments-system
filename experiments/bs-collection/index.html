@@ -19,13 +19,13 @@
 
   <main class="lab-shell">
     <section class="lab-section picker-section">
-      <div class="section-heading"><div><span>01</span><h2>اختيار الشحنات</h2></div><p id="shipmentCount">جاري تحميل شحنات بحر سواكن...</p></div>
+      <div class="section-heading"><div class="collapsible-heading-title"><span>01</span><h2>اختيار الشحنات</h2><button class="section-collapse-btn" type="button" data-collapse-section="picker-section" aria-expanded="true" title="طي القسم"><i class="bx bx-chevron-up"></i></button></div><p id="shipmentCount">جاري تحميل شحنات بحر سواكن...</p></div>
       <div class="filters"><label><i class="bx bx-search"></i><input id="searchInput" type="search" placeholder="ابحث برقم الشحنة أو الصنف أو الفاتورة أو البوليصة أو المستورد"></label><select id="currencyFilter"><option value="">كل العملات</option></select><select id="consigneeFilter"><option value="">كل المستوردين</option></select></div>
       <div id="shipmentList" class="shipment-list"><div class="empty-state">جاري جلب البيانات للقراءة فقط...</div></div>
     </section>
 
     <section class="lab-section draft-section">
-      <div class="section-heading"><div><span>02</span><h2>مسودة الإرسال للبنك المُرسل</h2></div><p id="selectionHint">اختر شحنة واحدة أو أكثر لبدء المعاينة.</p></div>
+      <div class="section-heading"><div class="collapsible-heading-title"><span>02</span><h2>مسودة الإرسال للبنك المُرسل</h2><button class="section-collapse-btn" type="button" data-collapse-section="draft-section" aria-expanded="true" title="طي القسم"><i class="bx bx-chevron-up"></i></button></div><p id="selectionHint">اختر شحنة واحدة أو أكثر لبدء المعاينة.</p></div>
       <div class="compact-collection-summary" aria-label="ملخص الإرسال">
         <button id="compactRecordCollectionBtn" class="summary-card summary-action" type="button"><i class="bx bx-send"></i><span><small>الإرسال</small><strong>إرسال (<b id="compactCollectionCount">0</b>)</strong></span></button>
         <label class="summary-card summary-rate"><i class="bx bx-line-chart"></i><span><small>سعر الصرف</small><input id="collectionExchangeRate" type="number" min="0" step="0.0001" value="3.6725" disabled></span><em>AED</em></label>
@@ -42,7 +42,7 @@
     </section>
 
     <section class="lab-section settings-section">
-      <div class="section-heading"><div><span>03</span><h2>بيانات الإرسال للبنك المُرسل</h2></div><p>مسودة محلية لهذه التجربة فقط، ولا يتم حفظها.</p></div>
+      <div class="section-heading"><div class="collapsible-heading-title"><span>03</span><h2>بيانات الإرسال للبنك المُرسل</h2><button class="section-collapse-btn" type="button" data-collapse-section="settings-section" aria-expanded="true" title="طي القسم"><i class="bx bx-chevron-up"></i></button></div><p>مسودة محلية لهذه التجربة فقط، ولا يتم حفظها.</p></div>
       <form id="settingsForm" class="settings-grid" autocomplete="off">
         <label>تاريخ الإرسال<input name="collectionDate" type="date"></label>
         <label>البنك المُرسِل<select name="remittingBank"></select></label>
@@ -67,13 +67,13 @@
     </section>
 
     <section class="lab-section preview-section">
-      <div class="section-heading"><div class="preview-heading-title"><span>04</span><h2>معاينة مستندات الإرسال</h2><button id="togglePreviewSectionBtn" class="preview-collapse-btn" type="button" aria-expanded="true" title="طي المعاينة"><i class="bx bx-chevron-up"></i><span>طي المعاينة</span></button></div><p>تتحدث فوراً من مسودة الإرسال المحلية.</p></div>
+      <div class="section-heading"><div class="collapsible-heading-title preview-heading-title"><span>04</span><h2>معاينة مستندات الإرسال</h2><button id="togglePreviewSectionBtn" class="section-collapse-btn preview-collapse-btn" type="button" data-collapse-section="preview-section" aria-expanded="true" title="طي المعاينة"><i class="bx bx-chevron-up"></i><span>طي المعاينة</span></button></div><p>تتحدث فوراً من مسودة الإرسال المحلية.</p></div>
       <div class="preview-tools"><div class="preview-tabs" id="previewTabs"><button class="active" data-preview="letter">Collection Letter</button><button data-preview="undertaking">Undertaking Letter</button><button data-preview="exchange">Bill of Exchange</button></div><div class="preview-actions"><details class="text-position-controls"><summary><i class="bx bx-move"></i> ضبط موضع النص</summary><div><label>يمين / يسار <input id="textOffsetX" type="range" min="-25" max="25" value="0" step="1"><output id="textOffsetXValue">0 mm</output></label><label>أعلى / أسفل <input id="textOffsetY" type="range" min="-25" max="25" value="0" step="1"><output id="textOffsetYValue">0 mm</output></label><button id="toggleTextBlockModeBtn" class="text-btn" type="button"><i class="bx bx-target-lock"></i> تحريك فقرة بالنقر</button><button id="resetSelectedTextBlockBtn" class="text-btn" type="button" hidden><i class="bx bx-reset"></i> استرجاع الفقرة المحددة</button><div class="text-format-actions"><span>تنسيق المحدد</span><button id="textStyleNormalBtn" type="button" title="نص عادي">A</button><button id="textStyleBoldBtn" type="button" title="نص عريض"><b>B</b></button><button id="textStyleSmallerBtn" type="button" title="تصغير النص">A−</button><button id="textStyleLargerBtn" type="button" title="تكبير النص">A+</button></div><small>فعّل الخيار، انقر على الفقرة أو الجدول، ثم استخدم الأسهم. مع Shift للحركة الأكبر.</small><button id="resetTextOffsetBtn" class="text-btn" type="button"><i class="bx bx-reset"></i> استرجاع موضع النص</button></div></details><span class="stamp-hint">اسحب الختم داخل المعاينة لتحريكه</span><button id="resetStampBtn" class="text-btn" type="button"><i class="bx bx-reset"></i> استرجاع موضع الختم</button><button id="printAllBtn" class="btn btn-primary" type="button"><i class="bx bx-printer"></i> طباعة الحزمة كاملة (3 مستندات)</button></div></div>
       <div id="documentPreview" class="document-preview"><div class="empty-state">اختر شحنات لعرض المستند التجريبي.</div></div>
     </section>
 
     <section class="lab-section collection-portal-section">
-      <div class="section-heading"><div><span>05</span><h2>بوابة التحصيل</h2></div><p>المستندات المرسلة للبنك المُرسل والتي تنتظر التحصيل.</p></div>
+      <div class="section-heading"><div class="collapsible-heading-title"><span>05</span><h2>بوابة التحصيل</h2><button class="section-collapse-btn" type="button" data-collapse-section="collection-portal-section" aria-expanded="true" title="طي القسم"><i class="bx bx-chevron-up"></i></button></div><p>المستندات المرسلة للبنك المُرسل والتي تنتظر التحصيل.</p></div>
       <div id="collectionNotice" class="collection-notice" hidden></div>
       <div id="pendingCollectionList" class="pending-collection-list"><div class="empty-state">لا توجد مستندات بانتظار التحصيل.</div></div>
     </section>

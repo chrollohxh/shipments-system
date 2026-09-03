@@ -10,7 +10,7 @@ const collectionTextOffsetStorageKey = 'bsCollectionTextOffsets';
 const collectionTextBlockOffsetStorageKey = 'bsCollectionTextBlockOffsets';
 const collectionTextStyleStorageKey = 'bsCollectionTextStyles';
 const remittingSubmissionStorageKey = 'bsCollectionRemittingSubmissions';
-const previewCollapseStorageKey = 'bsCollectionPreviewCollapsed';
+const sectionCollapseStorageKey = 'bsCollectionSectionCollapsed';
 let textBlockEditMode = false;
 let selectedTextBlock = null;
 let selectedTextStyle = null;
@@ -32,14 +32,16 @@ function saveCollectionLists(){ try { localStorage.setItem(collectionListStorage
 function loadRemittingBatches(){ try { remittingBatches=JSON.parse(localStorage.getItem(remittingSubmissionStorageKey)||'[]')||[]; } catch (_) { remittingBatches=[]; } }
 function saveRemittingBatches(){ try { localStorage.setItem(remittingSubmissionStorageKey,JSON.stringify(remittingBatches)); } catch (_) {} }
 function showCollectionNotice(message){ const notice=$('collectionNotice'); if(!notice) return; notice.textContent=message; notice.hidden=false; }
-function setPreviewCollapsed(collapsed){
-  const section=document.querySelector('.preview-section'), button=$('togglePreviewSectionBtn'); if(!section||!button) return;
-  section.classList.toggle('preview-is-collapsed',collapsed);
+function sectionCollapseState(){ try { return JSON.parse(localStorage.getItem(sectionCollapseStorageKey)||'{}')||{}; } catch (_) { return {}; } }
+function setSectionCollapsed(sectionName, collapsed){
+  const section=document.querySelector(`.${sectionName}`), button=document.querySelector(`[data-collapse-section="${sectionName}"]`); if(!section||!button) return;
+  section.classList.toggle('section-is-collapsed',collapsed);
   button.setAttribute('aria-expanded',String(!collapsed));
-  button.title=collapsed?'فتح المعاينة':'طي المعاينة';
+  button.title=collapsed?'فتح القسم':'طي القسم';
   button.setAttribute('aria-label',button.title);
-  button.innerHTML=collapsed?'<i class="bx bx-chevron-down"></i><span>فتح المعاينة</span>':'<i class="bx bx-chevron-up"></i><span>طي المعاينة</span>';
-  try { localStorage.setItem(previewCollapseStorageKey,collapsed?'1':'0'); } catch (_) {}
+  button.innerHTML=collapsed?'<i class="bx bx-chevron-down"></i>':'<i class="bx bx-chevron-up"></i>';
+  const state=sectionCollapseState(); state[sectionName]=collapsed;
+  try { localStorage.setItem(sectionCollapseStorageKey,JSON.stringify(state)); } catch (_) {}
 }
 function collectionTextOffsets(){ try { return JSON.parse(localStorage.getItem(collectionTextOffsetStorageKey)||'{}')||{}; } catch (_) { return {}; } }
 function textOffsetForPreview(){ return Object.assign({x:0,y:0}, collectionTextOffsets()[state.preview]||{}); }
@@ -292,7 +294,8 @@ async function recordCollection(){
 async function init(){
   loadCollectionLists();
   loadRemittingBatches();
-  try { setPreviewCollapsed(localStorage.getItem(previewCollapseStorageKey)==='1'); } catch (_) {}
+  const collapsed=sectionCollapseState();
+  document.querySelectorAll('[data-collapse-section]').forEach(button=>setSectionCollapsed(button.dataset.collapseSection,Boolean(collapsed[button.dataset.collapseSection])));
   populateCollectionSelects();
   renderCollectionListManager();
   Object.entries(state.settings).forEach(([key, value])=>{
@@ -325,7 +328,10 @@ $('groupByConsignee').addEventListener('click',()=>{const groups={};selectedShip
 $('resetBtn').addEventListener('click',()=>{state.selected.clear();state.overrides={};$('settingsForm').reset();Object.assign(state.settings,{collectionDate:new Date().toISOString().slice(0,10),remittingBank:'Abu Dhabi Islamic Bank',remittingBankLetterAddress:'Abu Dhabi, UAE',remittingBankAddress:'BANIYAS BRANCH BUILDING, 2ND FLOOR, BANIYAS EAST, P.O.BOX 313, ABU DHABI, UAE.',remittingBankAccountNo:'19567664',collectingBank:'SAUDI SUDANESE BANK',collectingBankAddress:'MAIN BRANCH, FREE ZONE AREA, PORT SUDAN, SUDAN',billOfLadingType:'Copy of Original Bill of Lading',billBy:'KINDLY SEND SWIFT MESSAGE TO COLLECTING BANK FOR DOCS AND SHARE SWIFT COPY WITH US.',term:'D/A 90 DAYS FROM BILL OF EXCHANGE DATE.',drawer:'BAHAR SWAKEN GENERAL TRADING L.L.C',authorizedPerson:'JAWAD ELMASRI',title:'Manager',draweeAddress:''});populateCollectionSelects();Object.entries(state.settings).forEach(([key,value])=>{const input=$('settingsForm').elements[key];if(input)input.value=value;});renderAll();});
 $('printBtn').addEventListener('click',()=>window.print());
 $('recordCollectionBtn').addEventListener('click',sendToRemittingBank);
-$('togglePreviewSectionBtn').addEventListener('click',()=>setPreviewCollapsed(!document.querySelector('.preview-section')?.classList.contains('preview-is-collapsed')));
+document.querySelectorAll('[data-collapse-section]').forEach(button=>button.addEventListener('click',()=>{
+  const sectionName=button.dataset.collapseSection;
+  setSectionCollapsed(sectionName,!document.querySelector(`.${sectionName}`)?.classList.contains('section-is-collapsed'));
+}));
 $('printAllBtn').addEventListener('click', printAllCollectionDocuments);
 $('resetStampBtn').addEventListener('click',()=>{ try { localStorage.removeItem('bsCollectionStampOffset'); } catch (_) {} renderPreview(); });
 $('textOffsetX').addEventListener('input',event=>saveTextOffset('x',event.target.value));
