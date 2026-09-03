@@ -406,6 +406,7 @@ function renderPreview(){
     body=`<article class="document-paper word-page-3"><h2>BILL OF EXCHANGE</h2><div class="boe-meta"><p><b>Amount:&nbsp;&nbsp; ${esc(amount)}</b></p><p><b>DATED:&nbsp;&nbsp; ${esc(collectionDateText(s.collectionDate))}</b></p></div><p class="boe-order"><b>AT&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ${esc(s.term)} PAY TO THE ORDER OF</b><br>${esc(s.remittingBank)}, ABU DHABI - UAE&nbsp;&nbsp;&nbsp; <b>A SUM OF ${esc(amount)}</b></p><p class="boe-words">${esc(amountWords(total).toLowerCase())} ${esc(currency)} only <b>BEING VALUE DRAWN UNDER INVOICE #</b></p><div class="boe-invoices">${rows.map((r,index)=>`<div><b data-text-style-id="boe-invoice-${index}">${esc(r.invoiceNo||r.shipmentNo||'-')}</b><span><span data-text-style-id="boe-dated-label-${index}">Dated:</span>&nbsp;&nbsp; <span data-text-style-id="boe-invoice-date-${index}">${esc(r.invoiceDate||'-')}</span></span></div>`).join('')}</div><div class="boe-drawn"><b>Drawn On</b><br>${esc(drawee)}<br>${esc(draweeAddress)}</div><div class="boe-drawer"><b>Drawer</b><br>${esc(s.drawer)}<br>307, ALWAHA 1 DEIRA, DUBAI - UAE +97145773892</div></article>`;
   }
   $('documentPreview').innerHTML=body;
+  $('documentPreview').querySelectorAll('mark').forEach(mark=>mark.replaceWith(...mark.childNodes));
   applyCollectionBranding();
   updateTextOffsetControls();
 }
