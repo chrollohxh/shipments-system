@@ -552,7 +552,7 @@ function printAllCollectionDocuments(){
   const popup = window.open('', '_blank');
   if(!popup){ alert('المتصفح منع نافذة الطباعة. اسمح بالنوافذ المنبثقة ثم حاول مرة أخرى.'); return; }
   popup.opener = null;
-  popup.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>BSGT Collection Documents</title><link rel="stylesheet" href="/experiments/bs-collection/collection-lab.css?v=20260903-5"><link rel="stylesheet" href="/experiments/bs-collection/collection-lists.css?v=20260903-5"><style>${brandCss}.print-page{break-after:page;page-break-after:always}.print-page:last-child{break-after:auto;page-break-after:auto}@media screen{body{background:#eaf0f6}.print-page{padding:12mm 0}}</style></head><body>${previews.map(page=>`<section class="print-page">${page}</section>`).join('')}</body></html>`);
+  popup.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>BSGT Collection Documents</title><link rel="stylesheet" href="/experiments/bs-collection/collection-lab.css?v=20260903-6"><link rel="stylesheet" href="/experiments/bs-collection/collection-lists.css?v=20260903-6"><style>${brandCss}.print-page{break-after:page;page-break-after:always}.print-page:last-child{break-after:auto;page-break-after:auto}@media screen{body{background:#eaf0f6}.print-page{padding:12mm 0}}</style></head><body>${previews.map(page=>`<section class="print-page">${page}</section>`).join('')}</body></html>`);
   popup.document.close();
   popup.onload = ()=>setTimeout(()=>popup.print(), 450);
 }
@@ -633,7 +633,8 @@ function applyCollectionBranding(){
   content.style.setProperty('--collection-text-y', `${textOffset.y}mm`);
   Array.from(paper.childNodes).forEach(node=>content.append(node));
   const flowImage = (className, source, position) => source ? `<img class="${className}" src="${esc(source)}" alt="" style="width:${Math.max(10,Math.min(Number(position.widthPercent)||16,35))}%;transform:rotate(${Number(position.rotate)||0}deg)">` : '';
-  const stampOverlay = stamp ? `<div class="collection-stamp-overlay" style="left:${Number(stampPos.xPercent)||78}%;top:${Number(stampPos.yPercent)||78}%;width:${Math.max(10,Math.min(Number(stampPos.widthPercent)||16,35))}%;transform:rotate(${Number(stampPos.rotate)||0}deg)" title="انقر على الختم لإظهار مقابض التحجيم"><img src="${esc(stamp)}" alt=""><span class="stamp-resize-handle nw" data-resize="nw"></span><span class="stamp-resize-handle n" data-resize="n"></span><span class="stamp-resize-handle ne" data-resize="ne"></span><span class="stamp-resize-handle e" data-resize="e"></span><span class="stamp-resize-handle se" data-resize="se"></span><span class="stamp-resize-handle s" data-resize="s"></span><span class="stamp-resize-handle sw" data-resize="sw"></span><span class="stamp-resize-handle w" data-resize="w"></span></div>` : '';
+  const stampHandles=state.preview==='letter'?'<span class="stamp-resize-handle nw" data-resize="nw"></span><span class="stamp-resize-handle n" data-resize="n"></span><span class="stamp-resize-handle ne" data-resize="ne"></span><span class="stamp-resize-handle e" data-resize="e"></span><span class="stamp-resize-handle se" data-resize="se"></span><span class="stamp-resize-handle s" data-resize="s"></span><span class="stamp-resize-handle sw" data-resize="sw"></span><span class="stamp-resize-handle w" data-resize="w"></span>':'';
+  const stampOverlay = stamp ? `<div class="collection-stamp-overlay" style="left:${Number(stampPos.xPercent)||78}%;top:${Number(stampPos.yPercent)||78}%;width:${Math.max(10,Math.min(Number(stampPos.widthPercent)||16,35))}%;transform:rotate(${Number(stampPos.rotate)||0}deg)" title="${state.preview==='letter'?'اسحب الختم أو استخدم المقابض لتحديد الحجم الموحد':'اسحب الختم لتحريك موضعه في هذه الصفحة'}"><img src="${esc(stamp)}" alt="">${stampHandles}</div>` : '';
   if(signature) content.insertAdjacentHTML('beforeend', `<div class="collection-flow-seals">${flowImage('collection-flow-signature', signature, signaturePos)}</div>`);
   paper.append(content);
   const background = settings.background ? `<img class="collection-brand-layer collection-brand-bg" src="${esc(settings.background)}" alt="">` : '';
@@ -661,43 +662,49 @@ function fitCollectionContent(content){
 function wireCollectionStampDrag(paper){
   const stamp = paper.querySelector('.collection-stamp-overlay');
   if(!stamp || portalRole!=='admin') return;
-  let saved = {xMm:0,yMm:0,widthMm:0};
+  const preview=state.preview;
+  const canResize=preview==='letter';
+  let saved = {widthMm:0,positions:{}};
   try { saved = Object.assign(saved, JSON.parse(localStorage.getItem(stampTransformStorageKey) || '{}')); } catch (_) {}
+  saved.positions=saved.positions||{};
   const paperRect=paper.getBoundingClientRect();
   const pxPerMm=(paperRect.width||1)/210;
-  const defaultWidthMm=stamp.getBoundingClientRect().width/pxPerMm;
-  const defaultHeightMm=stamp.getBoundingClientRect().height/pxPerMm;
-  // Migrate the earlier pixel/scale value once, then keep one A4-based position for all pages.
+  const stampRect=stamp.getBoundingClientRect();
+  const defaultWidthMm=stampRect.width/pxPerMm;
+  const defaultHeightMm=stampRect.height/pxPerMm;
+  // Migrate the earlier shared position once, then retain one position per document page.
   if(!saved.widthMm){
     saved.widthMm=defaultWidthMm*(Number(saved.scale)||1);
-    saved.xMm=(Number(saved.x)||0)/pxPerMm;
-    saved.yMm=(Number(saved.y)||0)/pxPerMm;
   }
+  const position=saved.positions[preview]||{
+    xMm:Number.isFinite(saved.xMm)?saved.xMm:(stampRect.left-paperRect.left)/pxPerMm,
+    yMm:Number.isFinite(saved.yMm)?saved.yMm:(stampRect.top-paperRect.top)/pxPerMm
+  };
+  saved.positions[preview]=position;
   const apply = () => {
-    stamp.style.left = `${saved.xMm*pxPerMm}px`;
-    stamp.style.top = `${saved.yMm*pxPerMm}px`;
+    stamp.style.left = `${position.xMm*pxPerMm}px`;
+    stamp.style.top = `${position.yMm*pxPerMm}px`;
     stamp.style.width = `${Math.max(12,saved.widthMm)*pxPerMm}px`;
   };
   apply();
-  stamp.title = 'اسحب الختم للتحريك، وانقر لإظهار مقابض التكبير والتصغير';
   stamp.addEventListener('pointerdown', event=>{
     event.preventDefault();
     stamp.classList.add('is-selected');
-    const handle=event.target.dataset.resize||'';
-    const start = {x:event.clientX,y:event.clientY,baseX:saved.xMm,baseY:saved.yMm,baseWidth:saved.widthMm};
+    const handle=canResize?(event.target.dataset.resize||''):'';
+    const start = {x:event.clientX,y:event.clientY,baseX:position.xMm,baseY:position.yMm,baseWidth:saved.widthMm};
     stamp.setPointerCapture(event.pointerId);
     const move = point=>{
       const dx=(point.clientX-start.x)/pxPerMm, dy=(point.clientY-start.y)/pxPerMm;
       if(!handle){
-        saved.xMm = start.baseX + dx;
-        saved.yMm = start.baseY + dy;
+        position.xMm = start.baseX + dx;
+        position.yMm = start.baseY + dy;
       }else{
         const horizontal=handle.includes('e')||handle.includes('w');
         const vertical=handle.includes('n')||handle.includes('s');
         const delta=horizontal ? (handle.includes('e')?dx:-dx) : (handle.includes('s')?dy:-dy)*(defaultWidthMm/defaultHeightMm);
         saved.widthMm=Math.max(12,Math.min(110,start.baseWidth+delta));
-        if(horizontal&&handle.includes('w')) saved.xMm=start.baseX+(start.baseWidth-saved.widthMm);
-        if(vertical&&handle.includes('n')) saved.yMm=start.baseY+(start.baseWidth-saved.widthMm)*(defaultHeightMm/defaultWidthMm);
+        if(horizontal&&handle.includes('w')) position.xMm=start.baseX+(start.baseWidth-saved.widthMm);
+        if(vertical&&handle.includes('n')) position.yMm=start.baseY+(start.baseWidth-saved.widthMm)*(defaultHeightMm/defaultWidthMm);
       }
       apply();
     };
