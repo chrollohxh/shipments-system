@@ -34,13 +34,14 @@
 .pending-status i { display: grid; place-items: center; width: 19px; height: 19px; border-radius: 50%; background: #fff2ce; color: #9a6400; font-size: 12px; }
 .pending-collect-btn { flex: 0 0 auto; padding: 8px 10px; border: 1px solid #9bc5ec; border-radius: 8px; background: #edf6ff; color: #1768bd; }
 @media (max-width: 640px) { .pending-collection-card { align-items: flex-start; flex-direction: column; } }
-.preview-heading-actions { display: flex; align-items: center; gap: 10px; }
-.preview-collapse-btn { display: inline-flex; align-items: center; gap: 4px; padding: 5px 8px; border: 1px solid #c9dced; border-radius: 7px; background: #f8fbff; color: #21609b; cursor: pointer; font: 700 9px 'Noto Kufi Arabic', sans-serif; }
-.preview-collapse-btn:hover { border-color: #1768bd; background: #edf6ff; }
+.preview-heading-title { gap: 9px !important; }
+.preview-collapse-btn { display: inline-flex; align-items: center; gap: 6px; min-height: 31px; padding: 6px 11px; border: 1px solid #9ec5e8; border-radius: 9px; background: linear-gradient(135deg, #fff, #edf6ff); box-shadow: 0 2px 6px rgba(23, 104, 189, .1); color: #1768bd; cursor: pointer; font: 700 9px 'Noto Kufi Arabic', sans-serif; transition: .18s ease; }
+.preview-collapse-btn i { display: grid; place-items: center; width: 17px; height: 17px; border-radius: 5px; background: #1768bd; color: #fff; font-size: 15px; }
+.preview-collapse-btn:hover { border-color: #1768bd; box-shadow: 0 5px 12px rgba(23, 104, 189, .16); transform: translateY(-1px); }
 .preview-is-collapsed { padding-bottom: 14px; }
 .preview-is-collapsed > :not(.section-heading) { display: none; }
 @media print { .preview-is-collapsed > .document-preview { display: block !important; } .preview-is-collapsed > .preview-tools, .preview-collapse-btn { display: none !important; } }
-@media (max-width: 640px) { .preview-heading-actions { align-items: flex-start; flex-direction: column; gap: 5px; } }
+@media (max-width: 640px) { .preview-heading-title { flex-wrap: wrap; } }
 .collection-a4 .word-page-1 { font-family: Georgia, 'Times New Roman', serif; color: #000; font-size: 13px; line-height: 1.22; }
 .collection-a4 .word-page-1 p { margin: 0 0 13px; font-size: 13px; line-height: 1.22; }
 .collection-a4 .word-page-1 .word-date { margin-bottom: 23px; }
