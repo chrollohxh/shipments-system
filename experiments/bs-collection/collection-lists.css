@@ -60,7 +60,7 @@
 .collection-a4 .word-page-2 .undertaking-dear { margin: 0 0 16px; font-size: 11px; }
 .collection-a4 .word-page-2 .undertaking-terms { margin: 0; padding-left: 18px; font-size: 10.6px; line-height: 1.16; }
 .collection-a4 .word-page-2 .undertaking-terms li { margin-bottom: 3px; padding-left: 6px; }
-.collection-a4 .word-page-2 mark { background: #ffff00; padding: 0 2px; }
+.collection-a4 .word-page-2 mark { background: transparent; padding: 0; color: inherit; }
 .collection-a4 .word-page-2 .undertaking-signature { margin-top: 12px; font-size: 10.8px; line-height: 1.18; }
 .collection-a4 .word-page-3 { font-family: Georgia, 'Times New Roman', serif; color: #000; font-size: 12px; line-height: 1.3; }
 .collection-a4 .word-page-3 h2 { margin: 0 0 24px; font-family: Georgia, 'Times New Roman', serif; font-size: 16px; text-align: center; }
