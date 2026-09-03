@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>مختبر مستندات التحصيل - بحر سواكن</title>
+  <title>بوابة إرسال مستندات البنك المُرسل - بحر سواكن</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;700&family=Noto+Kufi+Arabic:wght@400;600;700&display=swap" rel="stylesheet">
@@ -13,8 +13,8 @@
 </head>
 <body>
   <header class="lab-header">
-    <div><span class="lab-kicker">BSGT / EXPERIMENTAL</span><h1>مختبر مستندات التحصيل - بحر سواكن</h1><p>بوابة تجريبية للقراءة فقط. لا تؤثر على الشحنات أو المستندات الحالية.</p></div>
-    <div class="lab-actions"><button id="resetBtn" class="btn btn-secondary"><i class="bx bx-reset"></i> إعادة تعيين التجربة</button><button id="recordCollectionBtn" class="btn btn-secondary"><i class="bx bx-check-double"></i> تسجيل تحصيل الشحنات المحددة</button><button id="printBtn" class="btn btn-primary"><i class="bx bx-printer"></i> طباعة المستند الحالي</button></div>
+    <div><span class="lab-kicker">BSGT / EXPERIMENTAL</span><h1>بوابة إرسال مستندات البنك المُرسل - بحر سواكن</h1><p>مرحلة تجهيز وإرسال المستندات، ثم متابعتها من بوابة التحصيل.</p></div>
+    <div class="lab-actions"><button id="resetBtn" class="btn btn-secondary"><i class="bx bx-reset"></i> إعادة تعيين التجربة</button><button id="recordCollectionBtn" class="btn btn-secondary"><i class="bx bx-send"></i> إرسال للبنك المُرسل</button><button id="printBtn" class="btn btn-primary"><i class="bx bx-printer"></i> طباعة المستند الحالي</button></div>
   </header>
 
   <main class="lab-shell">
@@ -25,9 +25,9 @@
     </section>
 
     <section class="lab-section draft-section">
-      <div class="section-heading"><div><span>02</span><h2>مسودة التحصيل</h2></div><p id="selectionHint">اختر شحنة واحدة أو أكثر لبدء المعاينة.</p></div>
-      <div class="compact-collection-summary" aria-label="ملخص التحصيل">
-        <button id="compactRecordCollectionBtn" class="summary-card summary-action" type="button"><i class="bx bx-receipt"></i><span><small>التحصيل</small><strong>تحصيل (<b id="compactCollectionCount">0</b>)</strong></span></button>
+      <div class="section-heading"><div><span>02</span><h2>مسودة الإرسال للبنك المُرسل</h2></div><p id="selectionHint">اختر شحنة واحدة أو أكثر لبدء المعاينة.</p></div>
+      <div class="compact-collection-summary" aria-label="ملخص الإرسال">
+        <button id="compactRecordCollectionBtn" class="summary-card summary-action" type="button"><i class="bx bx-send"></i><span><small>الإرسال</small><strong>إرسال (<b id="compactCollectionCount">0</b>)</strong></span></button>
         <label class="summary-card summary-rate"><i class="bx bx-line-chart"></i><span><small>سعر الصرف</small><input id="collectionExchangeRate" type="number" min="0" step="0.0001" value="3.6725" disabled></span><em>AED</em></label>
         <button id="convertToAedBtn" class="summary-card summary-currency" type="button"><i class="bx bx-coin-stack"></i><span><small>العملة</small><strong id="compactCollectionCurrency">AED</strong></span></button>
         <div class="summary-card"><i class="bx bx-package"></i><span><small>عدد الشحنات</small><strong id="compactShipmentCount">0</strong></span></div>
@@ -42,9 +42,9 @@
     </section>
 
     <section class="lab-section settings-section">
-      <div class="section-heading"><div><span>03</span><h2>بيانات التحصيل</h2></div><p>مسودة محلية لهذه التجربة فقط، ولا يتم حفظها.</p></div>
+      <div class="section-heading"><div><span>03</span><h2>بيانات الإرسال للبنك المُرسل</h2></div><p>مسودة محلية لهذه التجربة فقط، ولا يتم حفظها.</p></div>
       <form id="settingsForm" class="settings-grid" autocomplete="off">
-        <label>تاريخ التحصيل<input name="collectionDate" type="date"></label>
+        <label>تاريخ الإرسال<input name="collectionDate" type="date"></label>
         <label>البنك المُرسِل<select name="remittingBank"></select></label>
         <label>عنوان بنك الإرسال للخطاب<select name="remittingBankLetterAddress"></select></label>
         <label>عنوان بنك الإرسال للتعهد<select name="remittingBankAddress"></select></label>
@@ -59,7 +59,7 @@
         <label>المنصب<select name="title"></select></label>
         <label>عنوان المستورد<select name="draweeAddress"></select></label>
         <section class="collection-lists span-all" aria-labelledby="collectionListsTitle">
-          <div><strong id="collectionListsTitle">قوائم بيانات التحصيل</strong><small>أضف بيانات الجهات مرة واحدة ثم اخترها من القوائم أعلاه.</small></div>
+          <div><strong id="collectionListsTitle">قوائم بيانات الإرسال</strong><small>أضف بيانات الجهات مرة واحدة ثم اخترها من القوائم أعلاه.</small></div>
           <div class="collection-list-controls"><select id="collectionListField"></select><input id="collectionListValue" type="text" placeholder="اكتب القيمة الجديدة"><button id="addCollectionListValue" type="button" class="mini-btn">إضافة للقائمة</button></div>
           <div id="collectionListValues" class="collection-list-values"></div>
         </section>
@@ -67,9 +67,15 @@
     </section>
 
     <section class="lab-section preview-section">
-      <div class="section-heading"><div><span>04</span><h2>معاينة مستندات التحصيل</h2></div><p>تتحدث فوراً من مسودة التحصيل المحلية.</p></div>
+      <div class="section-heading"><div><span>04</span><h2>معاينة مستندات الإرسال</h2></div><p>تتحدث فوراً من مسودة الإرسال المحلية.</p></div>
       <div class="preview-tools"><div class="preview-tabs" id="previewTabs"><button class="active" data-preview="letter">Collection Letter</button><button data-preview="undertaking">Undertaking Letter</button><button data-preview="exchange">Bill of Exchange</button></div><div class="preview-actions"><details class="text-position-controls"><summary><i class="bx bx-move"></i> ضبط موضع النص</summary><div><label>يمين / يسار <input id="textOffsetX" type="range" min="-25" max="25" value="0" step="1"><output id="textOffsetXValue">0 mm</output></label><label>أعلى / أسفل <input id="textOffsetY" type="range" min="-25" max="25" value="0" step="1"><output id="textOffsetYValue">0 mm</output></label><button id="toggleTextBlockModeBtn" class="text-btn" type="button"><i class="bx bx-target-lock"></i> تحريك فقرة بالنقر</button><button id="resetSelectedTextBlockBtn" class="text-btn" type="button" hidden><i class="bx bx-reset"></i> استرجاع الفقرة المحددة</button><div class="text-format-actions"><span>تنسيق المحدد</span><button id="textStyleNormalBtn" type="button" title="نص عادي">A</button><button id="textStyleBoldBtn" type="button" title="نص عريض"><b>B</b></button><button id="textStyleSmallerBtn" type="button" title="تصغير النص">A−</button><button id="textStyleLargerBtn" type="button" title="تكبير النص">A+</button></div><small>فعّل الخيار، انقر على الفقرة أو الجدول، ثم استخدم الأسهم. مع Shift للحركة الأكبر.</small><button id="resetTextOffsetBtn" class="text-btn" type="button"><i class="bx bx-reset"></i> استرجاع موضع النص</button></div></details><span class="stamp-hint">اسحب الختم داخل المعاينة لتحريكه</span><button id="resetStampBtn" class="text-btn" type="button"><i class="bx bx-reset"></i> استرجاع موضع الختم</button><button id="printAllBtn" class="btn btn-primary" type="button"><i class="bx bx-printer"></i> طباعة الحزمة كاملة (3 مستندات)</button></div></div>
       <div id="documentPreview" class="document-preview"><div class="empty-state">اختر شحنات لعرض المستند التجريبي.</div></div>
+    </section>
+
+    <section class="lab-section collection-portal-section">
+      <div class="section-heading"><div><span>05</span><h2>بوابة التحصيل</h2></div><p>المستندات المرسلة للبنك المُرسل والتي تنتظر التحصيل.</p></div>
+      <div id="collectionNotice" class="collection-notice" hidden></div>
+      <div id="pendingCollectionList" class="pending-collection-list"><div class="empty-state">لا توجد مستندات بانتظار التحصيل.</div></div>
     </section>
 
     <details class="debug-panel"><summary><i class="bx bx-code-alt"></i> بيانات التجربة</summary><pre id="debugOutput"></pre></details>

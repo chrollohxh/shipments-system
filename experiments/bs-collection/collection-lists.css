@@ -25,6 +25,15 @@
 .draft-section .draft-table th { padding: 8px 10px; background: #f6faff; color: #607b95; font-size: 9.5px; }
 .draft-section .draft-table td { padding: 8px 10px; font-size: 10.5px; line-height: 1.25; }
 .draft-section .draft-table tr:not(:has(.edit-grid)) td:first-child { font-weight: 700; color: #244665; }
+.collection-notice { margin: 0 0 11px; padding: 11px 13px; border: 1px solid #9ed7bd; border-radius: 10px; background: #effaf4; color: #176443; font-size: 10.5px; font-weight: 700; }
+.pending-collection-list { display: grid; gap: 8px; }
+.pending-collection-card { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 12px 14px; border: 1px solid #d9e6f2; border-radius: 10px; background: linear-gradient(135deg, #fff, #fbfdff); }
+.pending-collection-card h3 { margin: 6px 0 3px; color: #244665; font-size: 11px; }
+.pending-collection-card p { margin: 0; color: #748aa0; direction: ltr; font: 9px 'IBM Plex Mono', monospace; text-align: right; }
+.pending-status { display: inline-flex; align-items: center; gap: 5px; color: #9a6400; font-size: 9px; font-weight: 700; }
+.pending-status i { display: grid; place-items: center; width: 19px; height: 19px; border-radius: 50%; background: #fff2ce; color: #9a6400; font-size: 12px; }
+.pending-collect-btn { flex: 0 0 auto; padding: 8px 10px; border: 1px solid #9bc5ec; border-radius: 8px; background: #edf6ff; color: #1768bd; }
+@media (max-width: 640px) { .pending-collection-card { align-items: flex-start; flex-direction: column; } }
 .collection-a4 .word-page-1 { font-family: Georgia, 'Times New Roman', serif; color: #000; font-size: 13px; line-height: 1.22; }
 .collection-a4 .word-page-1 p { margin: 0 0 13px; font-size: 13px; line-height: 1.22; }
 .collection-a4 .word-page-1 .word-date { margin-bottom: 23px; }
