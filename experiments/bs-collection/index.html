@@ -18,6 +18,13 @@
   </header>
 
   <main class="lab-shell">
+    <nav id="portalStepGrid" class="portal-step-grid" aria-label="مراحل بوابة الإرسال">
+      <button class="portal-step-card" type="button" data-step-section="picker-section"><span class="step-number">01</span><i class="bx bx-package"></i><strong>اختيار الشحنات</strong><small data-step-description="picker-section">جاري تحميل شحنات بحر سواكن...</small></button>
+      <button class="portal-step-card" type="button" data-step-section="draft-section"><span class="step-number">02</span><i class="bx bx-file"></i><strong>مسودة الإرسال للبنك المُرسل</strong><small data-step-description="draft-section">اختر شحنة واحدة أو أكثر لبدء المعاينة.</small></button>
+      <button class="portal-step-card" type="button" data-step-section="settings-section"><span class="step-number">03</span><i class="bx bx-edit-alt"></i><strong>بيانات الإرسال للبنك المُرسل</strong><small data-step-description="settings-section">مسودة محلية لهذه التجربة فقط، ولا يتم حفظها.</small></button>
+      <button class="portal-step-card" type="button" data-step-section="preview-section"><span class="step-number">04</span><i class="bx bx-show"></i><strong>معاينة مستندات الإرسال</strong><small data-step-description="preview-section">تتحدث فوراً من مسودة الإرسال المحلية.</small></button>
+      <button class="portal-step-card" type="button" data-step-section="collection-portal-section"><span class="step-number">05</span><i class="bx bx-building-house"></i><strong>بوابة التحصيل</strong><small data-step-description="collection-portal-section">المستندات المرسلة للبنك المُرسل والتي تنتظر التحصيل.</small></button>
+    </nav>
     <section class="lab-section picker-section">
       <div class="section-heading"><div class="collapsible-heading-title"><span>01</span><h2>اختيار الشحنات</h2><button class="section-collapse-btn" type="button" data-collapse-section="picker-section" aria-expanded="true" title="طي القسم"><i class="bx bx-chevron-up"></i></button></div><p id="shipmentCount">جاري تحميل شحنات بحر سواكن...</p></div>
       <div class="filters"><label><i class="bx bx-search"></i><input id="searchInput" type="search" placeholder="ابحث برقم الشحنة أو الصنف أو الفاتورة أو البوليصة أو المستورد"></label><select id="currencyFilter"><option value="">كل العملات</option></select><select id="consigneeFilter"><option value="">كل المستوردين</option></select></div>

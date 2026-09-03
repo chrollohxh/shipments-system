@@ -11,6 +11,7 @@ const collectionTextBlockOffsetStorageKey = 'bsCollectionTextBlockOffsets';
 const collectionTextStyleStorageKey = 'bsCollectionTextStyles';
 const remittingSubmissionStorageKey = 'bsCollectionRemittingSubmissions';
 const sectionCollapseStorageKey = 'bsCollectionSectionCollapsed';
+const portalSectionNames = ['picker-section','draft-section','settings-section','preview-section','collection-portal-section'];
 let textBlockEditMode = false;
 let selectedTextBlock = null;
 let selectedTextStyle = null;
@@ -42,6 +43,23 @@ function setSectionCollapsed(sectionName, collapsed){
   button.innerHTML=collapsed?'<i class="bx bx-chevron-down"></i>':'<i class="bx bx-chevron-up"></i>';
   const state=sectionCollapseState(); state[sectionName]=collapsed;
   try { localStorage.setItem(sectionCollapseStorageKey,JSON.stringify(state)); } catch (_) {}
+  renderPortalStepGrid();
+}
+function renderPortalStepGrid(){
+  document.querySelectorAll('[data-step-section]').forEach(card=>{
+    const sectionName=card.dataset.stepSection, section=document.querySelector(`.${sectionName}`);
+    const isActive=Boolean(section&&!section.classList.contains('section-is-collapsed'));
+    card.classList.toggle('is-active',isActive);
+    card.setAttribute('aria-current',isActive?'step':'false');
+    const source=section?.querySelector('.section-heading > p');
+    const description=card.querySelector('[data-step-description]');
+    if(source&&description) description.textContent=source.textContent.trim();
+  });
+}
+function openPortalSection(sectionName){
+  portalSectionNames.forEach(name=>setSectionCollapsed(name,name!==sectionName));
+  renderPortalStepGrid();
+  document.querySelector(`.${sectionName}`)?.scrollIntoView({behavior:'smooth',block:'start'});
 }
 function collectionTextOffsets(){ try { return JSON.parse(localStorage.getItem(collectionTextOffsetStorageKey)||'{}')||{}; } catch (_) { return {}; } }
 function textOffsetForPreview(){ return Object.assign({x:0,y:0}, collectionTextOffsets()[state.preview]||{}); }
@@ -295,7 +313,8 @@ async function init(){
   loadCollectionLists();
   loadRemittingBatches();
   const collapsed=sectionCollapseState();
-  document.querySelectorAll('[data-collapse-section]').forEach(button=>setSectionCollapsed(button.dataset.collapseSection,Boolean(collapsed[button.dataset.collapseSection])));
+  const activeSection=portalSectionNames.find(name=>collapsed[name]===false)||'picker-section';
+  portalSectionNames.forEach(name=>setSectionCollapsed(name,name!==activeSection));
   populateCollectionSelects();
   renderCollectionListManager();
   Object.entries(state.settings).forEach(([key, value])=>{
@@ -332,6 +351,7 @@ document.querySelectorAll('[data-collapse-section]').forEach(button=>button.addE
   const sectionName=button.dataset.collapseSection;
   setSectionCollapsed(sectionName,!document.querySelector(`.${sectionName}`)?.classList.contains('section-is-collapsed'));
 }));
+document.querySelectorAll('[data-step-section]').forEach(card=>card.addEventListener('click',()=>openPortalSection(card.dataset.stepSection)));
 $('printAllBtn').addEventListener('click', printAllCollectionDocuments);
 $('resetStampBtn').addEventListener('click',()=>{ try { localStorage.removeItem('bsCollectionStampOffset'); } catch (_) {} renderPreview(); });
 $('textOffsetX').addEventListener('input',event=>saveTextOffset('x',event.target.value));
