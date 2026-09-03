@@ -37,6 +37,7 @@ function setPreviewCollapsed(collapsed){
   section.classList.toggle('preview-is-collapsed',collapsed);
   button.setAttribute('aria-expanded',String(!collapsed));
   button.title=collapsed?'فتح المعاينة':'طي المعاينة';
+  button.setAttribute('aria-label',button.title);
   button.innerHTML=collapsed?'<i class="bx bx-chevron-down"></i><span>فتح المعاينة</span>':'<i class="bx bx-chevron-up"></i><span>طي المعاينة</span>';
   try { localStorage.setItem(previewCollapseStorageKey,collapsed?'1':'0'); } catch (_) {}
 }

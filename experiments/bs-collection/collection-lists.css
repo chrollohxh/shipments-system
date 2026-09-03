@@ -35,9 +35,10 @@
 .pending-collect-btn { flex: 0 0 auto; padding: 8px 10px; border: 1px solid #9bc5ec; border-radius: 8px; background: #edf6ff; color: #1768bd; }
 @media (max-width: 640px) { .pending-collection-card { align-items: flex-start; flex-direction: column; } }
 .preview-heading-title { gap: 9px !important; }
-.preview-collapse-btn { display: inline-flex; align-items: center; gap: 6px; min-height: 31px; padding: 6px 11px; border: 1px solid #9ec5e8; border-radius: 9px; background: linear-gradient(135deg, #fff, #edf6ff); box-shadow: 0 2px 6px rgba(23, 104, 189, .1); color: #1768bd; cursor: pointer; font: 700 9px 'Noto Kufi Arabic', sans-serif; transition: .18s ease; }
-.preview-collapse-btn i { display: grid; place-items: center; width: 17px; height: 17px; border-radius: 5px; background: #1768bd; color: #fff; font-size: 15px; }
-.preview-collapse-btn:hover { border-color: #1768bd; box-shadow: 0 5px 12px rgba(23, 104, 189, .16); transform: translateY(-1px); }
+.preview-collapse-btn { display: grid; flex: 0 0 auto; place-items: center; width: 33px; height: 33px; padding: 0; border: 0; border-radius: 50%; background: #163d6d; box-shadow: 0 3px 9px rgba(22, 61, 109, .2); color: #fff; cursor: pointer; transition: .18s ease; }
+.preview-collapse-btn span { display: none; }
+.preview-collapse-btn i { font-size: 21px; line-height: 1; }
+.preview-collapse-btn:hover { background: #1768bd; box-shadow: 0 6px 14px rgba(23, 104, 189, .25); transform: translateY(-1px); }
 .preview-is-collapsed { padding-bottom: 14px; }
 .preview-is-collapsed > :not(.section-heading) { display: none; }
 @media print { .preview-is-collapsed > .document-preview { display: block !important; } .preview-is-collapsed > .preview-tools, .preview-collapse-btn { display: none !important; } }
