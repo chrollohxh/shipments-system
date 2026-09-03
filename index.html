@@ -1801,6 +1801,53 @@ body.role-staff #backTop{display:none !important;}
 #viewRecords.bsgt-shipment-view .ship-tab.active{
   background:#1657a8;border-color:#1657a8;box-shadow:0 6px 16px rgba(22,87,168,.22);
 }
+/* BSGT outgoing header: visual arrangement only; the original tabs and buttons stay in place. */
+body:has(#viewRecords.bsgt-shipment-view) .o-control-panel{
+  position:relative;min-height:82px;margin:16px 22px 0;padding:18px 22px;
+  border:1px solid #dce7f2;border-radius:16px;background:#fff;
+  box-shadow:0 4px 13px rgba(23,55,89,.045);
+}
+body:has(#viewRecords.bsgt-shipment-view) .o-breadcrumb{gap:0;font-size:24px;font-weight:800;color:#173753;}
+body:has(#viewRecords.bsgt-shipment-view) .o-breadcrumb .crumb-parent,
+body:has(#viewRecords.bsgt-shipment-view) .o-breadcrumb .sep{display:none;}
+body:has(#viewRecords.bsgt-shipment-view) .o-cp-actions{margin-inline-start:auto;gap:12px;}
+body:has(#viewRecords.bsgt-shipment-view) #bsgtCollectionLabBtn,
+body:has(#viewRecords.bsgt-shipment-view) #bsgtNewBtn,
+body:has(#viewRecords.bsgt-shipment-view) .ship-tab{
+  min-height:44px;padding:0 19px;border-radius:11px;font-size:13px;font-weight:700;
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+}
+body:has(#viewRecords.bsgt-shipment-view) #bsgtCollectionLabBtn{border-color:#1768bd;background:#fff;color:#1768bd;}
+body:has(#viewRecords.bsgt-shipment-view) #bsgtNewBtn{padding-inline:21px;border-radius:11px;background:#86191f;box-shadow:0 5px 13px rgba(134,25,31,.22);}
+body:has(#viewRecords.bsgt-shipment-view) #bsgtNewBtn:before{display:none;}
+body:has(#viewRecords.bsgt-shipment-view) .wrap{padding-top:24px;}
+body:has(#viewRecords.bsgt-shipment-view) .ship-tabs{
+  position:relative;z-index:2;width:max-content;max-width:100%;margin:-79px auto 48px;
+  gap:12px;justify-content:center;
+}
+body:has(#viewRecords.bsgt-shipment-view) .ship-tab{
+  min-width:132px;border-color:#d6e2ee;background:#fff;color:#244665;
+}
+body:has(#viewRecords.bsgt-shipment-view) .ship-tab.active{
+  background:#1768bd;border-color:#1768bd;box-shadow:0 5px 13px rgba(23,104,189,.22);
+}
+body:has(#viewRecords.bsgt-shipment-view) .ship-tab .st-badge{
+  min-width:21px;height:21px;background:#e8f1fa;color:#356386;font-size:11px;
+}
+body:has(#viewRecords.bsgt-shipment-view) .ship-tab.active .st-badge{background:rgba(255,255,255,.22);color:#fff;}
+@media (max-width:1080px){
+  body:has(#viewRecords.bsgt-shipment-view) .o-control-panel{min-height:auto;}
+  body:has(#viewRecords.bsgt-shipment-view) .ship-tabs{margin:14px 0 18px;}
+}
+@media (max-width:640px){
+  body:has(#viewRecords.bsgt-shipment-view) .o-control-panel{margin:12px 12px 0;padding:15px;}
+  body:has(#viewRecords.bsgt-shipment-view) .o-breadcrumb{width:100%;font-size:20px;}
+  body:has(#viewRecords.bsgt-shipment-view) .o-cp-actions{width:100%;margin:0;flex-wrap:wrap;}
+  body:has(#viewRecords.bsgt-shipment-view) #bsgtCollectionLabBtn,
+  body:has(#viewRecords.bsgt-shipment-view) #bsgtNewBtn{flex:1;padding-inline:10px;font-size:11px;}
+  body:has(#viewRecords.bsgt-shipment-view) .ship-tabs{width:100%;margin-top:12px;}
+  body:has(#viewRecords.bsgt-shipment-view) .ship-tab{flex:1;min-width:0;padding-inline:10px;font-size:12px;}
+}
 #viewRecords.bsgt-shipment-view .ledger{background:transparent;border:0;box-shadow:none;overflow:visible;}
 #viewRecords.bsgt-shipment-view .ledger-row.head{display:none;}
 #viewRecords.bsgt-shipment-view #issuedBody,
