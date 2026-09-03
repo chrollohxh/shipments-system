@@ -1769,6 +1769,18 @@ body.role-staff #navRecords,
 body.role-staff .ship-tabs,
 body.role-staff #backTop{display:none !important;}
 
+/* مستخدم بحر سواكن يرى البوابة المختصة فقط. */
+body.role-bsgt-user #navDashboard,
+body.role-bsgt-user #navTasks,
+body.role-bsgt-user #navCreateShip,
+body.role-bsgt-user #navOperations,
+body.role-bsgt-user #navActivityLog,
+body.role-bsgt-user #navReview,
+body.role-bsgt-user #navMoney,
+body.role-bsgt-user #navWallet,
+body.role-bsgt-user #navAdmin,
+body.role-bsgt-user #backTop{display:none !important;}
+
 /* ===== تبويبات الشحنات الداخلية ===== */
 .ship-tabs{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;}
 .ship-tab{
@@ -1866,6 +1878,7 @@ body:has(#viewRecords.bsgt-shipment-view) .ship-tab.active .st-badge{background:
 .bsgt-card-kind{font-size:11px;font-weight:700;color:#71839a;margin-inline-start:auto;}
 .bsgt-card-collection-status{display:inline-flex;align-items:center;gap:4px;padding:3px 7px;border:1px solid;border-radius:999px;font-size:9.5px;font-weight:700;white-space:nowrap;}
 .bsgt-card-collection-status .ic{font-size:12px!important;}
+.bsgt-card-collection-status.pending{border-color:#d6e0ec;background:#f7fafc;color:#61758b;}
 .bsgt-card-collection-status.sent{border-color:#efd7a8;background:#fff8e9;color:#9a6400;}
 .bsgt-card-collection-status.collected{border-color:#b9e2c6;background:#ecf9ef;color:#167a48;}
 .bsgt-card-arrow{color:#91a5bd;font-size:20px;line-height:1;}
@@ -6014,6 +6027,7 @@ let currentUser = null;
 function isAdmin(){ return currentUser && currentUser.role === 'admin'; }
 function isEditor(){ return currentUser && ['admin','editor','staff'].includes(currentUser.role); }
 function isStaffRole(){ return currentUser && currentUser.role === 'staff'; }
+function isBsgtPortalUser(){ return currentUser && currentUser.role === 'bsgt_user'; }
 function canEdit(){ return isEditor(); }
 function findUser(email){
   const u = (email||'').trim().toLowerCase();
@@ -6202,7 +6216,7 @@ function unlockApp(){
   document.getElementById('lockScreen').classList.add('hidden');
   document.getElementById('loginPass').value = '';
   document.getElementById('lockErr').textContent = '';
-  const roleAr = {admin:'مدير', editor:'محرر', viewer:'مشاهد', staff:'موظف'}[currentUser.role] || 'مستخدم';
+  const roleAr = {admin:'مدير', editor:'محرر', viewer:'مشاهد', staff:'موظف', bsgt_user:'مستخدم BSGT'}[currentUser.role] || 'مستخدم';
   document.getElementById('tsUser').textContent = `${currentUser.displayName} · ${roleAr}`;
   document.getElementById('navAdmin').style.display = '';
   document.getElementById('navReview').style.display = '';
@@ -6210,6 +6224,10 @@ function unlockApp(){
   document.getElementById('navWallet').style.display = '';
   applyPermissionsUi();
   refreshProfileChip();
+  if(isBsgtPortalUser()){
+    switchView('bsgt');
+    return;
+  }
   renderDashboard();
 }
 
@@ -6223,6 +6241,7 @@ function applyPermissionsUi(){
   document.body.classList.toggle('role-viewer', !ed);
   document.body.classList.toggle('role-admin', isAdmin());
   document.body.classList.toggle('role-staff', isStaffRole());
+  document.body.classList.toggle('role-bsgt-user', isBsgtPortalUser());
   const sbt = document.getElementById('saveBtnTxt');
   if(sbt) sbt.textContent = isStaffRole() ? 'حفظ ومراجعة قبل الإرسال' : 'حفظ وإرسال';
 }
@@ -6465,7 +6484,7 @@ function openProfile(){
   if(!currentUser) return;
   document.getElementById('pfAvatar').innerHTML = avatarHtml(currentUser, true);
   document.getElementById('pfName').textContent = currentUser.displayName || currentUser.username;
-  document.getElementById('pfRole').textContent = {admin:'مدير النظام', editor:'محرر', viewer:'مشاهد فقط', staff:'موظف'}[currentUser.role] || 'مستخدم';
+  document.getElementById('pfRole').textContent = {admin:'مدير النظام', editor:'محرر', viewer:'مشاهد فقط', staff:'موظف', bsgt_user:'مستخدم بوابة BSGT'}[currentUser.role] || 'مستخدم';
   document.getElementById('pfLast').textContent = 'آخر دخول: ' + (currentUser.lastLogin ? timeAgo(currentUser.lastLogin) : '—');
   document.getElementById('pf_displayName').value = currentUser.displayName || '';
   document.getElementById('pf_username').value = currentUser.email || '';
@@ -6550,7 +6569,7 @@ document.getElementById('pfSaveBtn').addEventListener('click', async ()=>{
   }catch(e){ show('تعذّر حفظ البيانات: '+(e.message||'')); return; }
 
   currentUser.displayName = newName;
-  const roleAr = {admin:'مدير', editor:'محرر', viewer:'مشاهد'}[currentUser.role] || 'مستخدم';
+  const roleAr = {admin:'مدير', editor:'محرر', viewer:'مشاهد', staff:'موظف', bsgt_user:'مستخدم BSGT'}[currentUser.role] || 'مستخدم';
   refreshProfileChip();
   document.getElementById('tsUser').textContent = `${currentUser.displayName} · ${roleAr}`;
   const me = users.find(u=>u.id===currentUser.id);
@@ -6772,7 +6791,7 @@ document.getElementById('usersList').addEventListener('click', async (e)=>{
   else if(e.target.classList.contains('act-role')){
     const admins = users.filter(x=>x.role==='admin').length;
     if(u.role==='admin' && admins<=1){ alert('لازم يفضل مدير واحد على الأقل.'); return; }
-    const order = ['admin','editor','staff','viewer'];
+    const order = ['admin','editor','staff','viewer','bsgt_user'];
     const next = order[(order.indexOf(u.role)+1) % order.length];
     try{ await dbUpdateProfile(u.id, {role: next}); }
     catch(err){ dbError(err,'تعذّر تغيير الصلاحية'); return; }
@@ -6790,7 +6809,7 @@ document.getElementById('usersList').addEventListener('click', async (e)=>{
     alert('حذف الحسابات نهائياً يتم من لوحة Supabase (Authentication ← Users).\n\nتقدر توقف الحساب من هنا بدل الحذف.');
   }
 });
-const ROLE_AR = {admin:'مدير', editor:'محرر', viewer:'مشاهد', staff:'موظف'};
+const ROLE_AR = {admin:'مدير', editor:'محرر', viewer:'مشاهد', staff:'موظف', bsgt_user:'مستخدم BSGT'};
 
 document.getElementById('addUserBtn').addEventListener('click', async ()=>{
   const email = prompt('البريد الإلكتروني للموظف الجديد:');
@@ -6799,6 +6818,7 @@ document.getElementById('addUserBtn').addEventListener('click', async ()=>{
   const displayName = prompt('الاسم الظاهر:', email.split('@')[0]) || email.split('@')[0];
   const pass = prompt('كلمة مرور مبدئية (6 حروف على الأقل):');
   if(!pass || pass.length<6){ alert('كلمة المرور قصيرة جداً.'); return; }
+  const bsgtOnly = confirm('هل يقتصر هذا المستخدم على بوابة شحنات بحر سواكن ومختبر التحصيل فقط؟');
   netStart();
   try{
     const {data, error} = await getSignupClient().auth.signUp({
@@ -6810,13 +6830,22 @@ document.getElementById('addUserBtn').addEventListener('click', async ()=>{
     await loadUsers(); renderUsers();
     const created = findUser(email);
     if(created && displayName){
-      try{ await dbUpdateProfile(created.id, {display_name: displayName}); created.displayName = displayName; renderUsers(); }catch(e){}
+      try{
+        await dbUpdateProfile(created.id, {display_name: displayName, role: bsgtOnly ? 'bsgt_user' : created.role});
+        created.displayName = displayName;
+        if(bsgtOnly) created.role = 'bsgt_user';
+        renderUsers();
+      }catch(e){
+        if(bsgtOnly) alert('تم إنشاء الحساب، لكن تعذّر تعيين صلاحية مستخدم BSGT. شغّل ملف SQL الخاص ببوابة BSGT في Supabase ثم غيّر الصلاحية من لوحة المستخدمين.');
+      }
     }
     addLog('add','إضافة مستخدم: '+email);
     if(data && data.user && !data.session && data.user.confirmation_sent_at){
       alert('تم إنشاء الحساب ✓\n\nالنظام أرسل رسالة تأكيد على بريده. لازم يفتحها ويأكّد قبل ما يقدر يدخل.\n\nلو عايز تلغي التأكيد: Supabase ← Authentication ← Users ← افتح الحساب ← Confirm.');
     }else{
-      alert('تم إنشاء الحساب ✓\n\nالصلاحية الافتراضية: مشاهد. غيّرها من زرار "تغيير الصلاحية".');
+      alert(bsgtOnly
+        ? 'تم إنشاء الحساب ✓\n\nالصلاحية: مستخدم BSGT — يرى شحنات بحر سواكن ومختبر التحصيل فقط.'
+        : 'تم إنشاء الحساب ✓\n\nالصلاحية الافتراضية: مشاهد. غيّرها من زرار "تغيير الصلاحية".');
     }
   }catch(e){ dbError(e, 'تعذّر إنشاء الحساب'); }
   finally{ netEnd(); }
@@ -7614,7 +7643,7 @@ function bsgtCollectionStatus(r){
   if(total>0 && paid>=total-.01) return {kind:'collected',label:'تم التحصيل',icon:'checkCircle'};
   if(r.collectionStatus==='sent') return {kind:'sent',label:'مرسلة للتحصيل',icon:'mail'};
   if(bsgtRemittingShipmentIds().has(String(r.id))) return {kind:'sent',label:'مرسلة للتحصيل',icon:'mail'};
-  return null;
+  return {kind:'pending',label:'بانتظار الإرسال',icon:'history'};
 }
 function bsgtShipmentCard(r, index, isDraft, missingHtml){
   const quantity = String(r.totalQty || r.qty || r.numberOfPackages || '').trim();
@@ -7634,7 +7663,7 @@ function bsgtShipmentCard(r, index, isDraft, missingHtml){
       <span class="bsgt-card-number">${String(index).padStart(2,'0')}</span>
       <span class="bsgt-card-icon">${icon(getShipmentIcon(r.itemDesc||'', r),21)}</span>
       <span class="bsgt-card-kind">${isDraft?'مسودة':'صادرة'}</span>
-      ${collectionStatus?`<span class="bsgt-card-collection-status ${collectionStatus.kind}" title="${collectionStatus.label}">${icon(collectionStatus.icon,12)}${collectionStatus.label}</span>`:''}
+      <span class="bsgt-card-collection-status ${collectionStatus.kind}" title="${collectionStatus.label}">${icon(collectionStatus.icon,12)}${collectionStatus.label}</span>
       <span class="bsgt-card-arrow" aria-hidden="true">‹</span>
     </div>
     <h3 title="${escapeHtml(r.itemDesc||'(بدون وصف)')}">${escapeHtml(r.itemDesc||'(بدون وصف)')}</h3>
@@ -8037,6 +8066,7 @@ window.addEventListener('hashchange', restoreFromHash);
 
 function switchView(v){
   closeAllOverlays();
+  if(isBsgtPortalUser() && v!=='bsgt') v='bsgt';
   const navKey = v; // قبل تحويلات التوافقية تحت، عشان تظليل القائمة الجانبية والعنوان يفضلوا صح
   currentCompanyScope = (v==='bsgt') ? 'bsgt' : 'general';
   // توافقية: الشاشات القديمة أصبحت تبويبات داخل شاشة الشحنات
