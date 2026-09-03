@@ -75,9 +75,15 @@
 .text-position-controls output { direction: ltr; color: var(--muted); font: 700 9px 'IBM Plex Mono', monospace; text-align: left; }
 .text-position-controls small { color: var(--muted); font-size: 8.5px; line-height: 1.55; }
 .text-position-controls .text-btn.is-active { color: #fff; background: var(--blue); border-radius: 6px; padding: 6px 8px; }
+.text-format-actions { display: flex; align-items: center; gap: 5px; padding-top: 3px; border-top: 1px solid #e7eef5; }
+.text-format-actions span { margin-inline-end: auto; color: #5f7993; font-size: 9px; font-weight: 700; }
+.text-format-actions button { min-width: 27px; height: 25px; border: 1px solid #cfdeeb; border-radius: 6px; background: #fff; color: #315c87; cursor: pointer; font: 700 11px Arial, sans-serif; }
+.text-format-actions button:hover:not(:disabled) { border-color: #1768bd; background: #edf6ff; }
+.text-format-actions button:disabled { cursor: not-allowed; opacity: .4; }
 .collection-page-content.is-text-layout-editing [data-text-block] { cursor: move; outline: 1px dashed rgba(23, 104, 189, .45); outline-offset: 3px; }
 .collection-page-content.is-text-layout-editing [data-text-block]:hover { background: rgba(23, 104, 189, .06); }
 .collection-page-content.is-text-layout-editing [data-text-block].is-text-block-selected { outline: 2px solid var(--blue); background: rgba(23, 104, 189, .1); }
+.collection-page-content.is-text-layout-editing .is-text-style-selected { outline: 1px solid #1768bd; outline-offset: 2px; background: rgba(23, 104, 189, .12); }
 @media print { .collection-page-content.is-text-layout-editing [data-text-block] { cursor: auto; outline: 0; background: transparent; } }
 .collection-list-controls { display: grid; grid-template-columns: minmax(180px, .8fr) minmax(220px, 1.6fr) auto; gap: 8px; }
 .collection-list-controls select, .collection-list-controls input { min-width: 0; padding: 9px; border: 1px solid var(--line); border-radius: 7px; background: #fff; color: var(--ink); font: 10px inherit; }

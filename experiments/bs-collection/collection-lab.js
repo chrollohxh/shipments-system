@@ -8,8 +8,10 @@ const esc = value => String(value ?? '').replace(/[&<>"']/g, c=>({'&':'&amp;','<
 const collectionListStorageKey = 'bsCollectionDataLists';
 const collectionTextOffsetStorageKey = 'bsCollectionTextOffsets';
 const collectionTextBlockOffsetStorageKey = 'bsCollectionTextBlockOffsets';
+const collectionTextStyleStorageKey = 'bsCollectionTextStyles';
 let textBlockEditMode = false;
 let selectedTextBlock = null;
+let selectedTextStyle = null;
 const collectionListFields = {
   remittingBank:{label:'البنك المُرسِل',defaults:['Abu Dhabi Islamic Bank']}, remittingBankLetterAddress:{label:'عنوان بنك الإرسال للخطاب',defaults:['Abu Dhabi, UAE']}, remittingBankAddress:{label:'عنوان بنك الإرسال للتعهد',defaults:['BANIYAS BRANCH BUILDING, 2ND FLOOR, BANIYAS EAST, P.O.BOX 313, ABU DHABI, UAE.']}, remittingBankAccountNo:{label:'رقم حساب بنك الإرسال',defaults:['19567664']}, collectingBank:{label:'بنك التحصيل',defaults:['SAUDI SUDANESE BANK']},
   collectingBankAddress:{label:'عنوان بنك التحصيل',defaults:['MAIN BRANCH, FREE ZONE AREA, PORT SUDAN, SUDAN']},
@@ -44,26 +46,55 @@ function saveTextBlockOffset(preview, index, offset){
   const offsets=collectionTextBlockOffsets(); offsets[preview]=offsets[preview]||{}; offsets[preview][index]=offset;
   try { localStorage.setItem(collectionTextBlockOffsetStorageKey,JSON.stringify(offsets)); } catch (_) {}
 }
+function collectionTextStyles(){ try { return JSON.parse(localStorage.getItem(collectionTextStyleStorageKey)||'{}')||{}; } catch (_) { return {}; } }
+function textStyleFor(preview, id){ return Object.assign({weight:'',size:0},collectionTextStyles()[preview]?.[id]||{}); }
+function saveTextStyle(preview, id, style){
+  const styles=collectionTextStyles(); styles[preview]=styles[preview]||{}; styles[preview][id]=style;
+  try { localStorage.setItem(collectionTextStyleStorageKey,JSON.stringify(styles)); } catch (_) {}
+}
+function applyTextStyle(node){
+  const style=textStyleFor(state.preview,node.dataset.textStyleId);
+  node.style.fontWeight=style.weight||'';
+  node.style.fontSize=style.size?`calc(1em + ${style.size}px)`:'';
+}
+function updateTextStyleControls(){
+  const enabled=Boolean(selectedTextStyle&&selectedTextStyle.preview===state.preview);
+  ['textStyleNormalBtn','textStyleBoldBtn','textStyleSmallerBtn','textStyleLargerBtn'].forEach(id=>$(id).disabled=!enabled);
+}
+function setSelectedTextStyle(change){
+  if(!selectedTextStyle||selectedTextStyle.preview!==state.preview) return;
+  const style=Object.assign(textStyleFor(selectedTextStyle.preview,selectedTextStyle.id),change);
+  saveTextStyle(selectedTextStyle.preview,selectedTextStyle.id,style);
+  renderPreview();
+}
 function updateTextBlockControls(){
   const reset=$('resetSelectedTextBlockBtn'); if(!reset) return;
   reset.hidden=!selectedTextBlock || selectedTextBlock.preview!==state.preview;
   $('toggleTextBlockModeBtn').classList.toggle('is-active',textBlockEditMode);
   $('toggleTextBlockModeBtn').innerHTML=textBlockEditMode?'<i class="bx bx-check"></i> اضغط على فقرة للتحريك':'<i class="bx bx-target-lock"></i> تحريك فقرة بالنقر';
+  updateTextStyleControls();
 }
 function prepareTextBlocks(content){
   if(selectedTextBlock && selectedTextBlock.preview!==state.preview) selectedTextBlock=null;
+  if(selectedTextStyle && selectedTextStyle.preview!==state.preview) selectedTextStyle=null;
   const blocks=[...content.children].filter(node=>!node.classList.contains('collection-flow-seals'));
   content.classList.toggle('is-text-layout-editing',textBlockEditMode);
   blocks.forEach((block,index)=>{
     const offset=textBlockOffset(state.preview,index);
     block.dataset.textBlock=String(index);
+    block.dataset.textStyleId=block.dataset.textStyleId||`block-${index}`;
     block.style.transform=`translate(${offset.x}px, ${offset.y}px)`;
     block.classList.toggle('is-text-block-selected',selectedTextBlock?.preview===state.preview&&selectedTextBlock.index===index);
+    applyTextStyle(block);
+    block.querySelectorAll('[data-text-style-id]').forEach(applyTextStyle);
   });
   if(textBlockEditMode) content.addEventListener('click',event=>{
     const block=event.target.closest('[data-text-block]'); if(!block||!content.contains(block)) return;
     event.preventDefault(); selectedTextBlock={preview:state.preview,index:Number(block.dataset.textBlock)};
+    const styleTarget=event.target.closest('[data-text-style-id]')||block;
+    selectedTextStyle={preview:state.preview,id:styleTarget.dataset.textStyleId};
     content.querySelectorAll('[data-text-block]').forEach(node=>node.classList.toggle('is-text-block-selected',node===block));
+    content.querySelectorAll('[data-text-style-id]').forEach(node=>node.classList.toggle('is-text-style-selected',node===styleTarget));
     updateTextBlockControls();
   });
   updateTextBlockControls();
@@ -242,6 +273,14 @@ $('resetTextOffsetBtn').addEventListener('click',()=>{
   renderPreview();
 });
 $('toggleTextBlockModeBtn').addEventListener('click',()=>{ textBlockEditMode=!textBlockEditMode; renderPreview(); });
+$('textStyleNormalBtn').addEventListener('click',()=>setSelectedTextStyle({weight:'',size:0}));
+$('textStyleBoldBtn').addEventListener('click',()=>setSelectedTextStyle({weight:'700'}));
+$('textStyleSmallerBtn').addEventListener('click',()=>{
+  if(!selectedTextStyle) return; const style=textStyleFor(selectedTextStyle.preview,selectedTextStyle.id); setSelectedTextStyle({size:Math.max(-5,style.size-1)});
+});
+$('textStyleLargerBtn').addEventListener('click',()=>{
+  if(!selectedTextStyle) return; const style=textStyleFor(selectedTextStyle.preview,selectedTextStyle.id); setSelectedTextStyle({size:Math.min(8,style.size+1)});
+});
 $('resetSelectedTextBlockBtn').addEventListener('click',()=>{
   if(!selectedTextBlock) return;
   const offsets=collectionTextBlockOffsets();
@@ -306,7 +345,7 @@ function renderPreview(){
   }else if(state.preview==='undertaking'){
     body=`<article class="document-paper word-page-2"><div class="undertaking-head"><div class="undertaking-date">Dated: <b>${esc(collectionDateText(s.collectionDate))}</b></div><div>THE MANAGER<br>TRADE FINANCE DEPARTMENT<br>${esc(s.remittingBank)}<br>${esc(s.remittingBankAddress)}</div></div><h2>UNDERTAKING LETTER UNDER Export Collection Docs</h2><table class="undertaking-refs"><thead><tr><th>REF #:</th><th></th><th></th><th></th></tr></thead><tbody>${undertakingRows}</tbody></table><p class="undertaking-dear">Dear Sir / Madam,</p><ol class="undertaking-terms"><li>We hereby certify to ${esc(s.remittingBank)} PJSC (the “<u><b>Bank</b></u>”) that all enclosed Documents and any other document in relation to the underlying shipment or goods as described in the enclosed documents are accurate, correct and complete documents in full force and effect at the date of this letter.</li><li>[We hereby acknowledge that we have submitted <mark>${esc(s.billOfLadingType)}</mark> and certify that the Bank is the only bank handling the collection as the remitting bank and that we have not submitted (nor will we submit) the above Documents as a duplicate presentation to any other bank inside or outside the United Arab Emirates. The Bank may take any action which the Bank considers, in its sole and absolute discretion, required or appropriate to comply with laws, regulations, sanctions regimes, international guidance, the Bank's policies and procedures and/or requests of courts or regulatory authorities relating to the detection and prevention of money laundering and terrorism financing.]</li><li>The Bank shall be under no obligation to make any payment to us as seller/exporter/drawer in respect of the collection until it has received full payment from the collecting/presenting bank.</li><li>The Bank is entitled to deduct any charges for its services rendered under this letter.</li><li>The Bank is not obliged to check the Documents before sending them to the collecting/presenting bank.</li><li>The Bank shall not be liable for any losses or damages arising out of any delay or failure by the Bank in performing its services under this letter.</li><li>We hereby agree to indemnify the Bank and hold it harmless against all actions, proceedings and claims brought or threatened against it, and against all losses, damages, costs and expenses (including legal or attorney's fees) relating thereto, where such actions, proceedings, claims, losses, damages, costs and expenses have arisen out of or are in connection with our instruction under this letter <mark>including us submitting “${esc(s.billOfLadingType)}” as transport document(s).</mark></li><li>We hereby agree that the collection documents will be handled in accordance with the Uniform Rules for Collections, ICC publication number 522 (URC 522) or any subsequent revision thereof to the extent these rules are consistent with the federal laws of the United Arab Emirates and the laws of the Emirate of Abu Dhabi and with the rules and principles Islamic Shariah as interpreted by the Internal Shariah Supervisory Committee of the Bank.</li></ol><div class="undertaking-signature">Sincerely,<br><br>For and on behalf of:<br><br><b>${esc(s.drawer)}</b><br><br>Name:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ${esc(s.authorizedPerson)}<br>Title:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ${esc(s.title)}<br><br><br>Signature:</div></article>`;
   }else{
-    body=`<article class="document-paper word-page-3"><h2>BILL OF EXCHANGE</h2><div class="boe-meta"><p><b>Amount:&nbsp;&nbsp; ${esc(amount)}</b></p><p><b>DATED:&nbsp;&nbsp; ${esc(collectionDateText(s.collectionDate))}</b></p></div><p class="boe-order"><b>AT&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ${esc(s.term)} PAY TO THE ORDER OF</b><br>${esc(s.remittingBank)}, ABU DHABI - UAE&nbsp;&nbsp;&nbsp; <b>A SUM OF ${esc(amount)}</b></p><p class="boe-words">${esc(amountWords(total).toLowerCase())} ${esc(currency)} only <b>BEING VALUE DRAWN UNDER INVOICE #</b></p><div class="boe-invoices">${rows.map(r=>`<div><b>${esc(r.invoiceNo||r.shipmentNo||'-')}</b><span><b>Dated:</b>&nbsp;&nbsp; ${esc(r.invoiceDate||'-')}</span></div>`).join('')}</div><div class="boe-drawn"><b>Drawn On</b><br>${esc(drawee)}<br>${esc(draweeAddress)}</div><div class="boe-drawer"><b>Drawer</b><br>${esc(s.drawer)}<br>307, ALWAHA 1 DEIRA, DUBAI - UAE +97145773892</div></article>`;
+    body=`<article class="document-paper word-page-3"><h2>BILL OF EXCHANGE</h2><div class="boe-meta"><p><b>Amount:&nbsp;&nbsp; ${esc(amount)}</b></p><p><b>DATED:&nbsp;&nbsp; ${esc(collectionDateText(s.collectionDate))}</b></p></div><p class="boe-order"><b>AT&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ${esc(s.term)} PAY TO THE ORDER OF</b><br>${esc(s.remittingBank)}, ABU DHABI - UAE&nbsp;&nbsp;&nbsp; <b>A SUM OF ${esc(amount)}</b></p><p class="boe-words">${esc(amountWords(total).toLowerCase())} ${esc(currency)} only <b>BEING VALUE DRAWN UNDER INVOICE #</b></p><div class="boe-invoices">${rows.map((r,index)=>`<div><b data-text-style-id="boe-invoice-${index}">${esc(r.invoiceNo||r.shipmentNo||'-')}</b><span><span data-text-style-id="boe-dated-label-${index}">Dated:</span>&nbsp;&nbsp; ${esc(r.invoiceDate||'-')}</span></div>`).join('')}</div><div class="boe-drawn"><b>Drawn On</b><br>${esc(drawee)}<br>${esc(draweeAddress)}</div><div class="boe-drawer"><b>Drawer</b><br>${esc(s.drawer)}<br>307, ALWAHA 1 DEIRA, DUBAI - UAE +97145773892</div></article>`;
   }
   $('documentPreview').innerHTML=body;
   applyCollectionBranding();
