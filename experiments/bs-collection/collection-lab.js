@@ -232,6 +232,24 @@ function prepareTextBlocks(content){
   });
   updateTextBlockControls();
 }
+function keepTextBlocksVisible(content){
+  const paper=content.closest('.collection-a4');
+  if(!paper) return;
+  const paperRect=paper.getBoundingClientRect();
+  const pxPerMm=(paperRect.width||1)/210;
+  const safeTop=content.getBoundingClientRect().top+49*pxPerMm;
+  const safeBottom=content.getBoundingClientRect().bottom-28*pxPerMm;
+  content.querySelectorAll('[data-text-block]').forEach(block=>{
+    const rect=block.getBoundingClientRect();
+    let correction=0;
+    if(rect.top<safeTop) correction=safeTop-rect.top;
+    else if(rect.bottom>safeBottom) correction=safeBottom-rect.bottom;
+    if(correction){
+      const offset=textBlockOffset(state.preview,Number(block.dataset.textBlock));
+      block.style.transform=`translate(${offset.x}px, ${offset.y+correction}px)`;
+    }
+  });
+}
 function populateCollectionSelects(){
   Object.keys(collectionListFields).forEach(key=>{
     const select=$('settingsForm').elements[key]; if(!select) return;
@@ -552,7 +570,7 @@ function printAllCollectionDocuments(){
   const popup = window.open('', '_blank');
   if(!popup){ alert('المتصفح منع نافذة الطباعة. اسمح بالنوافذ المنبثقة ثم حاول مرة أخرى.'); return; }
   popup.opener = null;
-  popup.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>BSGT Collection Documents</title><link rel="stylesheet" href="/experiments/bs-collection/collection-lab.css?v=20260903-6"><link rel="stylesheet" href="/experiments/bs-collection/collection-lists.css?v=20260903-6"><style>${brandCss}.print-page{break-after:page;page-break-after:always}.print-page:last-child{break-after:auto;page-break-after:auto}@media screen{body{background:#eaf0f6}.print-page{padding:12mm 0}}</style></head><body>${previews.map(page=>`<section class="print-page">${page}</section>`).join('')}</body></html>`);
+  popup.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>BSGT Collection Documents</title><link rel="stylesheet" href="/experiments/bs-collection/collection-lab.css?v=20260903-9"><link rel="stylesheet" href="/experiments/bs-collection/collection-lists.css?v=20260903-9"><style>${brandCss}.print-page{break-after:page;page-break-after:always}.print-page:last-child{break-after:auto;page-break-after:auto}@media screen{body{background:#eaf0f6}.print-page{padding:12mm 0}}</style></head><body>${previews.map(page=>`<section class="print-page">${page}</section>`).join('')}</body></html>`);
   popup.document.close();
   popup.onload = ()=>setTimeout(()=>popup.print(), 450);
 }
@@ -608,7 +626,7 @@ function applyCollectionBranding(){
       .collection-a4{position:relative;isolation:isolate;width:210mm!important;height:297mm!important;min-height:297mm!important;max-height:297mm!important;padding:0!important;overflow:hidden!important}
       .collection-a4>.collection-brand-layer{position:absolute;display:block;pointer-events:none}
       .collection-a4>.collection-brand-bg{inset:0;width:100%;height:100%;object-fit:fill;z-index:0}
-      .collection-a4>.collection-page-content{position:relative;z-index:1;display:flex;flex-direction:column;height:297mm;padding:53mm 17mm 52mm;overflow-wrap:anywhere;transform-origin:top left}
+      .collection-a4>.collection-page-content{position:relative;z-index:1;display:flex;flex-direction:column;height:297mm;padding:49mm 17mm 28mm;overflow-wrap:anywhere;transform-origin:top left}
       .collection-a4 .signature{margin-top:8mm!important;width:64mm!important;font-size:9.5px!important;line-height:1.25!important}
       .collection-a4 table,.collection-a4 table th,.collection-a4 table td{background:transparent!important;border-color:#000!important}
       .collection-a4 .document-total{background:transparent!important}
@@ -622,7 +640,7 @@ function applyCollectionBranding(){
       .collection-a4 .collection-stamp-overlay.is-selected .stamp-resize-handle{display:block}
       .collection-a4 .stamp-resize-handle.nw{top:-8px;left:-8px;cursor:nwse-resize}.collection-a4 .stamp-resize-handle.n{top:-8px;left:50%;margin-left:-4px;cursor:ns-resize}.collection-a4 .stamp-resize-handle.ne{top:-8px;right:-8px;cursor:nesw-resize}.collection-a4 .stamp-resize-handle.e{top:50%;right:-8px;margin-top:-4px;cursor:ew-resize}.collection-a4 .stamp-resize-handle.se{right:-8px;bottom:-8px;cursor:nwse-resize}.collection-a4 .stamp-resize-handle.s{bottom:-8px;left:50%;margin-left:-4px;cursor:ns-resize}.collection-a4 .stamp-resize-handle.sw{bottom:-8px;left:-8px;cursor:nesw-resize}.collection-a4 .stamp-resize-handle.w{top:50%;left:-8px;margin-top:-4px;cursor:ew-resize}
       .preview-tools{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.preview-tools .preview-tabs{margin-bottom:0}.preview-actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap}.stamp-hint{font-size:10px;color:#637d98}
-      @media print{@page{size:A4;margin:0}.collection-a4{width:210mm!important;height:297mm!important;min-height:297mm!important;max-height:297mm!important;margin:0!important;box-shadow:none!important}.collection-a4>.collection-page-content{height:297mm;padding:53mm 17mm 52mm}.collection-a4 .stamp-resize-handle{display:none!important}.collection-a4 .collection-stamp-overlay{outline:0!important}}
+      @media print{@page{size:A4;margin:0}.collection-a4{width:210mm!important;height:297mm!important;min-height:297mm!important;max-height:297mm!important;margin:0!important;box-shadow:none!important}.collection-a4>.collection-page-content{height:297mm;padding:49mm 17mm 28mm}.collection-a4 .stamp-resize-handle{display:none!important}.collection-a4 .collection-stamp-overlay{outline:0!important}}
     </style>`);
   }
   paper.classList.add('collection-a4');
@@ -642,6 +660,7 @@ function applyCollectionBranding(){
   paper.insertAdjacentHTML('beforeend', stampOverlay);
   prepareTextBlocks(content);
   fitCollectionContent(content);
+  keepTextBlocksVisible(content);
   wireCollectionStampDrag(paper);
 }
 
@@ -649,14 +668,7 @@ function fitCollectionContent(content){
   const translate = 'translate(var(--collection-text-x), var(--collection-text-y))';
   content.style.transform = translate;
   content.style.width = '';
-  const top = content.getBoundingClientRect().top;
-  const usedHeight = Math.max(content.scrollHeight, ...Array.from(content.children).map(node=>node.getBoundingClientRect().bottom - top));
-  const ratio = Math.min(1, content.clientHeight / Math.max(content.clientHeight, usedHeight));
-  if(ratio < .998){
-    const safeRatio = Math.max(.72, ratio);
-    content.style.transform = `${translate} scale(${safeRatio})`;
-    content.style.width = `${100 / safeRatio}%`;
-  }
+  content.dataset.fitScale='1';
 }
 
 function wireCollectionStampDrag(paper){
