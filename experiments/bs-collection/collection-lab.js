@@ -499,19 +499,17 @@ function applyCollectionBranding(){
 }
 
 function fitCollectionContent(content){
-  requestAnimationFrame(()=>{
-    const translate = 'translate(var(--collection-text-x), var(--collection-text-y))';
-    content.style.transform = translate;
-    content.style.width = '';
-    const top = content.getBoundingClientRect().top;
-    const usedHeight = Math.max(content.scrollHeight, ...Array.from(content.children).map(node=>node.getBoundingClientRect().bottom - top));
-    const ratio = Math.min(1, content.clientHeight / Math.max(content.clientHeight, usedHeight));
-    if(ratio < .998){
-      const safeRatio = Math.max(.72, ratio);
-      content.style.transform = `${translate} scale(${safeRatio})`;
-      content.style.width = `${100 / safeRatio}%`;
-    }
-  });
+  const translate = 'translate(var(--collection-text-x), var(--collection-text-y))';
+  content.style.transform = translate;
+  content.style.width = '';
+  const top = content.getBoundingClientRect().top;
+  const usedHeight = Math.max(content.scrollHeight, ...Array.from(content.children).map(node=>node.getBoundingClientRect().bottom - top));
+  const ratio = Math.min(1, content.clientHeight / Math.max(content.clientHeight, usedHeight));
+  if(ratio < .998){
+    const safeRatio = Math.max(.72, ratio);
+    content.style.transform = `${translate} scale(${safeRatio})`;
+    content.style.width = `${100 / safeRatio}%`;
+  }
 }
 
 function wireCollectionStampDrag(paper){
@@ -534,4 +532,5 @@ function wireCollectionStampDrag(paper){
   });
 }
 
+window.addEventListener('beforeprint',()=>document.querySelectorAll('.collection-page-content').forEach(fitCollectionContent));
 init();
