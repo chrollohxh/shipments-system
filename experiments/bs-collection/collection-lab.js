@@ -304,10 +304,17 @@ function renderDebug(){const d=detected();$('debugOutput').textContent=JSON.stri
 function renderCollectionPortal(){
   const list=$('pendingCollectionList'); if(!list) return;
   const batches=remittingBatches.map(batch=>Object.assign({},batch,{rows:batch.shipmentIds.map(id=>state.shipments.find(row=>row.id===id)).filter(Boolean)})).filter(batch=>batch.rows.length);
-  list.innerHTML=batches.length?batches.map(batch=>`<article class="pending-collection-card"><div><span class="pending-status"><i class="bx bx-time-five"></i> بانتظار التحصيل</span><h3>${esc(batch.rows.length)} شحنة مرسلة إلى ${esc(batch.remittingBank)}</h3><p>${esc(new Date(batch.sentAt).toLocaleString('ar-EG'))} · ${esc(batch.amount)}</p></div><button type="button" class="mini-btn pending-collect-btn" data-collect-batch="${esc(batch.id)}"><i class="bx bx-wallet"></i> بدء التحصيل</button></article>`).join(''):'<div class="empty-state">لا توجد مستندات بانتظار التحصيل.</div>';
+  list.innerHTML=batches.length?batches.map(batch=>`<article class="pending-collection-card"><div><span class="pending-status"><i class="bx bx-time-five"></i> بانتظار التحصيل</span><h3>${esc(batch.rows.length)} شحنة مرسلة إلى ${esc(batch.remittingBank)}</h3><p>${esc(new Date(batch.sentAt).toLocaleString('ar-EG'))} · ${esc(batch.amount)}</p></div><div class="pending-collection-actions"><button type="button" class="mini-btn pending-collect-btn" data-collect-batch="${esc(batch.id)}"><i class="bx bx-wallet"></i> بدء التحصيل</button><button type="button" class="mini-btn pending-cancel-btn" data-cancel-batch="${esc(batch.id)}"><i class="bx bx-undo"></i> إلغاء الإرسال</button></div></article>`).join(''):'<div class="empty-state">لا توجد مستندات بانتظار التحصيل.</div>';
   list.querySelectorAll('[data-collect-batch]').forEach(button=>button.addEventListener('click',()=>{
     const batch=remittingBatches.find(item=>item.id===button.dataset.collectBatch); if(!batch) return;
     state.selected=new Set(batch.shipmentIds); renderAll(); recordCollection();
+  }));
+  list.querySelectorAll('[data-cancel-batch]').forEach(button=>button.addEventListener('click',()=>{
+    const batch=remittingBatches.find(item=>item.id===button.dataset.cancelBatch); if(!batch) return;
+    if(!confirm(`إلغاء إرسال ${batch.shipmentIds.length} شحنة للبنك المُرسل؟ ستعود لحالتها العادية ولن يُسجل عليها تحصيل.`)) return;
+    remittingBatches=remittingBatches.filter(item=>item.id!==batch.id);
+    saveRemittingBatches(); renderAll();
+    showCollectionNotice('تم إلغاء الإرسال. عادت الشحنات إلى حالتها العادية ويمكن تجهيزها من جديد.');
   }));
 }
 function sendToRemittingBank(){

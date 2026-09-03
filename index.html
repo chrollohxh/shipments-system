@@ -7661,6 +7661,16 @@ function bindBsgtShipmentCards(body){
     });
   });
 }
+function refreshBsgtCollectionIndicators(){
+  if(currentCompanyScope==='bsgt'){
+    renderIssued();
+    renderDrafts();
+  }
+}
+window.addEventListener('pageshow', refreshBsgtCollectionIndicators);
+window.addEventListener('storage', event=>{
+  if(event.key===BSGT_REMITTING_SUBMISSIONS_KEY) refreshBsgtCollectionIndicators();
+});
 
 function renderIssued(){
   const q = (document.getElementById('issuedSearch').value||'').trim().toLowerCase();

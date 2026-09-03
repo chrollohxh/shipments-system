@@ -75,9 +75,11 @@ body, .lab-header, .lab-shell, button, input, select, textarea { font-family: 'I
 .pending-collection-card { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 12px 14px; border: 1px solid #d9e6f2; border-radius: 10px; background: linear-gradient(135deg, #fff, #fbfdff); }
 .pending-collection-card h3 { margin: 6px 0 3px; color: #244665; font-size: 11px; }
 .pending-collection-card p { margin: 0; color: #748aa0; direction: ltr; font: 9px 'IBM Plex Mono', monospace; text-align: right; }
+.pending-collection-actions { display: flex; flex: 0 0 auto; gap: 6px; }
 .pending-status { display: inline-flex; align-items: center; gap: 5px; color: #9a6400; font-size: 9px; font-weight: 700; }
 .pending-status i { display: grid; place-items: center; width: 19px; height: 19px; border-radius: 50%; background: #fff2ce; color: #9a6400; font-size: 12px; }
 .pending-collect-btn { flex: 0 0 auto; padding: 8px 10px; border: 1px solid #9bc5ec; border-radius: 8px; background: #edf6ff; color: #1768bd; }
+.pending-cancel-btn { padding: 8px 10px; border: 1px solid #e9c6c9; border-radius: 8px; background: #fff; color: #a54b52; }
 @media (max-width: 640px) { .pending-collection-card { align-items: flex-start; flex-direction: column; } }
 .collapsible-heading-title { gap: 9px !important; }
 .section-collapse-btn { display: grid; flex: 0 0 auto; place-items: center; width: 33px; height: 33px; padding: 0; border: 0; border-radius: 50%; background: #163d6d; box-shadow: 0 3px 9px rgba(22, 61, 109, .2); color: #fff; cursor: pointer; transition: .18s ease; }
