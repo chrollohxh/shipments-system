@@ -661,14 +661,22 @@ function fitCollectionContent(content){
 function wireCollectionStampDrag(paper){
   const stamp = paper.querySelector('.collection-flow-stamp');
   if(!stamp || portalRole!=='admin') return;
-  let saved = {x:0,y:0,scale:1};
+  let saved = {xMm:0,yMm:0,widthMm:0};
   try { saved = Object.assign(saved, JSON.parse(localStorage.getItem('bsCollectionStampOffset') || '{}')); } catch (_) {}
-  const baseWidth=stamp.getBoundingClientRect().width||1;
-  const baseHeight=stamp.getBoundingClientRect().height||1;
+  const paperRect=paper.getBoundingClientRect();
+  const pxPerMm=(paperRect.width||1)/210;
+  const defaultWidthMm=stamp.getBoundingClientRect().width/pxPerMm;
+  const defaultHeightMm=stamp.getBoundingClientRect().height/pxPerMm;
+  // Migrate the earlier pixel/scale value once, then keep one A4-based position for all pages.
+  if(!saved.widthMm){
+    saved.widthMm=defaultWidthMm*(Number(saved.scale)||1);
+    saved.xMm=(Number(saved.x)||0)/pxPerMm;
+    saved.yMm=(Number(saved.y)||0)/pxPerMm;
+  }
   const apply = () => {
-    stamp.style.left = `${saved.x}px`;
-    stamp.style.top = `${saved.y}px`;
-    stamp.style.width = `${Math.max(22,baseWidth*(Number(saved.scale)||1))}px`;
+    stamp.style.left = `${saved.xMm*pxPerMm}px`;
+    stamp.style.top = `${saved.yMm*pxPerMm}px`;
+    stamp.style.width = `${Math.max(12,saved.widthMm)*pxPerMm}px`;
   };
   apply();
   stamp.title = 'اسحب الختم للتحريك، وانقر لإظهار مقابض التكبير والتصغير';
@@ -676,20 +684,20 @@ function wireCollectionStampDrag(paper){
     event.preventDefault();
     stamp.classList.add('is-selected');
     const handle=event.target.dataset.resize||'';
-    const start = {x:event.clientX,y:event.clientY,baseX:saved.x,baseY:saved.y,baseScale:Number(saved.scale)||1};
+    const start = {x:event.clientX,y:event.clientY,baseX:saved.xMm,baseY:saved.yMm,baseWidth:saved.widthMm};
     stamp.setPointerCapture(event.pointerId);
     const move = point=>{
-      const dx=point.clientX-start.x, dy=point.clientY-start.y;
+      const dx=(point.clientX-start.x)/pxPerMm, dy=(point.clientY-start.y)/pxPerMm;
       if(!handle){
-        saved.x = start.baseX + dx;
-        saved.y = start.baseY + dy;
+        saved.xMm = start.baseX + dx;
+        saved.yMm = start.baseY + dy;
       }else{
         const horizontal=handle.includes('e')||handle.includes('w');
         const vertical=handle.includes('n')||handle.includes('s');
-        const delta=horizontal ? (handle.includes('e')?dx:-dx) : (handle.includes('s')?dy:-dy)*(baseWidth/baseHeight);
-        saved.scale=Math.max(.2,Math.min(5.5,start.baseScale+(delta/baseWidth)));
-        if(horizontal&&handle.includes('w')) saved.x=start.baseX+(baseWidth*start.baseScale-baseWidth*saved.scale);
-        if(vertical&&handle.includes('n')) saved.y=start.baseY+(baseHeight*start.baseScale-baseHeight*saved.scale);
+        const delta=horizontal ? (handle.includes('e')?dx:-dx) : (handle.includes('s')?dy:-dy)*(defaultWidthMm/defaultHeightMm);
+        saved.widthMm=Math.max(12,Math.min(110,start.baseWidth+delta));
+        if(horizontal&&handle.includes('w')) saved.xMm=start.baseX+(start.baseWidth-saved.widthMm);
+        if(vertical&&handle.includes('n')) saved.yMm=start.baseY+(start.baseWidth-saved.widthMm)*(defaultHeightMm/defaultWidthMm);
       }
       apply();
     };
