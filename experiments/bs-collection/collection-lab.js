@@ -120,12 +120,23 @@ function collectionTotal(rows){
 function updateConversionControls(){
   const button=$('convertToAedBtn'), rate=$('collectionExchangeRate'), preview=$('collectionConversionPreview');
   if(!button||!rate||!preview)return;
-  button.classList.toggle('is-active',state.convertToAed); button.textContent=state.convertToAed?'التحصيل بالدرهم AED':'تحويل إلى AED';
+  button.classList.toggle('is-active',state.convertToAed);
   rate.disabled=!state.convertToAed; rate.value=state.exchangeRate||'';
   const rows=selectedShipments();
-  if(!rows.length){ preview.textContent='اختر شحنة لعرض التحويل.'; return; }
+  const currencyLabel=$('compactCollectionCurrency');
+  if(!rows.length){ if(currencyLabel) currencyLabel.textContent='AED'; preview.textContent='اختر شحنة لعرض التحويل.'; return; }
   const result=collectionTotal(rows);
+  if(currencyLabel) currencyLabel.textContent=state.convertToAed?'AED':result.source.currency;
+  button.title=state.convertToAed?'التحصيل بالدرهم AED - اضغط للعودة للعملة الأصلية':'اضغط للتحويل إلى AED';
   preview.textContent=result.converted?`${formatMoney(result.source.currency,result.source.number)} × ${result.rate} = ${formatMoney('AED',result.number)}`:state.convertToAed?'الشحنة بعملة AED بالفعل.':'يظهر التحويل هنا بعد التفعيل.';
+}
+function renderCollectionSummary(){
+  const {rows,currencies}=detected(), action=$('compactRecordCollectionBtn');
+  const collection=rows.length&&currencies.length===1?collectionTotal(rows):null;
+  $('compactCollectionCount').textContent=rows.length;
+  $('compactShipmentCount').textContent=rows.length;
+  $('compactCollectionTotal').textContent=collection?formatMoney(collection.currency,collection.number):(rows.length?'عملات متعددة':'-');
+  action.disabled=!rows.length;
 }
 function renderPicker(){
   const search=$('searchInput').value.trim().toLowerCase(), cur=$('currencyFilter').value, consignee=$('consigneeFilter').value;
@@ -157,7 +168,7 @@ function renderPreview(){
   $('documentPreview').innerHTML=body;
 }
 function renderDebug(){const d=detected();$('debugOutput').textContent=JSON.stringify({selectedShipmentIds:[...state.selected],originalValues:state.shipments.filter(s=>state.selected.has(s.id)),overrides:state.overrides,totals:d.totals,detectedCurrency:d.currencies,detectedConsignee:d.consignees},null,2);}
-function renderAll(){renderPicker();renderDraft();renderPreview();updateConversionControls();renderDebug();}
+function renderAll(){renderPicker();renderDraft();renderCollectionSummary();renderPreview();updateConversionControls();renderDebug();}
 function fillFilters(){const currencies=[...new Set(state.shipments.map(s=>moneyInfo(s.totalAmount).currency).filter(c=>c!=='—'))].sort(), consignees=[...new Set(state.shipments.map(s=>s.consignee).filter(Boolean))].sort();$('currencyFilter').innerHTML='<option value="">كل العملات</option>'+currencies.map(v=>`<option>${esc(v)}</option>`).join('');$('consigneeFilter').innerHTML='<option value="">كل المستوردين</option>'+consignees.map(v=>`<option>${esc(v)}</option>`).join('');}
 async function recordCollection(){
   const rows=selectedShipments();
@@ -171,8 +182,9 @@ async function recordCollection(){
   const convertedTotal=collectionTotal(eligible);
   const summary=convertedTotal.converted?`${sourceSummary}\n= ${formatMoney('AED',convertedTotal.number)} بسعر ${convertedTotal.rate}`:sourceSummary;
   if(!confirm(`سيتم تسجيل التحصيل الكامل المتبقي لـ ${eligible.length} شحنة:\n${summary}\n\nهل تؤكد تسجيل التحصيل؟`)) return;
-  const button=$('recordCollectionBtn'), original=button.innerHTML;
-  button.disabled=true; button.textContent='جارٍ تسجيل التحصيل...';
+  const buttons=[$('recordCollectionBtn'),$('compactRecordCollectionBtn')].filter(Boolean);
+  const originals=buttons.map(button=>button.innerHTML);
+  buttons.forEach(button=>{button.disabled=true;button.textContent='جارٍ تسجيل التحصيل...';});
   try{
     const paidOn=state.settings.collectionDate||new Date().toISOString().slice(0,10);
     const rowsToInsert=eligible.map(row=>{const source=moneyInfo(row.totalAmount), converted=collectionMoney(`${source.currency} ${remainingOf(row)}`); return {shipment_id:row.id,amount:remainingOf(row),currency:source.currency,paid_on:paidOn,method:'تحصيل مستندات BSGT',reference:row.invoiceNo||row.shipmentNo,note:`تم التسجيل من بوابة مستندات التحصيل - بحر سواكن${converted.converted?` | تم التحصيل فعلياً: ${formatMoney('AED',converted.number)} بسعر صرف ${converted.rate}`:''}`};});
@@ -184,7 +196,7 @@ async function recordCollection(){
   }catch(error){
     const message=error?.message||String(error);
     alert(`تعذّر تسجيل التحصيل. ${message.includes('payments')?'تأكد من تشغيل ملف 6_التحصيل_والمستحقات.sql في Supabase ومن صلاحية المستخدم.':message}`);
-  }finally{ button.disabled=false; button.innerHTML=original; }
+  }finally{ buttons.forEach((button,index)=>{button.disabled=false;button.innerHTML=originals[index];}); }
 }
 async function init(){
   loadCollectionLists();
@@ -200,6 +212,7 @@ $('settingsForm').addEventListener('input',event=>{if(!event.target.name)return;
 $('settingsForm').addEventListener('change',event=>{if(!event.target.name)return;state.settings[event.target.name]=event.target.value;renderPreview();renderDebug();});
 $('convertToAedBtn').addEventListener('click',()=>{state.convertToAed=!state.convertToAed;renderAll();});
 $('collectionExchangeRate').addEventListener('input',event=>{state.exchangeRate=Number(event.target.value)||0;renderAll();});
+$('compactRecordCollectionBtn').addEventListener('click',recordCollection);
 $('collectionListField').addEventListener('change',renderCollectionListManager);
 $('addCollectionListValue').addEventListener('click',()=>{
   const key=$('collectionListField').value, input=$('collectionListValue'), value=input.value.trim();
