@@ -37,8 +37,7 @@
       <div class="section-heading"><div><span>03</span><h2>بيانات التحصيل</h2></div><p>مسودة محلية لهذه التجربة فقط، ولا يتم حفظها.</p></div>
       <form id="settingsForm" class="settings-grid" autocomplete="off">
         <label>تاريخ التحصيل<input name="collectionDate" type="date"></label>
-        <label>عملة التحصيل<button id="convertToAedBtn" type="button" class="collection-currency-btn">تحويل إلى AED</button></label>
-        <label>سعر الصرف إلى الدرهم<input id="collectionExchangeRate" type="number" min="0" step="0.0001" value="3.6725" disabled><small id="collectionConversionPreview">اختر شحنة لعرض التحويل.</small></label>
+        <div class="collection-conversion-row span2"><label class="collection-currency-control">عملة التحصيل<button id="convertToAedBtn" type="button" class="collection-currency-btn">تحويل إلى AED</button></label><label class="exchange-rate-control">سعر الصرف<div class="exchange-rate-field"><input id="collectionExchangeRate" type="number" min="0" step="0.0001" value="3.6725" disabled><span>AED</span></div></label><small id="collectionConversionPreview">اختر شحنة لعرض التحويل.</small></div>
         <label>البنك المُرسِل<select name="remittingBank"></select></label>
         <label>عنوان بنك الإرسال للخطاب<select name="remittingBankLetterAddress"></select></label>
         <label>عنوان بنك الإرسال للتعهد<select name="remittingBankAddress"></select></label>

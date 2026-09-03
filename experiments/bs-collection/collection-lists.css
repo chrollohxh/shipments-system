@@ -1,8 +1,18 @@
 .span-all { grid-column: 1 / -1; }
 .settings-grid select { width: 100%; padding: 10px; border: 1px solid var(--line); border-radius: 8px; background: #fff; color: var(--ink); font: 11px inherit; outline: none; }
-.collection-currency-btn { width: 100%; padding: 10px; border: 1px solid #b9d2ea; border-radius: 8px; background: #fff; color: #315c87; font: 700 11px inherit; cursor: pointer; }
-.collection-currency-btn.is-active { border-color: #157957; background: #e7f8ef; color: #157957; }
-#collectionConversionPreview { display: block; margin-top: 4px; color: var(--muted); font-size: 9px; font-weight: 400; }
+.collection-conversion-row { grid-column: span 2; display: grid; grid-template-columns: minmax(155px, 1fr) 118px; gap: 10px; align-items: end; padding: 10px 11px 8px; border: 1px solid #d6e4f1; border-radius: 11px; background: linear-gradient(135deg, #fbfdff, #f2f8ff); }
+.collection-conversion-row label { min-width: 0; }
+.collection-currency-btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; width: 100%; min-height: 38px; padding: 8px 12px; border: 1px solid #8cb8e3; border-radius: 9px; background: #fff; box-shadow: 0 2px 6px rgba(36, 91, 143, .08); color: #205b96; font: 700 10px inherit; cursor: pointer; transition: .18s ease; }
+.collection-currency-btn::before { content: 'AED'; display: grid; place-items: center; min-width: 27px; height: 20px; border-radius: 5px; background: #e6f1ff; color: #1768bd; font: 700 8px 'IBM Plex Mono', monospace; }
+.collection-currency-btn:hover { border-color: #1768bd; transform: translateY(-1px); }
+.collection-currency-btn.is-active { border-color: #157957; background: #157957; color: #fff; box-shadow: 0 4px 10px rgba(21, 121, 87, .2); }
+.collection-currency-btn.is-active::before { background: rgba(255,255,255,.18); color: #fff; }
+.exchange-rate-field { display: flex; align-items: center; min-height: 38px; overflow: hidden; border: 1px solid #b9d2ea; border-radius: 9px; background: #fff; }
+.settings-grid .exchange-rate-field input { min-width: 0; padding: 8px 6px 8px 3px; border: 0; border-radius: 0; background: transparent; font: 700 11px 'IBM Plex Mono', monospace; text-align: center; }
+.exchange-rate-field input:disabled { color: #9aaabb; }
+.exchange-rate-field span { padding: 0 8px; border-inline-start: 1px solid #e1eaf3; color: #5e7b98; font: 700 8px 'IBM Plex Mono', monospace; }
+#collectionConversionPreview { grid-column: 1 / -1; display: block; min-height: 13px; margin-top: -3px; color: var(--muted); font-size: 8.5px; font-weight: 400; direction: ltr; text-align: left; }
+@media (max-width: 640px) { .collection-conversion-row { grid-column: span 1; grid-template-columns: 1fr; } }
 .collection-a4 .word-page-1 { font-family: Georgia, 'Times New Roman', serif; color: #000; font-size: 13px; line-height: 1.22; }
 .collection-a4 .word-page-1 p { margin: 0 0 13px; font-size: 13px; line-height: 1.22; }
 .collection-a4 .word-page-1 .word-date { margin-bottom: 23px; }
