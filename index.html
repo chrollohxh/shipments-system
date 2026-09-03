@@ -7612,6 +7612,7 @@ function bsgtRemittingShipmentIds(){
 function bsgtCollectionStatus(r){
   const total=amountOf(r), paid=paidOf(r.id);
   if(total>0 && paid>=total-.01) return {kind:'collected',label:'تم التحصيل',icon:'checkCircle'};
+  if(r.collectionStatus==='sent') return {kind:'sent',label:'مرسلة للتحصيل',icon:'mail'};
   if(bsgtRemittingShipmentIds().has(String(r.id))) return {kind:'sent',label:'مرسلة للتحصيل',icon:'mail'};
   return null;
 }

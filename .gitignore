@@ -17,3 +17,8 @@
 # ملفات نظام التشغيل
 Thumbs.db
 .DS_Store
+.vercel
+.npm-cache
+.vercel-data
+.local-appdata
+.appdata
