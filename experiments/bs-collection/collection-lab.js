@@ -12,11 +12,13 @@ const collectionTextStyleStorageKey = 'bsCollectionTextStyles';
 const remittingSubmissionStorageKey = 'bsCollectionRemittingSubmissions';
 const sectionCollapseStorageKey = 'bsCollectionSectionCollapsed';
 const portalSectionNames = ['picker-section','draft-section','settings-section','preview-section','collection-portal-section'];
-const portalRoleLabels = {admin:'مدير النظام',editor:'محرر',staff:'موظف',viewer:'مشاهد'};
+const portalRoleLabels = {admin:'مدير النظام',editor:'محرر',staff:'موظف',viewer:'مشاهد',bsgt_user:'مستخدم BSGT'};
 let textBlockEditMode = false;
 let selectedTextBlock = null;
 let selectedTextStyle = null;
 let remittingBatches = [];
+let portalRole = '';
+let sharedCollectionBranding = {};
 const collectionListFields = {
   remittingBank:{label:'البنك المُرسِل',defaults:['Abu Dhabi Islamic Bank']}, remittingBankLetterAddress:{label:'عنوان بنك الإرسال للخطاب',defaults:['Abu Dhabi, UAE']}, remittingBankAddress:{label:'عنوان بنك الإرسال للتعهد',defaults:['BANIYAS BRANCH BUILDING, 2ND FLOOR, BANIYAS EAST, P.O.BOX 313, ABU DHABI, UAE.']}, remittingBankAccountNo:{label:'رقم حساب بنك الإرسال',defaults:['19567664']}, collectingBank:{label:'بنك التحصيل',defaults:['SAUDI SUDANESE BANK']},
   collectingBankAddress:{label:'عنوان بنك التحصيل',defaults:['MAIN BRANCH, FREE ZONE AREA, PORT SUDAN, SUDAN']},
@@ -35,6 +37,7 @@ function loadRemittingBatches(){ try { remittingBatches=JSON.parse(localStorage.
 function saveRemittingBatches(){ try { localStorage.setItem(remittingSubmissionStorageKey,JSON.stringify(remittingBatches)); } catch (_) {} }
 function setPortalUserProfile(user, profile){
   const name=profile?.display_name||user?.email?.split('@')[0]||'زائر';
+  portalRole=profile?.role||'';
   const role=portalRoleLabels[profile?.role]||'الحساب الحالي';
   $('portalUserName').textContent=name;
   $('portalUserRole').textContent=role;
@@ -64,6 +67,26 @@ async function loadPortalHeader(){
     console.warn('portal header',error);
     setPortalUserProfile(null,null);
     setPortalBrand(null);
+  }
+}
+function localCollectionBrandingSettings(){
+  try { return JSON.parse(localStorage.getItem('baharSwakenInvoicePreviewSettings') || '{}'); }
+  catch (_) { return {}; }
+}
+async function loadSharedCollectionBranding(company){
+  const remote=Object.assign({},company?.settings?.collectionBranding||{});
+  const local=localCollectionBrandingSettings();
+  const hasLocalAssets=Boolean(local.background||local.stamp||local.signature);
+  sharedCollectionBranding=remote;
+  // The existing admin browser is the migration source for the original A4 artwork.
+  if(portalRole==='admin' && hasLocalAssets){
+    const merged=Object.assign({},remote,local);
+    sharedCollectionBranding=merged;
+    if(JSON.stringify(remote)!==JSON.stringify(merged)){
+      const settings=Object.assign({},company.settings||{}, {collectionBranding:merged});
+      const {error}=await sb.from('companies').update({settings}).eq('id',company.id);
+      if(error) console.warn('collection branding sync',error);
+    }
   }
 }
 async function logoutPortal(){
@@ -418,7 +441,7 @@ async function init(){
   loadCollectionLists();
   loadRemittingBatches();
   const legacyRemittingBatches=[...remittingBatches];
-  loadPortalHeader();
+  await loadPortalHeader();
   const collapsed=sectionCollapseState();
   const activeSection=portalSectionNames.find(name=>collapsed[name]===false)||'picker-section';
   portalSectionNames.forEach(name=>setSectionCollapsed(name,name!==activeSection));
@@ -428,7 +451,7 @@ async function init(){
     const input = $('settingsForm').elements[key];
     if(input) input.value = value;
   });
-  try{const [{data:companies,error:ce},{data:rows,error:se},{data:paymentRows,error:pe}]=await Promise.all([sb.from('companies').select('*'),sb.from('shipments').select('*').order('updated_at',{ascending:false}),sb.from('payments').select('*').order('paid_on')]);if(ce)throw ce;if(se)throw se;if(pe)console.warn('payments',pe);state.payments={};(paymentRows||[]).forEach(payment=>(state.payments[payment.shipment_id]??=[]).push(payment));const bsgt=(companies||[]).find(c=>/بحر\s*سواكن|bahar\s*swaken/i.test(`${c.name_ar||''} ${c.name_en||''}`));if(!bsgt)throw new Error('لم يتم العثور على شركة بحر سواكن في بيانات الشركات.');state.shipments=(rows||[]).map(rowToShipment).filter(s=>s.companyId===bsgt.id);await migrateLegacyRemittingBatches(legacyRemittingBatches);rebuildRemittingBatches();fillFilters();renderAll();}catch(error){$('shipmentList').innerHTML=`<div class="empty-state">تعذّر تحميل مختبر التحصيل: ${esc(error.message||error)}. تأكد من تسجيل الدخول في النظام الأساسي أولاً.</div>`;$('shipmentCount').textContent='لم تُحمّل البيانات';}}
+  try{const [{data:companies,error:ce},{data:rows,error:se},{data:paymentRows,error:pe}]=await Promise.all([sb.from('companies').select('*'),sb.from('shipments').select('*').order('updated_at',{ascending:false}),sb.from('payments').select('*').order('paid_on')]);if(ce)throw ce;if(se)throw se;if(pe)console.warn('payments',pe);state.payments={};(paymentRows||[]).forEach(payment=>(state.payments[payment.shipment_id]??=[]).push(payment));const bsgt=(companies||[]).find(c=>/بحر\s*سواكن|bahar\s*swaken/i.test(`${c.name_ar||''} ${c.name_en||''}`));if(!bsgt)throw new Error('لم يتم العثور على شركة بحر سواكن في بيانات الشركات.');await loadSharedCollectionBranding(bsgt);state.shipments=(rows||[]).map(rowToShipment).filter(s=>s.companyId===bsgt.id);await migrateLegacyRemittingBatches(legacyRemittingBatches);rebuildRemittingBatches();fillFilters();renderAll();}catch(error){$('shipmentList').innerHTML=`<div class="empty-state">تعذّر تحميل مختبر التحصيل: ${esc(error.message||error)}. تأكد من تسجيل الدخول في النظام الأساسي أولاً.</div>`;$('shipmentCount').textContent='لم تُحمّل البيانات';}}
 ['searchInput','currencyFilter','consigneeFilter'].forEach(id=>$(id).addEventListener('input',renderPicker));
 $('settingsForm').addEventListener('input',event=>{if(!event.target.name)return;state.settings[event.target.name]=event.target.value;renderPreview();renderDebug();});
 $('settingsForm').addEventListener('change',event=>{if(!event.target.name)return;state.settings[event.target.name]=event.target.value;renderPreview();renderDebug();});
@@ -561,8 +584,7 @@ function renderPreview(){
 }
 
 function collectionBrandingSettings(){
-  try { return JSON.parse(localStorage.getItem('baharSwakenInvoicePreviewSettings') || '{}'); }
-  catch (_) { return {}; }
+  return Object.assign({},localCollectionBrandingSettings(),sharedCollectionBranding);
 }
 
 function applyCollectionBranding(){
