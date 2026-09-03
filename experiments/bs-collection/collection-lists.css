@@ -15,6 +15,7 @@
 .portal-step-card:nth-child(5) .step-number { color: #163d6d; }.portal-step-card:nth-child(5) > i { background: #e8eff8; color: #163d6d; }
 .portal-step-grid ~ .lab-section > .section-heading { display: none; }
 .portal-step-grid ~ .lab-section { margin-top: 3px; }
+.portal-step-grid ~ .lab-section.section-is-collapsed { display: none; }
 @media (max-width: 1180px) { .portal-step-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 760px) { .portal-step-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 460px) { .portal-step-grid { grid-template-columns: 1fr; } .portal-step-card { min-height: 132px; } }
@@ -60,7 +61,7 @@
 .section-collapse-btn:hover { background: #1768bd; box-shadow: 0 6px 14px rgba(23, 104, 189, .25); transform: translateY(-1px); }
 .section-is-collapsed { padding-bottom: 14px; }
 .section-is-collapsed > :not(.section-heading) { display: none; }
-@media print { .portal-step-grid, .section-is-collapsed > .preview-tools, .section-collapse-btn, .collection-portal-section { display: none !important; } .section-is-collapsed > .document-preview { display: block !important; } }
+@media print { .portal-step-grid, .section-is-collapsed > .preview-tools, .section-collapse-btn, .collection-portal-section { display: none !important; } .preview-section.section-is-collapsed, .section-is-collapsed > .document-preview { display: block !important; } }
 @media (max-width: 640px) { .collapsible-heading-title { flex-wrap: wrap; } }
 .collection-a4 .word-page-1 { font-family: Georgia, 'Times New Roman', serif; color: #000; font-size: 13px; line-height: 1.22; }
 .collection-a4 .word-page-1 p { margin: 0 0 13px; font-size: 13px; line-height: 1.22; }
