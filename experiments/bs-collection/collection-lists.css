@@ -2,7 +2,7 @@
 .settings-grid select { width: 100%; padding: 10px; border: 1px solid var(--line); border-radius: 8px; background: #fff; color: var(--ink); font: 11px inherit; outline: none; }
 .collection-conversion-row { grid-column: span 2; display: grid; grid-template-columns: minmax(155px, 1fr) 118px; gap: 10px; align-items: end; padding: 10px 11px 8px; border: 1px solid #d6e4f1; border-radius: 11px; background: linear-gradient(135deg, #fbfdff, #f2f8ff); }
 .collection-conversion-row label { min-width: 0; }
-.collection-currency-btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; width: 100%; min-height: 38px; padding: 8px 12px; border: 1px solid #8cb8e3; border-radius: 9px; background: #fff; box-shadow: 0 2px 6px rgba(36, 91, 143, .08); color: #205b96; font: 700 10px inherit; cursor: pointer; transition: .18s ease; }
+.collection-currency-btn { display: inline-flex; align-items: center; justify-content: center; justify-self: start; gap: 7px; width: min(160px, 100%); min-height: 38px; padding: 8px 12px; border: 1px solid #8cb8e3; border-radius: 9px; background: #fff; box-shadow: 0 2px 6px rgba(36, 91, 143, .08); color: #205b96; font: 700 10px inherit; cursor: pointer; transition: .18s ease; }
 .collection-currency-btn::before { content: 'AED'; display: grid; place-items: center; min-width: 27px; height: 20px; border-radius: 5px; background: #e6f1ff; color: #1768bd; font: 700 8px 'IBM Plex Mono', monospace; }
 .collection-currency-btn:hover { border-color: #1768bd; transform: translateY(-1px); }
 .collection-currency-btn.is-active { border-color: #157957; background: #157957; color: #fff; box-shadow: 0 4px 10px rgba(21, 121, 87, .2); }
