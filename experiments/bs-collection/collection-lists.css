@@ -110,9 +110,10 @@ body, .lab-header, .lab-shell, button, input, select, textarea { font-family: 'I
 .collection-a4 .word-page-2 .undertaking-head { display: block; font-size: 10.8px; line-height: 1.25; }
 .collection-a4 .word-page-2 .undertaking-date { margin: 0 0 12px; text-align: right; }
 .collection-a4 .word-page-2 h2 { margin: 13px 0 2px; font-family: Georgia, 'Times New Roman', serif; font-size: 11.5px; text-align: center; }
-.collection-a4 .word-page-2 .undertaking-refs { width: 48%; margin: 0 auto 24px; border-collapse: collapse; font-size: 11.5px; font-weight: 700; }
-.collection-a4 .word-page-2 .undertaking-refs th, .collection-a4 .word-page-2 .undertaking-refs td { padding: 0 8px 1px 0; border: 0 !important; background: transparent !important; font-family: Georgia, 'Times New Roman', serif; }
+.collection-a4 .word-page-2 .undertaking-refs { width: auto; max-width: 100%; margin: 0 0 14px; border-collapse: collapse; font-size: 11.5px; font-weight: 700; table-layout: auto; }
+.collection-a4 .word-page-2 .undertaking-refs th, .collection-a4 .word-page-2 .undertaking-refs td { padding: 0 3px 1px 0; border: 0 !important; background: transparent !important; font-family: Georgia, 'Times New Roman', serif; white-space: nowrap; }
 .collection-a4 .word-page-2 .undertaking-refs td:nth-child(2), .collection-a4 .word-page-2 .undertaking-refs td:nth-child(3), .collection-a4 .word-page-2 .undertaking-refs td:nth-child(4) { text-align: center; }
+.role-bsgt-portal-user .text-position-controls, .role-bsgt-portal-user .stamp-hint, .role-bsgt-portal-user #resetStampBtn { display: none !important; }
 .collection-a4 .word-page-2 .undertaking-dear { margin: 0 0 16px; font-size: 11px; }
 .collection-a4 .word-page-2 .undertaking-terms { margin: 0; padding-left: 18px; font-size: 10.6px; line-height: 1.16; }
 .collection-a4 .word-page-2 .undertaking-terms li { margin-bottom: 3px; padding-left: 6px; }
