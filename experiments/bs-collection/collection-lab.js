@@ -12,6 +12,7 @@ const collectionTextStyleStorageKey = 'bsCollectionTextStyles';
 const remittingSubmissionStorageKey = 'bsCollectionRemittingSubmissions';
 const sectionCollapseStorageKey = 'bsCollectionSectionCollapsed';
 const portalSectionNames = ['picker-section','draft-section','settings-section','preview-section','collection-portal-section'];
+const portalRoleLabels = {admin:'مدير النظام',editor:'محرر',staff:'موظف',viewer:'مشاهد'};
 let textBlockEditMode = false;
 let selectedTextBlock = null;
 let selectedTextStyle = null;
@@ -32,6 +33,52 @@ function loadCollectionLists(){
 function saveCollectionLists(){ try { localStorage.setItem(collectionListStorageKey,JSON.stringify(collectionLists)); } catch (_) {} }
 function loadRemittingBatches(){ try { remittingBatches=JSON.parse(localStorage.getItem(remittingSubmissionStorageKey)||'[]')||[]; } catch (_) { remittingBatches=[]; } }
 function saveRemittingBatches(){ try { localStorage.setItem(remittingSubmissionStorageKey,JSON.stringify(remittingBatches)); } catch (_) {} }
+function setPortalUserProfile(user, profile){
+  const name=profile?.display_name||user?.email?.split('@')[0]||'زائر';
+  const role=portalRoleLabels[profile?.role]||'الحساب الحالي';
+  $('portalUserName').textContent=name;
+  $('portalUserRole').textContent=role;
+  const avatar=$('portalUserAvatar'), photo=profile?.photo_url;
+  avatar.innerHTML=photo?`<img src="${esc(photo)}" alt="">`:`<span>${esc(name.trim().slice(0,1).toUpperCase()||'U')}</span>`;
+}
+function setPortalBrand(branding){
+  const image=$('portalBrandImage'), icon=$('portalBrandIcon');
+  if(branding?.iconImg){ image.src=branding.iconImg; image.hidden=false; icon.hidden=true; return; }
+  image.removeAttribute('src'); image.hidden=true; icon.hidden=false;
+  icon.className=`bx bx-${branding?.icon||'ship'}`;
+}
+async function loadPortalHeader(){
+  try{
+    const [{data:{user}}, {data:branding}]=await Promise.all([
+      sb.auth.getUser(),
+      sb.from('settings').select('value').eq('key','branding').maybeSingle()
+    ]);
+    let profile=null;
+    if(user){
+      const {data}=await sb.from('profiles').select('display_name, role, photo_url').eq('id',user.id).maybeSingle();
+      profile=data;
+    }
+    setPortalUserProfile(user,profile);
+    setPortalBrand(branding?.value);
+  }catch(error){
+    console.warn('portal header',error);
+    setPortalUserProfile(null,null);
+    setPortalBrand(null);
+  }
+}
+async function logoutPortal(){
+  const button=$('portalLogoutBtn');
+  if(!confirm('تسجيل الخروج من النظام؟')) return;
+  button.disabled=true;
+  try{
+    const {error}=await sb.auth.signOut();
+    if(error) throw error;
+    window.location.assign('/');
+  }catch(error){
+    button.disabled=false;
+    alert(`تعذّر تسجيل الخروج: ${error.message||error}`);
+  }
+}
 function showCollectionNotice(message){ const notice=$('collectionNotice'); if(!notice) return; notice.textContent=message; notice.hidden=false; }
 function sectionCollapseState(){ try { return JSON.parse(localStorage.getItem(sectionCollapseStorageKey)||'{}')||{}; } catch (_) { return {}; } }
 function setSectionCollapsed(sectionName, collapsed){
@@ -312,6 +359,7 @@ async function recordCollection(){
 async function init(){
   loadCollectionLists();
   loadRemittingBatches();
+  loadPortalHeader();
   const collapsed=sectionCollapseState();
   const activeSection=portalSectionNames.find(name=>collapsed[name]===false)||'picker-section';
   portalSectionNames.forEach(name=>setSectionCollapsed(name,name!==activeSection));
@@ -347,6 +395,10 @@ $('groupByConsignee').addEventListener('click',()=>{const groups={};selectedShip
 $('resetBtn').addEventListener('click',()=>{state.selected.clear();state.overrides={};$('settingsForm').reset();Object.assign(state.settings,{collectionDate:new Date().toISOString().slice(0,10),remittingBank:'Abu Dhabi Islamic Bank',remittingBankLetterAddress:'Abu Dhabi, UAE',remittingBankAddress:'BANIYAS BRANCH BUILDING, 2ND FLOOR, BANIYAS EAST, P.O.BOX 313, ABU DHABI, UAE.',remittingBankAccountNo:'19567664',collectingBank:'SAUDI SUDANESE BANK',collectingBankAddress:'MAIN BRANCH, FREE ZONE AREA, PORT SUDAN, SUDAN',billOfLadingType:'Copy of Original Bill of Lading',billBy:'KINDLY SEND SWIFT MESSAGE TO COLLECTING BANK FOR DOCS AND SHARE SWIFT COPY WITH US.',term:'D/A 90 DAYS FROM BILL OF EXCHANGE DATE.',drawer:'BAHAR SWAKEN GENERAL TRADING L.L.C',authorizedPerson:'JAWAD ELMASRI',title:'Manager',draweeAddress:''});populateCollectionSelects();Object.entries(state.settings).forEach(([key,value])=>{const input=$('settingsForm').elements[key];if(input)input.value=value;});renderAll();});
 $('printBtn').addEventListener('click',()=>window.print());
 $('recordCollectionBtn').addEventListener('click',sendToRemittingBank);
+$('portalBackBtn').addEventListener('click',()=>{
+  if(window.history.length>1) window.history.back(); else window.location.assign('/');
+});
+$('portalLogoutBtn').addEventListener('click',logoutPortal);
 document.querySelectorAll('[data-collapse-section]').forEach(button=>button.addEventListener('click',()=>{
   const sectionName=button.dataset.collapseSection;
   setSectionCollapsed(sectionName,!document.querySelector(`.${sectionName}`)?.classList.contains('section-is-collapsed'));

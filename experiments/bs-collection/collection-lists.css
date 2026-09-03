@@ -1,6 +1,29 @@
 .span-all { grid-column: 1 / -1; }
 .lab-header { min-height: 106px; padding-block: 22px; background: linear-gradient(118deg, #071f49, #0f4b8f); }
 .lab-header h1 { font-size: 21px; }
+.lab-brand { display: flex; align-items: center; gap: 13px; min-width: 0; }
+.lab-site-logo { display: grid; flex: 0 0 auto; place-items: center; width: 48px; height: 48px; overflow: hidden; border: 1px solid rgba(255,255,255,.35); border-radius: 13px; background: rgba(255,255,255,.13); box-shadow: 0 7px 18px rgba(0,0,0,.15); color: #fff; text-decoration: none; }
+.lab-site-logo:hover { background: rgba(255,255,255,.22); transform: translateY(-1px); }
+.lab-site-logo img { width: 100%; height: 100%; object-fit: cover; }
+.lab-site-logo i { font-size: 27px; }
+.lab-header-side { display: flex; flex: 0 1 660px; align-items: center; justify-content: flex-start; gap: 9px; flex-wrap: wrap; }
+.lab-quick-nav { display: flex; align-items: center; gap: 5px; }
+.lab-quick-nav a, .lab-quick-nav button { display: inline-flex; align-items: center; gap: 5px; min-height: 32px; padding: 6px 8px; border: 1px solid rgba(255,255,255,.3); border-radius: 8px; background: rgba(3,24,59,.16); color: #e6f2ff; cursor: pointer; font: 700 9px 'Noto Kufi Arabic', sans-serif; text-decoration: none; }
+.lab-quick-nav a:hover, .lab-quick-nav button:hover { border-color: rgba(255,255,255,.72); background: rgba(255,255,255,.14); }
+.lab-quick-nav button:disabled { cursor: wait; opacity: .6; }
+.lab-quick-nav i { font-size: 15px; }
+.lab-user-profile { display: flex; align-items: center; gap: 7px; min-width: 138px; padding: 5px 8px 5px 10px; border: 1px solid rgba(255,255,255,.25); border-radius: 10px; background: rgba(2,25,62,.2); }
+.lab-user-avatar { display: grid; flex: 0 0 29px; place-items: center; width: 29px; height: 29px; overflow: hidden; border-radius: 50%; background: #ddecff; color: #124a84; font: 700 12px 'IBM Plex Mono', monospace; }
+.lab-user-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.lab-user-avatar i { font-size: 17px; }
+.lab-user-copy { display: grid; min-width: 0; gap: 1px; }
+.lab-user-copy strong, .lab-user-copy small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lab-user-copy strong { color: #fff; font-size: 9px; }
+.lab-user-copy small { color: #bcd8f2; font-size: 8px; }
+.lab-header .lab-actions { gap: 6px; }
+.lab-header .lab-actions .btn { padding: 8px 9px; font-size: 9px; }
+@media (max-width: 1120px) { .lab-header { align-items: flex-start; } .lab-header-side { flex-basis: 100%; } }
+@media (max-width: 640px) { .lab-brand { align-items: flex-start; } .lab-site-logo { width: 42px; height: 42px; } .lab-header-side { margin-top: 15px; } .lab-quick-nav { width: 100%; } .lab-quick-nav a, .lab-quick-nav button { flex: 1; justify-content: center; } .lab-user-profile { flex: 1; } }
 .portal-step-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 15px; }
 .portal-step-card { position: relative; display: grid; align-content: start; min-height: 156px; padding: 17px; border: 1px solid #dbe6f0; border-radius: 13px; background: #fff; box-shadow: 0 3px 10px rgba(25, 57, 92, .045); color: var(--ink); cursor: pointer; text-align: right; transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease; }
 .portal-step-card:hover { border-color: #abc9e6; box-shadow: 0 7px 18px rgba(25, 57, 92, .08); transform: translateY(-2px); }
