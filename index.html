@@ -7659,6 +7659,7 @@ function bsgtShipmentCard(r, index, isDraft, missingHtml){
   const shownQuantity = quantity && unit && !quantity.toLowerCase().includes(unit.toLowerCase()) ? `${quantity} ${unit}` : quantity;
   const invoice = r.invoiceNo || r.proformaNo || 'بدون رقم فاتورة';
   const collectionStatus = !isDraft ? bsgtCollectionStatus(r) : null;
+  const collectionBadge = collectionStatus ? `<span class="bsgt-card-collection-status ${collectionStatus.kind}" title="${collectionStatus.label}">${icon(collectionStatus.icon,12)}${collectionStatus.label}</span>` : '';
   const docs = isDraft ? (missingHtml || '<span class="miss-none">جاهزة للإرسال</span>') : `
     <div class="docpills">
       <span class="pill ${r.proformaNo?'ready':''}">بروفورما</span>
@@ -7671,7 +7672,7 @@ function bsgtShipmentCard(r, index, isDraft, missingHtml){
       <span class="bsgt-card-number">${String(index).padStart(2,'0')}</span>
       <span class="bsgt-card-icon">${icon(getShipmentIcon(r.itemDesc||'', r),21)}</span>
       <span class="bsgt-card-kind">${isDraft?'مسودة':'صادرة'}</span>
-      <span class="bsgt-card-collection-status ${collectionStatus.kind}" title="${collectionStatus.label}">${icon(collectionStatus.icon,12)}${collectionStatus.label}</span>
+      ${collectionBadge}
       <span class="bsgt-card-arrow" aria-hidden="true">‹</span>
     </div>
     <h3 title="${escapeHtml(r.itemDesc||'(بدون وصف)')}">${escapeHtml(r.itemDesc||'(بدون وصف)')}</h3>
