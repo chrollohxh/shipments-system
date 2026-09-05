@@ -298,24 +298,32 @@ function wireTextBlockDrag(content){
     const block=event.target.closest('[data-text-block]'); if(!block||!content.contains(block)) return;
     event.preventDefault();
     const index=Number(block.dataset.textBlock);
-    selectedTextBlock={preview:state.preview,index}; selectedTextStyle={preview:state.preview,id:`block-${index}`};
+    const styleTarget=event.target.closest('[data-text-style-id]');
+    const isInlineText=styleTarget&&styleTarget!==block;
+    selectedTextBlock={preview:state.preview,index};
+    selectedTextStyle={preview:state.preview,id:isInlineText?styleTarget.dataset.textStyleId:`block-${index}`};
     updateTextBlockControls();
     renderTextCompare(content);
-    const start={x:event.clientX,y:event.clientY,offset:textBlockOffset(state.preview,index)};
+    const start={x:event.clientX,y:event.clientY,offset:isInlineText?textStyleFor(state.preview,styleTarget.dataset.textStyleId):textBlockOffset(state.preview,index)};
     const paper=content.closest('.collection-a4'); paper?.classList.add('is-text-guiding');
-    block.setPointerCapture(event.pointerId);
+    const target=isInlineText?styleTarget:block;
+    target.setPointerCapture(event.pointerId);
     const move=point=>{
       const next={x:start.offset.x+point.clientX-start.x,y:start.offset.y+point.clientY-start.y};
-      block.style.transform=`translate(${next.x}px, ${next.y}px)`;
+      if(isInlineText){ target.style.display='inline-block'; target.style.transform=`translate(${next.x}px, ${next.y}px)`; }
+      else block.style.transform=`translate(${next.x}px, ${next.y}px)`;
     };
     const finish=point=>{
       const next={x:start.offset.x+point.clientX-start.x,y:start.offset.y+point.clientY-start.y};
-      saveTextBlockOffset(state.preview,index,next);
+      if(isInlineText){
+        const style=textStyleFor(state.preview,styleTarget.dataset.textStyleId);
+        saveTextStyle(state.preview,styleTarget.dataset.textStyleId,Object.assign(style,next));
+      }else saveTextBlockOffset(state.preview,index,next);
       paper?.classList.remove('is-text-guiding');
-      block.removeEventListener('pointermove',move); block.removeEventListener('pointerup',finish); block.removeEventListener('pointercancel',finish);
+      target.removeEventListener('pointermove',move); target.removeEventListener('pointerup',finish); target.removeEventListener('pointercancel',finish);
       renderPreview();
     };
-    block.addEventListener('pointermove',move); block.addEventListener('pointerup',finish); block.addEventListener('pointercancel',finish);
+    target.addEventListener('pointermove',move); target.addEventListener('pointerup',finish); target.addEventListener('pointercancel',finish);
   });
 }
 function keepTextBlocksVisible(content){
@@ -657,7 +665,7 @@ function printAllCollectionDocuments(){
   const popup = window.open('', '_blank');
   if(!popup){ alert('المتصفح منع نافذة الطباعة. اسمح بالنوافذ المنبثقة ثم حاول مرة أخرى.'); return; }
   popup.opener = null;
-  popup.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>BSGT Collection Documents</title><link rel="stylesheet" href="/experiments/bs-collection/collection-lab.css?v=20260905-2"><link rel="stylesheet" href="/experiments/bs-collection/collection-lists.css?v=20260905-2"><style>${brandCss}.print-page{break-after:page;page-break-after:always}.print-page:last-child{break-after:auto;page-break-after:auto}@media screen{body{background:#eaf0f6}.print-page{padding:12mm 0}}</style></head><body>${previews.map(page=>`<section class="print-page">${page}</section>`).join('')}</body></html>`);
+  popup.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>BSGT Collection Documents</title><link rel="stylesheet" href="/experiments/bs-collection/collection-lab.css?v=20260905-3"><link rel="stylesheet" href="/experiments/bs-collection/collection-lists.css?v=20260905-3"><style>${brandCss}.print-page{break-after:page;page-break-after:always}.print-page:last-child{break-after:auto;page-break-after:auto}@media screen{body{background:#eaf0f6}.print-page{padding:12mm 0}}</style></head><body>${previews.map(page=>`<section class="print-page">${page}</section>`).join('')}</body></html>`);
   popup.document.close();
   popup.onload = ()=>setTimeout(()=>popup.print(), 450);
 }
