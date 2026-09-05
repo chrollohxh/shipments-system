@@ -9,6 +9,7 @@ const collectionListStorageKey = 'bsCollectionDataLists';
 const collectionTextOffsetStorageKey = 'bsCollectionTextOffsets';
 const collectionTextBlockOffsetStorageKey = 'bsCollectionTextBlockOffsets';
 const collectionTextStyleStorageKey = 'bsCollectionTextStyles';
+const collectionTextLayerStorageKey = 'bsCollectionTextLayers';
 const remittingSubmissionStorageKey = 'bsCollectionRemittingSubmissions';
 const sectionCollapseStorageKey = 'bsCollectionSectionCollapsed';
 const stampTransformStorageKey = 'bsCollectionStampTransformA4';
@@ -154,6 +155,47 @@ function saveTextBlockOffset(preview, index, offset){
   try { localStorage.setItem(collectionTextBlockOffsetStorageKey,JSON.stringify(offsets)); } catch (_) {}
 }
 function collectionTextStyles(){ try { return JSON.parse(localStorage.getItem(collectionTextStyleStorageKey)||'{}')||{}; } catch (_) { return {}; } }
+function collectionTextLayers(){ try { return JSON.parse(localStorage.getItem(collectionTextLayerStorageKey)||'{}')||{}; } catch (_) { return {}; } }
+function textLayerFor(preview,index){ return Object.assign({hidden:false,zIndex:index+1},collectionTextLayers()[preview]?.[index]||{}); }
+function saveTextLayer(preview,index,layer){
+  const layers=collectionTextLayers(); layers[preview]=layers[preview]||{}; layers[preview][index]=layer;
+  try { localStorage.setItem(collectionTextLayerStorageKey,JSON.stringify(layers)); } catch (_) {}
+}
+function textLayerLabel(block,index){
+  const label=block.matches('table')?'جدول':block.matches('h1,h2,h3')?'عنوان':(block.innerText||block.textContent||'نص').replace(/\s+/g,' ').trim();
+  return `${index+1}. ${label.slice(0,42)||'طبقة نص'}`;
+}
+function ensureTextLayerControls(){
+  if($('textLayersPanel')) return;
+  document.querySelector('.preview-actions')?.insertAdjacentHTML('afterbegin',`<details class="text-layer-controls"><summary><i class="bx bx-layer"></i> طبقات النص</summary><div id="textLayersPanel" class="text-layers-panel"><p>اختر شحنات لإظهار الطبقات.</p></div></details>`);
+  $('textLayersPanel')?.addEventListener('click',event=>{
+    if(portalRole!=='admin') return;
+    const button=event.target.closest('button[data-layer-action]'); if(!button) return;
+    const index=Number(button.dataset.layerIndex); if(!Number.isFinite(index)) return;
+    const action=button.dataset.layerAction;
+    if(action==='select'){
+      selectedTextBlock={preview:state.preview,index}; selectedTextStyle={preview:state.preview,id:`block-${index}`}; textBlockEditMode=true;
+    }else if(action==='toggle'){
+      const layer=textLayerFor(state.preview,index); layer.hidden=!layer.hidden; saveTextLayer(state.preview,index,layer);
+    }else if(action==='move'){
+      const offset=textBlockOffset(state.preview,index); offset.y+=(button.dataset.direction==='up'?-2:2); saveTextBlockOffset(state.preview,index,offset);
+      selectedTextBlock={preview:state.preview,index}; selectedTextStyle={preview:state.preview,id:`block-${index}`};
+    }else if(action==='front'||action==='back'){
+      const values=[...document.querySelectorAll('#documentPreview [data-text-block]')].map(block=>Number(block.dataset.textBlock)).filter(layerIndex=>layerIndex!==index).map(layerIndex=>textLayerFor(state.preview,layerIndex).zIndex);
+      const layer=textLayerFor(state.preview,index); layer.zIndex=action==='front'?Math.max(index+1,...values)+1:Math.min(index+1,...values)-1; saveTextLayer(state.preview,index,layer);
+    }
+    renderPreview();
+  });
+}
+function renderTextLayers(content){
+  const panel=$('textLayersPanel'); if(!panel) return;
+  if(portalRole!=='admin'){ panel.innerHTML=''; return; }
+  const blocks=[...content.querySelectorAll('[data-text-block]')];
+  panel.innerHTML=blocks.length?blocks.map(block=>{
+    const index=Number(block.dataset.textBlock),layer=textLayerFor(state.preview,index),selected=selectedTextBlock?.preview===state.preview&&selectedTextBlock.index===index;
+    return `<div class="text-layer-row ${selected?'is-selected':''} ${layer.hidden?'is-hidden':''}"><button type="button" class="layer-eye" data-layer-action="toggle" data-layer-index="${index}" title="${layer.hidden?'إظهار':'إخفاء'} الطبقة"><i class="bx bx-${layer.hidden?'hide':'show'}"></i></button><button type="button" class="layer-name" data-layer-action="select" data-layer-index="${index}" title="اختيار الطبقة وتحريكها بالأسهم">${esc(textLayerLabel(block,index))}</button><span class="layer-actions"><button type="button" data-layer-action="move" data-direction="up" data-layer-index="${index}" title="تحريك لأعلى"><i class="bx bx-up-arrow-alt"></i></button><button type="button" data-layer-action="move" data-direction="down" data-layer-index="${index}" title="تحريك لأسفل"><i class="bx bx-down-arrow-alt"></i></button><button type="button" data-layer-action="front" data-layer-index="${index}" title="تقديم أمام الطبقات"><i class="bx bx-chevrons-up"></i></button><button type="button" data-layer-action="back" data-layer-index="${index}" title="إرسال خلف الطبقات"><i class="bx bx-chevrons-down"></i></button></span></div>`;
+  }).join(''):'<p>لا توجد طبقات نص في هذا المستند.</p>';
+}
 function textStyleFor(preview, id){ return Object.assign({weight:'',size:0,x:0,y:0},collectionTextStyles()[preview]?.[id]||{}); }
 function saveTextStyle(preview, id, style){
   const styles=collectionTextStyles(); styles[preview]=styles[preview]||{}; styles[preview][id]=style;
@@ -198,9 +240,13 @@ function prepareTextBlocks(content){
   content.classList.toggle('is-text-layout-editing',textBlockEditMode);
   blocks.forEach((block,index)=>{
     const offset=textBlockOffset(state.preview,index);
+    const layer=textLayerFor(state.preview,index);
     block.dataset.textBlock=String(index);
     block.dataset.textStyleId=block.dataset.textStyleId||`block-${index}`;
     block.style.transform=`translate(${offset.x}px, ${offset.y}px)`;
+    block.style.position='relative';
+    block.style.zIndex=String(layer.zIndex);
+    block.style.visibility=layer.hidden?'hidden':'visible';
     block.classList.toggle('is-text-block-selected',selectedTextBlock?.preview===state.preview&&selectedTextBlock.index===index);
     applyTextStyle(block);
     const textNodes=[];
@@ -221,6 +267,7 @@ function prepareTextBlocks(content){
       node.classList.toggle('is-text-style-selected',selectedTextStyle?.preview===state.preview&&selectedTextStyle.id===node.dataset.textStyleId);
     });
   });
+  renderTextLayers(content);
   if(portalRole==='admin'&&textBlockEditMode) content.addEventListener('click',event=>{
     const block=event.target.closest('[data-text-block]'); if(!block||!content.contains(block)) return;
     event.preventDefault(); selectedTextBlock={preview:state.preview,index:Number(block.dataset.textBlock)};
@@ -464,6 +511,7 @@ async function recordCollection(){
   }finally{ buttons.forEach((button,index)=>{button.disabled=false;button.innerHTML=originals[index];}); }
 }
 async function init(){
+  ensureTextLayerControls();
   loadCollectionLists();
   loadRemittingBatches();
   const legacyRemittingBatches=[...remittingBatches];
@@ -570,7 +618,7 @@ function printAllCollectionDocuments(){
   const popup = window.open('', '_blank');
   if(!popup){ alert('المتصفح منع نافذة الطباعة. اسمح بالنوافذ المنبثقة ثم حاول مرة أخرى.'); return; }
   popup.opener = null;
-  popup.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>BSGT Collection Documents</title><link rel="stylesheet" href="/experiments/bs-collection/collection-lab.css?v=20260903-9"><link rel="stylesheet" href="/experiments/bs-collection/collection-lists.css?v=20260903-9"><style>${brandCss}.print-page{break-after:page;page-break-after:always}.print-page:last-child{break-after:auto;page-break-after:auto}@media screen{body{background:#eaf0f6}.print-page{padding:12mm 0}}</style></head><body>${previews.map(page=>`<section class="print-page">${page}</section>`).join('')}</body></html>`);
+  popup.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>BSGT Collection Documents</title><link rel="stylesheet" href="/experiments/bs-collection/collection-lab.css?v=20260905-1"><link rel="stylesheet" href="/experiments/bs-collection/collection-lists.css?v=20260905-1"><style>${brandCss}.print-page{break-after:page;page-break-after:always}.print-page:last-child{break-after:auto;page-break-after:auto}@media screen{body{background:#eaf0f6}.print-page{padding:12mm 0}}</style></head><body>${previews.map(page=>`<section class="print-page">${page}</section>`).join('')}</body></html>`);
   popup.document.close();
   popup.onload = ()=>setTimeout(()=>popup.print(), 450);
 }
