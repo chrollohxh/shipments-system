@@ -167,7 +167,7 @@ function textLayerLabel(block,index){
 }
 function ensureTextLayerControls(){
   if($('textLayersPanel')) return;
-  document.querySelector('.preview-actions')?.insertAdjacentHTML('afterbegin',`<details class="text-layer-controls"><summary><i class="bx bx-layer"></i> طبقات النص</summary><div id="textLayersPanel" class="text-layers-panel"><p>اختر شحنات لإظهار الطبقات.</p></div></details>`);
+  document.querySelector('.preview-actions')?.insertAdjacentHTML('afterbegin',`<details class="text-review-controls"><summary><i class="bx bx-git-compare"></i> النص الأصلي / المعاينة</summary><div id="textComparePanel" class="text-compare-panel"><p>اختر طبقة لعرض المقارنة.</p></div></details><details class="text-layer-controls"><summary><i class="bx bx-layer"></i> طبقات النص</summary><div id="textLayersPanel" class="text-layers-panel"><p>اختر شحنات لإظهار الطبقات.</p></div></details>`);
   $('textLayersPanel')?.addEventListener('click',event=>{
     if(portalRole!=='admin') return;
     const button=event.target.closest('button[data-layer-action]'); if(!button) return;
@@ -195,6 +195,16 @@ function renderTextLayers(content){
     const index=Number(block.dataset.textBlock),layer=textLayerFor(state.preview,index),selected=selectedTextBlock?.preview===state.preview&&selectedTextBlock.index===index;
     return `<div class="text-layer-row ${selected?'is-selected':''} ${layer.hidden?'is-hidden':''}"><button type="button" class="layer-eye" data-layer-action="toggle" data-layer-index="${index}" title="${layer.hidden?'إظهار':'إخفاء'} الطبقة"><i class="bx bx-${layer.hidden?'hide':'show'}"></i></button><button type="button" class="layer-name" data-layer-action="select" data-layer-index="${index}" title="اختيار الطبقة وتحريكها بالأسهم">${esc(textLayerLabel(block,index))}</button><span class="layer-actions"><button type="button" data-layer-action="move" data-direction="up" data-layer-index="${index}" title="تحريك لأعلى"><i class="bx bx-up-arrow-alt"></i></button><button type="button" data-layer-action="move" data-direction="down" data-layer-index="${index}" title="تحريك لأسفل"><i class="bx bx-down-arrow-alt"></i></button><button type="button" data-layer-action="front" data-layer-index="${index}" title="تقديم أمام الطبقات"><i class="bx bx-chevrons-up"></i></button><button type="button" data-layer-action="back" data-layer-index="${index}" title="إرسال خلف الطبقات"><i class="bx bx-chevrons-down"></i></button></span></div>`;
   }).join(''):'<p>لا توجد طبقات نص في هذا المستند.</p>';
+}
+function renderTextCompare(content){
+  const panel=$('textComparePanel'); if(!panel) return;
+  if(portalRole!=='admin'){ panel.innerHTML=''; return; }
+  const index=selectedTextBlock?.preview===state.preview?selectedTextBlock.index:null;
+  const block=index===null?null:content.querySelector(`[data-text-block="${index}"]`);
+  if(!block){ panel.innerHTML='<p>اختر طبقة من القائمة أو من المستند لعرض النص.</p>'; return; }
+  const original=(block.dataset.originalText||block.innerText||'').trim();
+  const current=(block.innerText||'').trim();
+  panel.innerHTML=`<div class="text-compare-columns"><section><strong>الأصلي</strong><pre>${esc(original)}</pre></section><section><strong>المعاينة</strong><pre>${esc(current)}</pre></section></div><small>${original===current?'الكلمات متطابقة. التعديل الحالي موضع أو تنسيق فقط.':'هناك اختلاف في النص المعروض.'}</small>`;
 }
 function textStyleFor(preview, id){ return Object.assign({weight:'',size:0,x:0,y:0},collectionTextStyles()[preview]?.[id]||{}); }
 function saveTextStyle(preview, id, style){
@@ -242,6 +252,7 @@ function prepareTextBlocks(content){
     const offset=textBlockOffset(state.preview,index);
     const layer=textLayerFor(state.preview,index);
     block.dataset.textBlock=String(index);
+    block.dataset.originalText=block.innerText||block.textContent||'';
     block.dataset.textStyleId=block.dataset.textStyleId||`block-${index}`;
     block.style.transform=`translate(${offset.x}px, ${offset.y}px)`;
     block.style.position='relative';
@@ -268,6 +279,8 @@ function prepareTextBlocks(content){
     });
   });
   renderTextLayers(content);
+  renderTextCompare(content);
+  if(portalRole==='admin'&&textBlockEditMode) wireTextBlockDrag(content);
   if(portalRole==='admin'&&textBlockEditMode) content.addEventListener('click',event=>{
     const block=event.target.closest('[data-text-block]'); if(!block||!content.contains(block)) return;
     event.preventDefault(); selectedTextBlock={preview:state.preview,index:Number(block.dataset.textBlock)};
@@ -276,8 +289,34 @@ function prepareTextBlocks(content){
     content.querySelectorAll('[data-text-block]').forEach(node=>node.classList.toggle('is-text-block-selected',node===block));
     content.querySelectorAll('[data-text-style-id]').forEach(node=>node.classList.toggle('is-text-style-selected',node===styleTarget));
     updateTextBlockControls();
+    renderTextCompare(content);
   });
   updateTextBlockControls();
+}
+function wireTextBlockDrag(content){
+  content.addEventListener('pointerdown',event=>{
+    const block=event.target.closest('[data-text-block]'); if(!block||!content.contains(block)) return;
+    event.preventDefault();
+    const index=Number(block.dataset.textBlock);
+    selectedTextBlock={preview:state.preview,index}; selectedTextStyle={preview:state.preview,id:`block-${index}`};
+    updateTextBlockControls();
+    renderTextCompare(content);
+    const start={x:event.clientX,y:event.clientY,offset:textBlockOffset(state.preview,index)};
+    const paper=content.closest('.collection-a4'); paper?.classList.add('is-text-guiding');
+    block.setPointerCapture(event.pointerId);
+    const move=point=>{
+      const next={x:start.offset.x+point.clientX-start.x,y:start.offset.y+point.clientY-start.y};
+      block.style.transform=`translate(${next.x}px, ${next.y}px)`;
+    };
+    const finish=point=>{
+      const next={x:start.offset.x+point.clientX-start.x,y:start.offset.y+point.clientY-start.y};
+      saveTextBlockOffset(state.preview,index,next);
+      paper?.classList.remove('is-text-guiding');
+      block.removeEventListener('pointermove',move); block.removeEventListener('pointerup',finish); block.removeEventListener('pointercancel',finish);
+      renderPreview();
+    };
+    block.addEventListener('pointermove',move); block.addEventListener('pointerup',finish); block.addEventListener('pointercancel',finish);
+  });
 }
 function keepTextBlocksVisible(content){
   const paper=content.closest('.collection-a4');
@@ -618,7 +657,7 @@ function printAllCollectionDocuments(){
   const popup = window.open('', '_blank');
   if(!popup){ alert('المتصفح منع نافذة الطباعة. اسمح بالنوافذ المنبثقة ثم حاول مرة أخرى.'); return; }
   popup.opener = null;
-  popup.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>BSGT Collection Documents</title><link rel="stylesheet" href="/experiments/bs-collection/collection-lab.css?v=20260905-1"><link rel="stylesheet" href="/experiments/bs-collection/collection-lists.css?v=20260905-1"><style>${brandCss}.print-page{break-after:page;page-break-after:always}.print-page:last-child{break-after:auto;page-break-after:auto}@media screen{body{background:#eaf0f6}.print-page{padding:12mm 0}}</style></head><body>${previews.map(page=>`<section class="print-page">${page}</section>`).join('')}</body></html>`);
+  popup.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>BSGT Collection Documents</title><link rel="stylesheet" href="/experiments/bs-collection/collection-lab.css?v=20260905-2"><link rel="stylesheet" href="/experiments/bs-collection/collection-lists.css?v=20260905-2"><style>${brandCss}.print-page{break-after:page;page-break-after:always}.print-page:last-child{break-after:auto;page-break-after:auto}@media screen{body{background:#eaf0f6}.print-page{padding:12mm 0}}</style></head><body>${previews.map(page=>`<section class="print-page">${page}</section>`).join('')}</body></html>`);
   popup.document.close();
   popup.onload = ()=>setTimeout(()=>popup.print(), 450);
 }
@@ -687,8 +726,9 @@ function applyCollectionBranding(){
       .collection-a4 .stamp-resize-handle{display:none;position:absolute;width:8px;height:8px;border:1px solid #1768bd;border-radius:2px;background:#fff;z-index:3}
       .collection-a4 .collection-stamp-overlay.is-selected .stamp-resize-handle{display:block}
       .collection-a4 .stamp-resize-handle.nw{top:-8px;left:-8px;cursor:nwse-resize}.collection-a4 .stamp-resize-handle.n{top:-8px;left:50%;margin-left:-4px;cursor:ns-resize}.collection-a4 .stamp-resize-handle.ne{top:-8px;right:-8px;cursor:nesw-resize}.collection-a4 .stamp-resize-handle.e{top:50%;right:-8px;margin-top:-4px;cursor:ew-resize}.collection-a4 .stamp-resize-handle.se{right:-8px;bottom:-8px;cursor:nwse-resize}.collection-a4 .stamp-resize-handle.s{bottom:-8px;left:50%;margin-left:-4px;cursor:ns-resize}.collection-a4 .stamp-resize-handle.sw{bottom:-8px;left:-8px;cursor:nesw-resize}.collection-a4 .stamp-resize-handle.w{top:50%;left:-8px;margin-top:-4px;cursor:ew-resize}
+      .collection-a4 .text-move-guides{display:none;position:absolute;inset:0;z-index:2;pointer-events:none;background-image:linear-gradient(rgba(23,104,189,.12) 1px,transparent 1px),linear-gradient(90deg,rgba(23,104,189,.12) 1px,transparent 1px);background-size:10mm 10mm}.collection-a4.is-text-guiding .text-move-guides{display:block}.collection-a4 .text-move-guides .guide-v,.collection-a4 .text-move-guides .guide-h{position:absolute;background:#1768bd;opacity:.72}.collection-a4 .text-move-guides .guide-v{top:0;bottom:0;left:50%;width:1px}.collection-a4 .text-move-guides .guide-h{left:0;right:0;top:50%;height:1px}
       .preview-tools{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.preview-tools .preview-tabs{margin-bottom:0}.preview-actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap}.stamp-hint{font-size:10px;color:#637d98}
-      @media print{@page{size:A4;margin:0}.collection-a4{width:210mm!important;height:297mm!important;min-height:297mm!important;max-height:297mm!important;margin:0!important;box-shadow:none!important}.collection-a4>.collection-page-content{height:297mm;padding:49mm 17mm 28mm}.collection-a4 .stamp-resize-handle{display:none!important}.collection-a4 .collection-stamp-overlay{outline:0!important}}
+      @media print{@page{size:A4;margin:0}.collection-a4{width:210mm!important;height:297mm!important;min-height:297mm!important;max-height:297mm!important;margin:0!important;box-shadow:none!important}.collection-a4>.collection-page-content{height:297mm;padding:49mm 17mm 28mm}.collection-a4 .stamp-resize-handle,.collection-a4 .text-move-guides{display:none!important}.collection-a4 .collection-stamp-overlay{outline:0!important}}
     </style>`);
   }
   paper.classList.add('collection-a4');
@@ -705,6 +745,7 @@ function applyCollectionBranding(){
   paper.append(content);
   const background = settings.background ? `<img class="collection-brand-layer collection-brand-bg" src="${esc(settings.background)}" alt="">` : '';
   paper.insertAdjacentHTML('afterbegin', background);
+  paper.insertAdjacentHTML('beforeend','<div class="text-move-guides" aria-hidden="true"><span class="guide-v"></span><span class="guide-h"></span></div>');
   paper.insertAdjacentHTML('beforeend', stampOverlay);
   prepareTextBlocks(content);
   fitCollectionContent(content);
