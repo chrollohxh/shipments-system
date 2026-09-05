@@ -63,8 +63,7 @@
         <label>عنوان بنك الإرسال للخطاب<select name="remittingBankLetterAddress"></select></label>
         <label>عنوان بنك الإرسال للتعهد<select name="remittingBankAddress"></select></label>
         <label>رقم حساب بنك الإرسال<select name="remittingBankAccountNo"></select></label>
-        <label>بنك التحصيل<select name="collectingBank"></select></label>
-        <label>عنوان بنك التحصيل<select name="collectingBankAddress"></select></label>
+        <label class="span2">بنك التحصيل وعنوانه<select name="collectingBankProfile"></select></label>
         <label class="span2">نوع بوليصة الشحن (Bill of Lading Type)<select name="billOfLadingType"></select></label>
         <label class="span2">تعليمات Bill By<select name="billBy"></select></label>
         <label class="span2">شرط الدفع (Term Of Payment)<select name="term"></select></label>
@@ -74,7 +73,7 @@
         <label>عنوان المستورد<select name="draweeAddress"></select></label>
         <section class="collection-lists span-all" aria-labelledby="collectionListsTitle">
           <div><strong id="collectionListsTitle">قوائم بيانات الإرسال</strong><small>أضف بيانات الجهات مرة واحدة ثم اخترها من القوائم أعلاه.</small></div>
-          <div class="collection-list-controls"><select id="collectionListField"></select><input id="collectionListValue" type="text" placeholder="اكتب القيمة الجديدة"><button id="addCollectionListValue" type="button" class="mini-btn">إضافة للقائمة</button></div>
+          <div class="collection-list-controls"><select id="collectionListField"></select><input id="collectionListValue" type="text" placeholder="اكتب القيمة الجديدة"><input id="collectionListAddress" type="text" placeholder="عنوان البنك" hidden><button id="addCollectionListValue" type="button" class="mini-btn">إضافة للقائمة</button></div>
           <div id="collectionListValues" class="collection-list-values"></div>
         </section>
       </form>
@@ -95,6 +94,6 @@
     <details class="debug-panel"><summary><i class="bx bx-code-alt"></i> بيانات التجربة</summary><pre id="debugOutput"></pre></details>
   </main>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="collection-lab.js?v=20260905-6"></script>
+  <script src="collection-lab.js?v=20260905-7"></script>
 </body>
 </html>

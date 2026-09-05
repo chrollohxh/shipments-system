@@ -59,17 +59,27 @@ function redoLayout(){
   restoreLayoutSnapshot(layoutRedoHistory.pop());
 }
 const collectionListFields = {
-  remittingBank:{label:'البنك المُرسِل',defaults:['Abu Dhabi Islamic Bank']}, remittingBankLetterAddress:{label:'عنوان بنك الإرسال للخطاب',defaults:['Abu Dhabi, UAE']}, remittingBankAddress:{label:'عنوان بنك الإرسال للتعهد',defaults:['BANIYAS BRANCH BUILDING, 2ND FLOOR, BANIYAS EAST, P.O.BOX 313, ABU DHABI, UAE.']}, remittingBankAccountNo:{label:'رقم حساب بنك الإرسال',defaults:['19567664']}, collectingBank:{label:'بنك التحصيل',defaults:['SAUDI SUDANESE BANK']},
-  collectingBankAddress:{label:'عنوان بنك التحصيل',defaults:['MAIN BRANCH, FREE ZONE AREA, PORT SUDAN, SUDAN']},
+  remittingBank:{label:'البنك المُرسِل',defaults:['Abu Dhabi Islamic Bank']}, remittingBankLetterAddress:{label:'عنوان بنك الإرسال للخطاب',defaults:['Abu Dhabi, UAE']}, remittingBankAddress:{label:'عنوان بنك الإرسال للتعهد',defaults:['BANIYAS BRANCH BUILDING, 2ND FLOOR, BANIYAS EAST, P.O.BOX 313, ABU DHABI, UAE.']}, remittingBankAccountNo:{label:'رقم حساب بنك الإرسال',defaults:['19567664']}, collectingBankProfile:{label:'بنك التحصيل وعنوانه',paired:true,defaults:[{bank:'SAUDI SUDANESE BANK',address:'MAIN BRANCH, FREE ZONE AREA, PORT SUDAN, SUDAN'}]},
   billOfLadingType:{label:'نوع بوليصة الشحن',defaults:['Copy of  Original Bill of Lading']},
   billBy:{label:'تعليمات Bill By',defaults:['Kindly send SWIFT message to collecting bank for docs and share SWIFT copy with us.']},
   term:{label:'شرط الدفع',defaults:['D/A 90 DAYS FROM BILL OF EXCHANGE DATE.']}, drawer:{label:'المُصدّر / Drawer',defaults:['BAHAR SWAKEN GENERAL TRADING LLC']},
   authorizedPerson:{label:'الشخص المفوض',defaults:['JAWAD ELMASRI']}, title:{label:'المنصب',defaults:['MANAGER']}, draweeAddress:{label:'عنوان المستورد',defaults:[]}
 };
 let collectionLists = {};
+const collectingBankProfileKey = profile => `${profile.bank}|||${profile.address}`;
+const normalizedCollectingBankProfile = value => ({bank:String(value?.bank||'').trim(),address:String(value?.address||'').trim()});
 function loadCollectionLists(){
   let saved={}; try { saved=JSON.parse(localStorage.getItem(collectionListStorageKey)||'{}')||{}; } catch (_) {}
-  collectionLists=Object.fromEntries(Object.entries(collectionListFields).map(([key,field])=>[key,[...new Set([...(field.defaults||[]),...((saved[key]||[]).filter(Boolean))])]]));
+  collectionLists=Object.fromEntries(Object.entries(collectionListFields).map(([key,field])=>{
+    if(field.paired){
+      const legacyBanks=Array.isArray(saved.collectingBank)?saved.collectingBank:[];
+      const legacyAddresses=Array.isArray(saved.collectingBankAddress)?saved.collectingBankAddress:[];
+      const savedProfiles=Array.isArray(saved[key])?saved[key]:legacyBanks.map((bank,index)=>({bank,address:legacyAddresses[index]||''}));
+      const profiles=[...(field.defaults||[]),...savedProfiles].map(normalizedCollectingBankProfile).filter(profile=>profile.bank);
+      return [key,profiles.filter((profile,index,list)=>list.findIndex(item=>collectingBankProfileKey(item)===collectingBankProfileKey(profile))===index)];
+    }
+    return [key,[...new Set([...(field.defaults||[]),...((saved[key]||[]).filter(Boolean))])]];
+  }));
 }
 function saveCollectionLists(){ try { localStorage.setItem(collectionListStorageKey,JSON.stringify(collectionLists)); } catch (_) {} }
 function loadRemittingBatches(){ try { remittingBatches=JSON.parse(localStorage.getItem(remittingSubmissionStorageKey)||'[]')||[]; } catch (_) { remittingBatches=[]; } }
@@ -404,6 +414,15 @@ function keepTextBlocksVisible(content){
 function populateCollectionSelects(){
   Object.keys(collectionListFields).forEach(key=>{
     const select=$('settingsForm').elements[key]; if(!select) return;
+    if(collectionListFields[key].paired){
+      const profiles=collectionLists[key]||[];
+      const current={bank:state.settings.collectingBank||'',address:state.settings.collectingBankAddress||''};
+      const selected=profiles.find(profile=>profile.bank===current.bank&&profile.address===current.address)||profiles.find(profile=>profile.bank===current.bank)||profiles[0];
+      if(selected){ state.settings.collectingBank=selected.bank; state.settings.collectingBankAddress=selected.address; }
+      select.innerHTML=profiles.map(profile=>`<option value="${esc(collectingBankProfileKey(profile))}">${esc(profile.bank)} - ${esc(profile.address)}</option>`).join('');
+      select.value=selected?collectingBankProfileKey(selected):'';
+      return;
+    }
     const values=[...(collectionLists[key]||[])];
     if(state.settings[key] && !values.includes(state.settings[key])) values.push(state.settings[key]);
     const auto=key==='draweeAddress'?'<option value="">من الشحنة المختارة تلقائياً</option>':'';
@@ -412,10 +431,17 @@ function populateCollectionSelects(){
   });
 }
 function renderCollectionListManager(){
-  const field=$('collectionListField'), values=$('collectionListValues'); if(!field||!values) return;
+  const field=$('collectionListField'), values=$('collectionListValues'), valueInput=$('collectionListValue'), addressInput=$('collectionListAddress'), addButton=$('addCollectionListValue'); if(!field||!values) return;
   if(!field.options.length) field.innerHTML=Object.entries(collectionListFields).map(([key,meta])=>`<option value="${key}">${esc(meta.label)}</option>`).join('');
   const key=field.value||'remittingBank';
-  values.innerHTML=(collectionLists[key]||[]).length?(collectionLists[key]||[]).map(value=>`<span class="collection-list-value"><span title="${esc(value)}">${esc(value)}</span><button type="button" title="حذف" data-remove-list-value="${esc(value)}">×</button></span>`).join(''):'<small>لا توجد قيم محفوظة بعد.</small>';
+  const paired=Boolean(collectionListFields[key]?.paired);
+  valueInput.placeholder=paired?'اسم بنك التحصيل':'اكتب القيمة الجديدة';
+  addressInput.hidden=!paired;
+  addButton.textContent=paired?'إضافة البنك والعنوان':'إضافة للقائمة';
+  values.innerHTML=(collectionLists[key]||[]).length?(collectionLists[key]||[]).map((value,index)=>{
+    const text=paired?`${value.bank} - ${value.address}`:value;
+    return `<span class="collection-list-value"><span title="${esc(text)}">${esc(text)}</span><button type="button" title="حذف" data-remove-list-index="${index}">×</button></span>`;
+  }).join(''):'<small>لا توجد قيم محفوظة بعد.</small>';
 }
 const rowToShipment = row => Object.assign({}, row.data||{}, {id:row.id,status:row.status,companyId:row.company_id,shipmentNo:row.data?.operationNo||row.task_ref||row.id.slice(0,8)});
 function shipmentDataForUpdate(shipment){
@@ -632,22 +658,42 @@ async function init(){
   try{const [{data:companies,error:ce},{data:rows,error:se},{data:paymentRows,error:pe}]=await Promise.all([sb.from('companies').select('*'),sb.from('shipments').select('*').order('updated_at',{ascending:false}),sb.from('payments').select('*').order('paid_on')]);if(ce)throw ce;if(se)throw se;if(pe)console.warn('payments',pe);state.payments={};(paymentRows||[]).forEach(payment=>(state.payments[payment.shipment_id]??=[]).push(payment));const bsgt=(companies||[]).find(c=>/بحر\s*سواكن|bahar\s*swaken/i.test(`${c.name_ar||''} ${c.name_en||''}`));if(!bsgt)throw new Error('لم يتم العثور على شركة بحر سواكن في بيانات الشركات.');await loadSharedCollectionBranding(bsgt);state.shipments=(rows||[]).map(rowToShipment).filter(s=>s.companyId===bsgt.id);await migrateLegacyRemittingBatches(legacyRemittingBatches);rebuildRemittingBatches();fillFilters();renderAll();}catch(error){$('shipmentList').innerHTML=`<div class="empty-state">تعذّر تحميل مختبر التحصيل: ${esc(error.message||error)}. تأكد من تسجيل الدخول في النظام الأساسي أولاً.</div>`;$('shipmentCount').textContent='لم تُحمّل البيانات';}}
 ['searchInput','currencyFilter','consigneeFilter'].forEach(id=>$(id).addEventListener('input',renderPicker));
 $('settingsForm').addEventListener('input',event=>{if(!event.target.name)return;state.settings[event.target.name]=event.target.value;renderPreview();renderDebug();});
-$('settingsForm').addEventListener('change',event=>{if(!event.target.name)return;state.settings[event.target.name]=event.target.value;renderPreview();renderDebug();});
+$('settingsForm').addEventListener('change',event=>{
+  if(!event.target.name)return;
+  if(event.target.name==='collectingBankProfile'){
+    const profile=(collectionLists.collectingBankProfile||[]).find(item=>collectingBankProfileKey(item)===event.target.value);
+    if(profile){ state.settings.collectingBank=profile.bank; state.settings.collectingBankAddress=profile.address; }
+  }else state.settings[event.target.name]=event.target.value;
+  renderPreview();renderDebug();
+});
 $('convertToAedBtn').addEventListener('click',()=>{state.convertToAed=!state.convertToAed;renderAll();});
 $('collectionExchangeRate').addEventListener('input',event=>{state.exchangeRate=Number(event.target.value)||0;renderAll();});
 $('compactRecordCollectionBtn').addEventListener('click',sendToRemittingBank);
 $('collectionListField').addEventListener('change',renderCollectionListManager);
 $('addCollectionListValue').addEventListener('click',()=>{
-  const key=$('collectionListField').value, input=$('collectionListValue'), value=input.value.trim();
+  const key=$('collectionListField').value, input=$('collectionListValue'), addressInput=$('collectionListAddress'), value=input.value.trim();
   if(!value){ input.focus(); return; }
-  if(!collectionLists[key].includes(value)) collectionLists[key].push(value);
-  state.settings[key]=value; input.value=''; saveCollectionLists(); populateCollectionSelects(); renderCollectionListManager(); renderPreview(); renderDebug();
+  if(collectionListFields[key]?.paired){
+    const address=addressInput.value.trim();
+    if(!address){ addressInput.focus(); return; }
+    const profile={bank:value,address};
+    if(!(collectionLists[key]||[]).some(item=>collectingBankProfileKey(item)===collectingBankProfileKey(profile))) collectionLists[key].push(profile);
+    state.settings.collectingBank=profile.bank; state.settings.collectingBankAddress=profile.address; input.value=''; addressInput.value='';
+  }else{
+    if(!collectionLists[key].includes(value)) collectionLists[key].push(value);
+    state.settings[key]=value; input.value='';
+  }
+  saveCollectionLists(); populateCollectionSelects(); renderCollectionListManager(); renderPreview(); renderDebug();
 });
 $('collectionListValues').addEventListener('click',event=>{
-  const button=event.target.closest('[data-remove-list-value]'); if(!button) return;
-  const key=$('collectionListField').value, value=button.dataset.removeListValue;
-  collectionLists[key]=(collectionLists[key]||[]).filter(item=>item!==value);
-  if(state.settings[key]===value) state.settings[key]=key==='draweeAddress'?'':(collectionLists[key][0]||'');
+  const button=event.target.closest('[data-remove-list-index]'); if(!button) return;
+  const key=$('collectionListField').value, index=Number(button.dataset.removeListIndex), value=(collectionLists[key]||[])[index];
+  collectionLists[key]=(collectionLists[key]||[]).filter((_,itemIndex)=>itemIndex!==index);
+  if(collectionListFields[key]?.paired){
+    if(value&&state.settings.collectingBank===value.bank&&state.settings.collectingBankAddress===value.address){
+      const next=collectionLists[key][0]||{bank:'',address:''}; state.settings.collectingBank=next.bank; state.settings.collectingBankAddress=next.address;
+    }
+  }else if(state.settings[key]===value) state.settings[key]=key==='draweeAddress'?'':(collectionLists[key][0]||'');
   saveCollectionLists(); populateCollectionSelects(); renderCollectionListManager(); renderPreview(); renderDebug();
 });
 $('previewTabs').addEventListener('click',event=>{const button=event.target.closest('[data-preview]');if(!button)return;state.preview=button.dataset.preview;document.querySelectorAll('[data-preview]').forEach(b=>b.classList.toggle('active',b===button));renderPreview();});
