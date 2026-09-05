@@ -164,6 +164,8 @@ body, .lab-header, .lab-shell, button, input, select, textarea { font-family: 'I
 .text-position-controls output { direction: ltr; color: var(--muted); font: 700 9px 'IBM Plex Mono', monospace; text-align: left; }
 .text-position-controls small { color: var(--muted); font-size: 8.5px; line-height: 1.55; }
 .text-position-controls .text-btn.is-active { color: #fff; background: var(--blue); border-radius: 6px; padding: 6px 8px; }
+.layout-history-actions { display: flex; gap: 6px; }
+.layout-history-actions .text-btn { flex: 1; }
 .text-format-actions { display: flex; align-items: center; gap: 5px; padding-top: 3px; border-top: 1px solid #e7eef5; }
 .text-format-actions span { margin-inline-end: auto; color: #5f7993; font-size: 9px; font-weight: 700; }
 .text-format-actions button { min-width: 27px; height: 25px; border: 1px solid #cfdeeb; border-radius: 6px; background: #fff; color: #315c87; cursor: pointer; font: 700 11px Arial, sans-serif; }

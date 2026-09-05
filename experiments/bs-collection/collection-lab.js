@@ -21,6 +21,43 @@ let selectedTextStyle = null;
 let remittingBatches = [];
 let portalRole = '';
 let sharedCollectionBranding = {};
+let layoutHistory = [];
+let layoutRedoHistory = [];
+let restoringLayoutHistory = false;
+const layoutHistoryKeys = [collectionTextOffsetStorageKey, collectionTextBlockOffsetStorageKey, collectionTextStyleStorageKey, collectionTextLayerStorageKey, stampTransformStorageKey];
+function layoutSnapshot(){ return Object.fromEntries(layoutHistoryKeys.map(key=>[key,localStorage.getItem(key)])); }
+function updateLayoutHistoryControls(){
+  const undo=$('undoLayoutBtn'), redo=$('redoLayoutBtn');
+  if(undo) undo.disabled=!layoutHistory.length;
+  if(redo) redo.disabled=!layoutRedoHistory.length;
+}
+function recordLayoutHistory(){
+  if(restoringLayoutHistory||portalRole!=='admin') return;
+  const snapshot=layoutSnapshot();
+  const previous=layoutHistory.at(-1);
+  if(previous&&JSON.stringify(previous)===JSON.stringify(snapshot)) return;
+  layoutHistory.push(snapshot);
+  if(layoutHistory.length>40) layoutHistory.shift();
+  layoutRedoHistory=[];
+  updateLayoutHistoryControls();
+}
+function restoreLayoutSnapshot(snapshot){
+  restoringLayoutHistory=true;
+  Object.entries(snapshot).forEach(([key,value])=>{ if(value===null) localStorage.removeItem(key); else localStorage.setItem(key,value); });
+  restoringLayoutHistory=false;
+  renderPreview();
+  updateLayoutHistoryControls();
+}
+function undoLayout(){
+  if(!layoutHistory.length) return;
+  layoutRedoHistory.push(layoutSnapshot());
+  restoreLayoutSnapshot(layoutHistory.pop());
+}
+function redoLayout(){
+  if(!layoutRedoHistory.length) return;
+  layoutHistory.push(layoutSnapshot());
+  restoreLayoutSnapshot(layoutRedoHistory.pop());
+}
 const collectionListFields = {
   remittingBank:{label:'البنك المُرسِل',defaults:['Abu Dhabi Islamic Bank']}, remittingBankLetterAddress:{label:'عنوان بنك الإرسال للخطاب',defaults:['Abu Dhabi, UAE']}, remittingBankAddress:{label:'عنوان بنك الإرسال للتعهد',defaults:['BANIYAS BRANCH BUILDING, 2ND FLOOR, BANIYAS EAST, P.O.BOX 313, ABU DHABI, UAE.']}, remittingBankAccountNo:{label:'رقم حساب بنك الإرسال',defaults:['19567664']}, collectingBank:{label:'بنك التحصيل',defaults:['SAUDI SUDANESE BANK']},
   collectingBankAddress:{label:'عنوان بنك التحصيل',defaults:['MAIN BRANCH, FREE ZONE AREA, PORT SUDAN, SUDAN']},
@@ -143,6 +180,7 @@ function updateTextOffsetControls(){
   $('textOffsetYValue').textContent=`${offset.y} mm`;
 }
 function saveTextOffset(axis, value){
+  recordLayoutHistory();
   const offsets=collectionTextOffsets(), current=Object.assign({x:0,y:0},offsets[state.preview]||{});
   current[axis]=Number(value)||0; offsets[state.preview]=current;
   try { localStorage.setItem(collectionTextOffsetStorageKey,JSON.stringify(offsets)); } catch (_) {}
@@ -151,6 +189,7 @@ function saveTextOffset(axis, value){
 function collectionTextBlockOffsets(){ try { return JSON.parse(localStorage.getItem(collectionTextBlockOffsetStorageKey)||'{}')||{}; } catch (_) { return {}; } }
 function textBlockOffset(preview, index){ return Object.assign({x:0,y:0}, collectionTextBlockOffsets()[preview]?.[index]||{}); }
 function saveTextBlockOffset(preview, index, offset){
+  recordLayoutHistory();
   const offsets=collectionTextBlockOffsets(); offsets[preview]=offsets[preview]||{}; offsets[preview][index]=offset;
   try { localStorage.setItem(collectionTextBlockOffsetStorageKey,JSON.stringify(offsets)); } catch (_) {}
 }
@@ -158,6 +197,7 @@ function collectionTextStyles(){ try { return JSON.parse(localStorage.getItem(co
 function collectionTextLayers(){ try { return JSON.parse(localStorage.getItem(collectionTextLayerStorageKey)||'{}')||{}; } catch (_) { return {}; } }
 function textLayerFor(preview,index){ return Object.assign({hidden:false,zIndex:index+1},collectionTextLayers()[preview]?.[index]||{}); }
 function saveTextLayer(preview,index,layer){
+  recordLayoutHistory();
   const layers=collectionTextLayers(); layers[preview]=layers[preview]||{}; layers[preview][index]=layer;
   try { localStorage.setItem(collectionTextLayerStorageKey,JSON.stringify(layers)); } catch (_) {}
 }
@@ -168,7 +208,9 @@ function textLayerLabel(block,index){
 function ensureTextLayerControls(){
   const textControls=document.querySelector('.text-position-controls > div');
   if(textControls&&!$('selectParagraphForArrowsBtn')){
-    textControls.insertAdjacentHTML('beforeend','<button id="selectParagraphForArrowsBtn" class="text-btn" type="button"><i class="bx bx-arrow-to-top"></i> تحريك الفقرة بالأسهم</button><button id="resetCurrentPreviewBtn" class="text-btn" type="button"><i class="bx bx-reset"></i> إرجاع هذه الصفحة للافتراضي</button>');
+    textControls.insertAdjacentHTML('beforeend','<div class="layout-history-actions"><button id="undoLayoutBtn" class="text-btn" type="button" title="Ctrl+Z"><i class="bx bx-undo"></i> تراجع</button><button id="redoLayoutBtn" class="text-btn" type="button" title="Ctrl+Y"><i class="bx bx-redo"></i> إعادة</button></div><button id="selectParagraphForArrowsBtn" class="text-btn" type="button"><i class="bx bx-arrow-to-top"></i> تحريك الفقرة بالأسهم</button><button id="resetCurrentPreviewBtn" class="text-btn" type="button"><i class="bx bx-reset"></i> إرجاع هذه الصفحة للافتراضي</button>');
+    $('undoLayoutBtn').addEventListener('click',undoLayout);
+    $('redoLayoutBtn').addEventListener('click',redoLayout);
     $('selectParagraphForArrowsBtn').addEventListener('click',()=>{
       if(!selectedTextBlock||selectedTextBlock.preview!==state.preview){ alert('اختر الفقرة أولاً من الورقة أو من طبقات النص.'); return; }
       selectedTextStyle={preview:state.preview,id:`block-${selectedTextBlock.index}`};
@@ -176,6 +218,7 @@ function ensureTextLayerControls(){
       renderPreview();
     });
     $('resetCurrentPreviewBtn').addEventListener('click',resetCurrentPreviewLayout);
+    updateLayoutHistoryControls();
   }
   if($('textLayersPanel')) return;
   document.querySelector('.preview-actions')?.insertAdjacentHTML('afterbegin',`<details class="text-review-controls"><summary><i class="bx bx-git-compare"></i> النص الأصلي / المعاينة</summary><div id="textComparePanel" class="text-compare-panel"><p>اختر طبقة لعرض المقارنة.</p></div></details><details class="text-layer-controls"><summary><i class="bx bx-layer"></i> طبقات النص</summary><div id="textLayersPanel" class="text-layers-panel"><p>اختر شحنات لإظهار الطبقات.</p></div></details>`);
@@ -219,6 +262,7 @@ function renderTextCompare(content){
 }
 function textStyleFor(preview, id){ return Object.assign({weight:'',size:0,x:0,y:0},collectionTextStyles()[preview]?.[id]||{}); }
 function saveTextStyle(preview, id, style){
+  recordLayoutHistory();
   const styles=collectionTextStyles(); styles[preview]=styles[preview]||{}; styles[preview][id]=style;
   try { localStorage.setItem(collectionTextStyleStorageKey,JSON.stringify(styles)); } catch (_) {}
 }
@@ -621,15 +665,17 @@ document.querySelectorAll('[data-collapse-section]').forEach(button=>button.addE
 }));
 document.querySelectorAll('[data-step-section]').forEach(card=>card.addEventListener('click',()=>openPortalSection(card.dataset.stepSection)));
 $('printAllBtn').addEventListener('click', printAllCollectionDocuments);
-$('resetStampBtn').addEventListener('click',()=>{ try { localStorage.removeItem('bsCollectionStampOffset'); localStorage.removeItem(stampTransformStorageKey); } catch (_) {} renderPreview(); });
+$('resetStampBtn').addEventListener('click',()=>{ recordLayoutHistory(); try { localStorage.removeItem('bsCollectionStampOffset'); localStorage.removeItem(stampTransformStorageKey); } catch (_) {} renderPreview(); });
 $('textOffsetX').addEventListener('input',event=>saveTextOffset('x',event.target.value));
 $('textOffsetY').addEventListener('input',event=>saveTextOffset('y',event.target.value));
 $('resetTextOffsetBtn').addEventListener('click',()=>{
+  recordLayoutHistory();
   const offsets=collectionTextOffsets(); delete offsets[state.preview];
   try { localStorage.setItem(collectionTextOffsetStorageKey,JSON.stringify(offsets)); } catch (_) {}
   renderPreview();
 });
 function resetCurrentPreviewLayout(){
+  recordLayoutHistory();
   const clearPreview=(key)=>{
     try {
       const stored=JSON.parse(localStorage.getItem(key)||'{}')||{};
@@ -662,14 +708,24 @@ $('textStyleLargerBtn').addEventListener('click',()=>{
 });
 $('resetSelectedTextBlockBtn').addEventListener('click',()=>{
   if(!selectedTextBlock) return;
+  recordLayoutHistory();
   const offsets=collectionTextBlockOffsets();
   if(offsets[selectedTextBlock.preview]) delete offsets[selectedTextBlock.preview][selectedTextBlock.index];
   try { localStorage.setItem(collectionTextBlockOffsetStorageKey,JSON.stringify(offsets)); } catch (_) {}
   renderPreview();
 });
 document.addEventListener('keydown',event=>{
-  if(portalRole!=='admin'||!textBlockEditMode||!selectedTextBlock||selectedTextBlock.preview!==state.preview) return;
+  if(portalRole!=='admin') return;
   if(['INPUT','TEXTAREA','SELECT','BUTTON'].includes(document.activeElement?.tagName)) return;
+  if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==='z'){
+    event.preventDefault();
+    if(event.shiftKey) redoLayout(); else undoLayout();
+    return;
+  }
+  if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==='y'){
+    event.preventDefault(); redoLayout(); return;
+  }
+  if(!textBlockEditMode||!selectedTextBlock||selectedTextBlock.preview!==state.preview) return;
   const movement={ArrowLeft:['x',-1],ArrowRight:['x',1],ArrowUp:['y',-1],ArrowDown:['y',1]}[event.key];
   if(!movement) return;
   event.preventDefault();
@@ -700,7 +756,7 @@ function printAllCollectionDocuments(){
   const popup = window.open('', '_blank');
   if(!popup){ alert('المتصفح منع نافذة الطباعة. اسمح بالنوافذ المنبثقة ثم حاول مرة أخرى.'); return; }
   popup.opener = null;
-  popup.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>BSGT Collection Documents</title><link rel="stylesheet" href="/experiments/bs-collection/collection-lab.css?v=20260905-4"><link rel="stylesheet" href="/experiments/bs-collection/collection-lists.css?v=20260905-4"><style>${brandCss}.print-page{break-after:page;page-break-after:always}.print-page:last-child{break-after:auto;page-break-after:auto}@media screen{body{background:#eaf0f6}.print-page{padding:12mm 0}}</style></head><body>${previews.map(page=>`<section class="print-page">${page}</section>`).join('')}</body></html>`);
+  popup.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>BSGT Collection Documents</title><link rel="stylesheet" href="/experiments/bs-collection/collection-lab.css?v=20260905-5"><link rel="stylesheet" href="/experiments/bs-collection/collection-lists.css?v=20260905-5"><style>${brandCss}.print-page{break-after:page;page-break-after:always}.print-page:last-child{break-after:auto;page-break-after:auto}@media screen{body{background:#eaf0f6}.print-page{padding:12mm 0}}</style></head><body>${previews.map(page=>`<section class="print-page">${page}</section>`).join('')}</body></html>`);
   popup.document.close();
   popup.onload = ()=>setTimeout(()=>popup.print(), 450);
 }
@@ -833,6 +889,7 @@ function wireCollectionStampDrag(paper){
   apply();
   stamp.addEventListener('pointerdown', event=>{
     event.preventDefault();
+    recordLayoutHistory();
     stamp.classList.add('is-selected');
     const handle=canResize?(event.target.dataset.resize||''):'';
     const start = {x:event.clientX,y:event.clientY,baseX:position.xMm,baseY:position.yMm,baseWidth:saved.widthMm};
