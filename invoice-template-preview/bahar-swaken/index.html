@@ -54,8 +54,8 @@
     <section class="totals"><div class="cartons"><span>TOTAL PACKAGES</span><b>200 PACKAGE</b></div><div class="amount"><span>TOTAL AMOUNT</span><b>AED 44,040.00</b></div></section>
     <div class="amount-note">ONLY. FORTY-FOUR THOUSAND FORTY AED</div>
     <section class="terms"><div class="term"><label>INCOTERM</label><div>CFR</div></div><div class="term"><label>PORT OF DELIVERY</label><div>PORT SUDAN</div></div><div class="term"><label>COUNTRY OF ORIGIN</label><div>CHINA</div></div><div class="term"><label>TERM OF PAYMENTS</label><div>D/A 90 DAYS FROM BILL OF EXCHANGE DATE</div></div></section>
-    <section class="signatures"><div class="sign-line">Authorized Signature &amp; Company Stamp</div><div class="qr" aria-label="QR code placeholder"></div></section>
-  </div><img class="editor-float signature-image" data-label="التوقيع" alt="Signature"><img class="editor-float stamp-image" data-label="الختم" alt="Company stamp"></article></div></main>
+    <section class="signatures"><div class="sign-line">Authorized Signature &amp; Company Stamp</div></section>
+  </div><img class="editor-float signature-image" data-label="التوقيع" alt="Signature"><img class="editor-float stamp-image" data-label="الختم" alt="Company stamp"><div class="editor-float qr qr-image" data-label="QR العملية" aria-label="QR code preview"></div></article></div></main>
   <script>
     (function(){
       const params = new URLSearchParams(location.search);
@@ -86,7 +86,7 @@
       if (isEditor) document.body.classList.add('editor');
       const defaults = {
         accent:'#b72127', tableHeader:'#86191f', tableFont:'IBM Plex Sans', background:'', watermark:'', watermarkOpacity:7, showWatermark:false, signature:'', stamp:'', showStamp:true, showSigLine:true,
-        stampPosition:{xPercent:78,yPercent:78,widthPercent:13,rotate:0}, signaturePosition:{xPercent:10,yPercent:81,widthPercent:23,rotate:0},
+        stampPosition:{xPercent:78,yPercent:78,widthPercent:13,rotate:0}, signaturePosition:{xPercent:10,yPercent:81,widthPercent:23,rotate:0}, qrPosition:{xPercent:85,yPercent:20,widthPercent:9,rotate:0},
         labelFontSize:14, labelFontWeight:700, valueFontSize:13, valueFontWeight:400,
         titleFontSize:'', productHeaderFontSize:'', productValueFontSize:'', bottomLabelFontSize:'', bottomValueFontSize:'', addressFontSize:'',
         amountWordsFontSize:'', totalAmountFontSize:'', totalCartonsFontSize:'',
@@ -134,11 +134,12 @@
       const signature = document.querySelector('.signature-image');
       const stamp = document.querySelector('.stamp-image');
       const signLine = document.querySelector('.sign-line');
-      const qr = document.querySelector('.qr');
+      const qr = document.querySelector('.qr-image');
       const normalize = next => {
         const value = Object.assign({}, defaults, next || {});
         value.stampPosition = Object.assign({}, defaults.stampPosition, next?.stampPosition || {});
         value.signaturePosition = Object.assign({}, defaults.signaturePosition, next?.signaturePosition || {});
+        value.qrPosition = Object.assign({}, defaults.qrPosition, next?.qrPosition || {});
         return value;
       };
       const setFloat = (element, position, source, visible) => {
@@ -146,6 +147,12 @@
         element.src = source; element.style.display = 'block';
         element.style.left = position.xPercent + '%'; element.style.top = position.yPercent + '%';
         element.style.width = position.widthPercent + '%'; element.style.transform = `rotate(${position.rotate}deg)`;
+      };
+      const setQr = position => {
+        if (!qr) return;
+        qr.style.display = 'block';
+        qr.style.left = position.xPercent + '%'; qr.style.top = position.yPercent + '%';
+        qr.style.width = position.widthPercent + '%'; qr.style.height = 'auto'; qr.style.aspectRatio = '1'; qr.style.transform = `rotate(${position.rotate}deg)`;
       };
       const applySettings = next => {
         settings = normalize(next);
@@ -163,7 +170,7 @@
         if (signLine) signLine.style.display = settings.showSigLine ? '' : 'none';
         setFloat(signature, settings.signaturePosition, settings.signature, settings.showSigLine);
         setFloat(stamp, settings.stampPosition, settings.stamp, settings.showStamp);
-        if (qr) qr.style.display = settings.showStamp && settings.stamp ? 'none' : '';
+        setQr(settings.qrPosition);
       };
       applySettings(Object.assign({}, read('baharSwakenInvoicePreviewSettings'), isEditor ? read('baharSwakenInvoicePreviewDraft') : {}));
       window.addEventListener('message', event => { if (event.origin === location.origin && event.data?.type === 'bahar-live-settings') applySettings(event.data.settings); });
@@ -180,13 +187,14 @@
           const width = position.widthPercent;
           position.xPercent = Math.max(0, Math.min(100 - width, start.position.xPercent + (moveEvent.clientX - start.x) / rect.width * 100));
           position.yPercent = Math.max(0, Math.min(100 - width, start.position.yPercent + (moveEvent.clientY - start.y) / rect.height * 100));
-          setFloat(element, position, key === 'stamp' ? settings.stamp : settings.signature, key === 'stamp' ? settings.showStamp : settings.showSigLine);
+          if (key === 'qr') setQr(position);
+          else setFloat(element, position, key === 'stamp' ? settings.stamp : settings.signature, key === 'stamp' ? settings.showStamp : settings.showSigLine);
           window.parent.postMessage({type:'bahar-live-position', key, position}, location.origin);
         };
         element.addEventListener('pointermove', move);
         element.addEventListener('pointerup', () => element.removeEventListener('pointermove', move), {once:true});
       });
-      bindDrag(stamp, 'stamp'); bindDrag(signature, 'signature');
+      bindDrag(stamp, 'stamp'); bindDrag(signature, 'signature'); bindDrag(qr, 'qr');
     })();
   </script>
 </body>

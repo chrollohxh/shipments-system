@@ -174,7 +174,7 @@
     return {
       name:'Bahar Swaken — Commercial Invoice', accent:'#86191f', tableHeader:'#86191f', tableFont:'IBM Plex Sans',
       background:'', watermark:'', watermarkOpacity:7, showWatermark:false, signature:'', stamp:'', showStamp:true, showSigLine:true,
-      stampPosition:{xPercent:78,yPercent:78,widthPercent:13,rotate:0}, signaturePosition:{xPercent:10,yPercent:81,widthPercent:23,rotate:0},
+      stampPosition:{xPercent:78,yPercent:78,widthPercent:13,rotate:0}, signaturePosition:{xPercent:10,yPercent:81,widthPercent:23,rotate:0}, qrPosition:{xPercent:85,yPercent:20,widthPercent:9,rotate:0},
       // Typography — fixed px sizes (never auto-shrunk); granular fields fall back to the base
       // label/value pair when left unset (empty string), so most users only touch the base four.
       labelFontSize:14, labelFontWeight:700, valueFontSize:13, valueFontWeight:400,
@@ -259,6 +259,7 @@
     };
     const stampPosition = Object.assign({xPercent:78,yPercent:78,widthPercent:13,rotate:0}, settings.stampPosition || {});
     const signaturePosition = Object.assign({xPercent:10,yPercent:81,widthPercent:23,rotate:0}, settings.signaturePosition || {});
+    const qrPosition = Object.assign({xPercent:85,yPercent:20,widthPercent:9,rotate:0}, settings.qrPosition || {});
     simple.innerHTML = `
       <style>
         #baharSimpleSettings{flex:1;min-height:0;overflow:hidden!important;padding:0!important}#baharSimpleSettings .bs-workspace{height:100%;display:grid;grid-template-columns:minmax(340px,39%) minmax(0,61%);background:#f7f9fc}#baharSimpleSettings .bs-card{min-height:0;overflow:auto;border-left:1px solid #dbe4ee;padding:24px;background:#fff;box-shadow:none}
@@ -324,10 +325,11 @@
         <div class="field" style="margin-top:10px"><label>شفافية العلامة المائية: <b class="bs-opacity-value"></b>%</label><input class="bs-opacity" type="range" min="0" max="100" step="1"></div>
         ${fileControl('stamp', 'صورة الختم', 'image/png,image/jpeg,image/webp', settings.stamp, 'PNG أو JPG. يمكن استخدام الختم الموجود أو رفع ختم خاص بهذا القالب.')}
         ${transformControls('stamp', 'تحريك وتعديل الختم', stampPosition)}
+        ${transformControls('qr', 'تحريك وتعديل QR العملية', qrPosition)}
         ${fileControl('signature', 'صورة التوقيع', 'image/png,image/jpeg,image/webp', settings.signature, 'يفضل PNG بخلفية شفافة. الصورة اختيارية.')}
         ${transformControls('signature', 'تحريك وتعديل التوقيع', signaturePosition)}
         <div class="bs-actions"><button type="button" class="btn btn-primary bs-save">حفظ إعدادات المعاينة</button><button type="button" class="btn btn-ghost bs-preview">معاينة الطباعة</button></div>
-      </div><aside class="bs-live"><div class="bs-live-head"><div><strong>المعاينة الحية</strong><small>نموذج A4 حقيقي</small></div><div class="bs-zoom"><button type="button" data-zoom=".62">Fit</button><button type="button" data-zoom=".75">75%</button><button type="button" data-zoom="1">100%</button></div></div><div class="bs-page-stage"><iframe class="bs-live-frame" title="المعاينة الحية لفاتورة بحر سواكن" src="/invoice-template-preview/bahar-swaken/?embed=editor"></iframe></div></aside></div>`;
+      </div><aside class="bs-live"><div class="bs-live-head"><div><strong>المعاينة الحية</strong><small>نموذج A4 حقيقي</small></div><div class="bs-zoom"><button type="button" data-zoom=".62">Fit</button><button type="button" data-zoom=".75">75%</button><button type="button" data-zoom="1">100%</button></div></div><div class="bs-page-stage"><iframe class="bs-live-frame" title="المعاينة الحية لفاتورة بحر سواكن" src="/invoice-template-preview/bahar-swaken/?embed=editor&v=20260905-qr1"></iframe></div></aside></div>`;
     const one = selector => simple.querySelector(selector);
     one('.bs-name').value = settings.name;
     one('.bs-font').value = settings.tableFont;
@@ -388,7 +390,7 @@
     const collect = () => ({
       name:one('.bs-name').value.trim() || invoicePreviewDefaults().name, tableFont:one('.bs-font').value, accent:one('.bs-accent').value, tableHeader:one('.bs-header').value,
       background:simple.querySelector('[data-key="background"]').dataset.value || settings.background || '', watermark:simple.querySelector('[data-key="watermark"]').dataset.value || settings.watermark || '',
-      signature:simple.querySelector('[data-key="signature"]').dataset.value || settings.signature || '', watermarkOpacity:Number(one('.bs-opacity').value), stamp:simple.querySelector('[data-key="stamp"]').dataset.value || settings.stamp || company.stamp || '', showStamp:one('.bs-show-stamp').checked, showSigLine:one('.bs-show-signature').checked, showWatermark:one('.bs-show-watermark').checked, transparentTableCells:one('.bs-transparent-cells').checked, stampPosition:transformValue('stamp'), signaturePosition:transformValue('signature'),
+      signature:simple.querySelector('[data-key="signature"]').dataset.value || settings.signature || '', watermarkOpacity:Number(one('.bs-opacity').value), stamp:simple.querySelector('[data-key="stamp"]').dataset.value || settings.stamp || company.stamp || '', showStamp:one('.bs-show-stamp').checked, showSigLine:one('.bs-show-signature').checked, showWatermark:one('.bs-show-watermark').checked, transparentTableCells:one('.bs-transparent-cells').checked, stampPosition:transformValue('stamp'), qrPosition:transformValue('qr'), signaturePosition:transformValue('signature'),
       ...typographyValues()
     });
     const liveFrame = one('.bs-live-frame');
