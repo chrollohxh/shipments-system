@@ -166,6 +166,17 @@ function textLayerLabel(block,index){
   return `${index+1}. ${label.slice(0,42)||'طبقة نص'}`;
 }
 function ensureTextLayerControls(){
+  const textControls=document.querySelector('.text-position-controls > div');
+  if(textControls&&!$('selectParagraphForArrowsBtn')){
+    textControls.insertAdjacentHTML('beforeend','<button id="selectParagraphForArrowsBtn" class="text-btn" type="button"><i class="bx bx-arrow-to-top"></i> تحريك الفقرة بالأسهم</button><button id="resetCurrentPreviewBtn" class="text-btn" type="button"><i class="bx bx-reset"></i> إرجاع هذه الصفحة للافتراضي</button>');
+    $('selectParagraphForArrowsBtn').addEventListener('click',()=>{
+      if(!selectedTextBlock||selectedTextBlock.preview!==state.preview){ alert('اختر الفقرة أولاً من الورقة أو من طبقات النص.'); return; }
+      selectedTextStyle={preview:state.preview,id:`block-${selectedTextBlock.index}`};
+      textBlockEditMode=true;
+      renderPreview();
+    });
+    $('resetCurrentPreviewBtn').addEventListener('click',resetCurrentPreviewLayout);
+  }
   if($('textLayersPanel')) return;
   document.querySelector('.preview-actions')?.insertAdjacentHTML('afterbegin',`<details class="text-review-controls"><summary><i class="bx bx-git-compare"></i> النص الأصلي / المعاينة</summary><div id="textComparePanel" class="text-compare-panel"><p>اختر طبقة لعرض المقارنة.</p></div></details><details class="text-layer-controls"><summary><i class="bx bx-layer"></i> طبقات النص</summary><div id="textLayersPanel" class="text-layers-panel"><p>اختر شحنات لإظهار الطبقات.</p></div></details>`);
   $('textLayersPanel')?.addEventListener('click',event=>{
@@ -235,7 +246,9 @@ function updateTextBlockControls(){
   const reset=$('resetSelectedTextBlockBtn'); if(!reset) return;
   reset.hidden=!selectedTextBlock || selectedTextBlock.preview!==state.preview;
   $('toggleTextBlockModeBtn').classList.toggle('is-active',textBlockEditMode);
-  $('toggleTextBlockModeBtn').innerHTML=textBlockEditMode?'<i class="bx bx-check"></i> اضغط على فقرة للتحريك':'<i class="bx bx-target-lock"></i> تحريك فقرة بالنقر';
+  $('toggleTextBlockModeBtn').innerHTML=textBlockEditMode?'<i class="bx bx-check"></i> وضع تحريك النص والفقرة مفعّل':'<i class="bx bx-target-lock"></i> تحريك النص أو الفقرة';
+  const paragraphArrows=$('selectParagraphForArrowsBtn');
+  if(paragraphArrows) paragraphArrows.disabled=!selectedTextBlock||selectedTextBlock.preview!==state.preview;
   updateTextStyleControls();
 }
 function prepareTextBlocks(content){
@@ -616,6 +629,28 @@ $('resetTextOffsetBtn').addEventListener('click',()=>{
   try { localStorage.setItem(collectionTextOffsetStorageKey,JSON.stringify(offsets)); } catch (_) {}
   renderPreview();
 });
+function resetCurrentPreviewLayout(){
+  const clearPreview=(key)=>{
+    try {
+      const stored=JSON.parse(localStorage.getItem(key)||'{}')||{};
+      delete stored[state.preview];
+      localStorage.setItem(key,JSON.stringify(stored));
+    } catch (_) {}
+  };
+  clearPreview(collectionTextOffsetStorageKey);
+  clearPreview(collectionTextBlockOffsetStorageKey);
+  clearPreview(collectionTextStyleStorageKey);
+  clearPreview(collectionTextLayerStorageKey);
+  try {
+    const stamp=JSON.parse(localStorage.getItem(stampTransformStorageKey)||'{}')||{};
+    if(stamp.positions) delete stamp.positions[state.preview];
+    localStorage.setItem(stampTransformStorageKey,JSON.stringify(stamp));
+  } catch (_) {}
+  selectedTextBlock=null;
+  selectedTextStyle=null;
+  textBlockEditMode=false;
+  renderPreview();
+}
 $('toggleTextBlockModeBtn').addEventListener('click',()=>{ if(portalRole==='admin'){ textBlockEditMode=!textBlockEditMode; renderPreview(); } });
 $('textStyleNormalBtn').addEventListener('click',()=>setSelectedTextStyle({weight:'',size:0}));
 $('textStyleBoldBtn').addEventListener('click',()=>setSelectedTextStyle({weight:'700'}));
@@ -665,7 +700,7 @@ function printAllCollectionDocuments(){
   const popup = window.open('', '_blank');
   if(!popup){ alert('المتصفح منع نافذة الطباعة. اسمح بالنوافذ المنبثقة ثم حاول مرة أخرى.'); return; }
   popup.opener = null;
-  popup.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>BSGT Collection Documents</title><link rel="stylesheet" href="/experiments/bs-collection/collection-lab.css?v=20260905-3"><link rel="stylesheet" href="/experiments/bs-collection/collection-lists.css?v=20260905-3"><style>${brandCss}.print-page{break-after:page;page-break-after:always}.print-page:last-child{break-after:auto;page-break-after:auto}@media screen{body{background:#eaf0f6}.print-page{padding:12mm 0}}</style></head><body>${previews.map(page=>`<section class="print-page">${page}</section>`).join('')}</body></html>`);
+  popup.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>BSGT Collection Documents</title><link rel="stylesheet" href="/experiments/bs-collection/collection-lab.css?v=20260905-4"><link rel="stylesheet" href="/experiments/bs-collection/collection-lists.css?v=20260905-4"><style>${brandCss}.print-page{break-after:page;page-break-after:always}.print-page:last-child{break-after:auto;page-break-after:auto}@media screen{body{background:#eaf0f6}.print-page{padding:12mm 0}}</style></head><body>${previews.map(page=>`<section class="print-page">${page}</section>`).join('')}</body></html>`);
   popup.document.close();
   popup.onload = ()=>setTimeout(()=>popup.print(), 450);
 }
