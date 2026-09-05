@@ -2909,6 +2909,10 @@ body.role-staff #navWallet,body.role-staff #navAdmin{display:flex !important;}
         <datalist id="dl_taskRef"></datalist>
       </div>
       <div class="field span2">
+        <label>ملف العملية</label>
+        <input type="text" id="f_operationNo" dir="ltr" readonly placeholder="يتولد تلقائياً عند إنشاء الشحنة">
+      </div>
+      <div class="field span2">
         <label>نوع الشحن (يحدد شهادة المنشأ والبوليصة)</label>
         <select id="f_shipType">
           <option value="land">شحن بري</option>
@@ -5009,6 +5013,10 @@ SWIFT: NBEGEGCX"></textarea>
       <button class="close-x" id="bsgtShipCloseX" data-ic="close"></button>
     </div>
     <div class="bsgt-ship-body" style="padding:0 26px;">
+      <div class="section-title">ملف العملية</div>
+      <div class="grid">
+        <div class="field span2"><label>رقم العملية الموحد</label><input type="text" id="bsgt_operationNo" dir="ltr" readonly></div>
+      </div>
       <div class="section-title">الصنف والسعر</div>
       <div class="grid bsgt-item-grid">
         <div class="field span2"><label>وصف الصنف</label><input type="text" id="bsgt_itemDesc" placeholder="مثال: Ceramic"></div>
@@ -7564,7 +7572,7 @@ function renderSea(){
   let list = records.filter(r=>isSea(r) && inCompanyScope(r));
   const total = list.length;
   if(q){
-    list = list.filter(r=>[r.itemDesc,r.consignee,r.exporter,r.invoiceNo,r.proformaNo,
+    list = list.filter(r=>[r.operationNo,r.itemDesc,r.consignee,r.exporter,r.invoiceNo,r.proformaNo,
                            r.certNo,r.billNo,r.destBank].join(' ').toLowerCase().includes(q));
   }
   list.sort((a,b)=> (b.invoiceDate||'').localeCompare(a.invoiceDate||''));
@@ -7669,6 +7677,7 @@ function bsgtShipmentCard(r, index, isDraft, missingHtml){
     <h3 title="${escapeHtml(r.itemDesc||'(بدون وصف)')}">${escapeHtml(r.itemDesc||'(بدون وصف)')}</h3>
     <p class="bsgt-card-consignee">${escapeHtml(r.consignee || r.exporter || 'لم يُحدد العميل')}</p>
     <div class="bsgt-card-meta">
+      ${r.operationNo ? `<span title="ملف العملية">${icon('folder',13)} ${escapeHtml(r.operationNo)}</span>` : ''}
       <span>${icon('calendarIcon',13)} ${escapeHtml(String(fmtDate(r.invoiceDate||'') || 'بدون تاريخ'))}</span>
       ${shownQuantity ? `<span>${icon('box',13)} ${escapeHtml(shownQuantity)}</span>` : ''}
       <span>${icon('invoice',13)} ${escapeHtml(invoice)}</span>
@@ -7707,7 +7716,7 @@ function renderIssued(){
   let list = records.filter(r=>recStatus(r)==='sent' && inCompanyScope(r));
   const total = list.length;
   if(q){
-    list = list.filter(r=>[r.itemDesc,r.consignee,r.exporter,r.invoiceNo,r.proformaNo,
+    list = list.filter(r=>[r.operationNo,r.itemDesc,r.consignee,r.exporter,r.invoiceNo,r.proformaNo,
                            r.certNo,r.billNo,r.destBank].join(' ').toLowerCase().includes(q));
   }
   list.sort((a,b)=> (b.invoiceDate||'').localeCompare(a.invoiceDate||''));
@@ -11824,7 +11833,7 @@ document.getElementById('repExportBtn').addEventListener('click', ()=>{
   const rows = records.filter(r=>monthKey(r.invoiceDate) === pick);
   if(!rows.length){ toast('مفيش بيانات للتصدير','err'); return; }
   const cols = [
-    ['رقم المهمة','taskRef'],['نوع الشحن',r=>isSea(r)?'بحري':'بري'],['الحالة',r=>STATUS_AR[recStatus(r)]],
+    ['ملف العملية','operationNo'],['رقم المهمة','taskRef'],['نوع الشحن',r=>isSea(r)?'بحري':'بري'],['الحالة',r=>STATUS_AR[recStatus(r)]],
     ['الصنف','itemDesc'],['الكمية','qty'],['نوع التعبئة','qtyUnit'],['المبلغ','totalAmount'],
     ['المصدّر','exporter'],['المرسل إليه','consignee'],
     ['ميناء الشحن','portLoading'],['ميناء التفريغ','portDischarge'],['بلد المنشأ','countryOrigin'],
@@ -12310,7 +12319,7 @@ function submitForReview(id){
     : `<div class="presend-ok">${icon('check',15)} كل البيانات الأساسية مكتملة</div>`;
 
   const rows = [
-    ['رقم المهمة', r.taskRef], ['نوع الشحن', isSea(r)?'بحري':'بري'],
+    ['ملف العملية', r.operationNo], ['رقم المهمة', r.taskRef], ['نوع الشحن', isSea(r)?'بحري':'بري'],
     ['الصنف', r.itemDesc], ['الكمية', [r.qty, r.qtyUnit].filter(Boolean).join(' ')],
     ['سعر الوحدة', r.unitPrice], ['المبلغ الإجمالي', r.totalAmount],
     ['المصدّر', r.exporter], ['المرسل إليه', r.consignee],
@@ -12513,7 +12522,7 @@ function renderTargetDashboard(){
         </div>
       </section>
       <section class="db-three-grid">
-        <div class="db-panel"><div class="db-panel-title"><div><h3>آخر العمليات</h3><p>نظرة سريعة على آخر الحركات التشغيلية</p></div><button class="db-link" id="dbShowAll">عرض الكل</button></div><table class="db-operations"><thead><tr><th>الشركة</th><th>رقم العملية</th><th>النوع</th><th>التاريخ</th></tr></thead><tbody>${recent.length?recent.map((r,i)=>{const seaType=isSea(r);return `<tr><td>${escapeHtml(r.exporter||r.consignee||'—')}</td><td>#${r.taskRef||r.invoiceNo||String(total-i).padStart(4,'0')}</td><td><span class="db-type ${seaType?'sea':'land'}">${icon(seaType?'ship':'truck',11)}${seaType?'بحرية':'برية'}</span></td><td>${r.invoiceDate?new Date(r.invoiceDate).toLocaleDateString('ar-EG'): '—'}</td></tr>`;}).join(''):'<tr><td colspan="4" style="padding:28px;text-align:center;color:#9aa8b9">لا توجد عمليات مسجلة بعد</td></tr>'}</tbody></table></div>
+        <div class="db-panel"><div class="db-panel-title"><div><h3>آخر العمليات</h3><p>نظرة سريعة على آخر الحركات التشغيلية</p></div><button class="db-link" id="dbShowAll">عرض الكل</button></div><table class="db-operations"><thead><tr><th>الشركة</th><th>ملف العملية</th><th>النوع</th><th>التاريخ</th></tr></thead><tbody>${recent.length?recent.map((r,i)=>{const seaType=isSea(r);return `<tr><td>${escapeHtml(r.exporter||r.consignee||'—')}</td><td>${escapeHtml(r.operationNo||r.taskRef||r.invoiceNo||String(total-i).padStart(4,'0'))}</td><td><span class="db-type ${seaType?'sea':'land'}">${icon(seaType?'ship':'truck',11)}${seaType?'بحرية':'برية'}</span></td><td>${r.invoiceDate?new Date(r.invoiceDate).toLocaleDateString('ar-EG'): '—'}</td></tr>`;}).join(''):'<tr><td colspan="4" style="padding:28px;text-align:center;color:#9aa8b9">لا توجد عمليات مسجلة بعد</td></tr>'}</tbody></table></div>
         <div class="db-panel"><div class="db-panel-title"><div><h3>العمليات آخر 6 أشهر</h3><p>اتجاهات النمو والتغير التشغيلي</p></div><span class="db-link">آخر 6 أشهر</span></div><div class="db-chart"><svg viewBox="0 0 570 180" preserveAspectRatio="none"><defs><linearGradient id="dbArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1b76ed" stop-opacity=".25"/><stop offset="1" stop-color="#1b76ed" stop-opacity=".01"/></linearGradient></defs>${[45,82,119,156].map(y=>`<line x1="20" x2="550" y1="${y}" y2="${y}" stroke="#e8eef7" stroke-dasharray="3 7"/>`).join('')}<path d="${area}" fill="url(#dbArea)"/><path d="${line}" fill="none" stroke="#1c76ef" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>${pts.map((p,i)=>`<circle cx="${p.x}" cy="${p.y}" r="4" fill="#fff" stroke="#1c76ef" stroke-width="2"/><text x="${p.x}" y="${p.y-10}" text-anchor="middle" fill="#36475e" font-size="10" font-weight="700">${months[i].count||''}</text>`).join('')}</svg><div class="db-chart-labels">${months.map(m=>`<span>${m.label}</span>`).join('')}</div></div></div>
         <div class="db-panel"><div class="db-panel-title"><div><h3>تقييم الشركات (أعلى 3)</h3><p>أفضل الشركات حسب الأداء</p></div><span>${icon('award',17)}</span></div>${companies.length?companies.map(([name,count],i)=>`<div class="db-company"><div class="db-company-top"><span>${escapeHtml(name)}</span><span class="db-rank">${i+1}</span></div><div class="db-company-meta"><span>${fmt(count)} عملية</span><span class="db-stars">★★★★★ ${Math.max(4.1,4.9-i*.3).toFixed(1)}</span></div></div>`).join(''):'<div class="dash-empty">ستظهر التقييمات بعد إضافة عمليات</div>'}<button class="db-all">عرض جميع الشركات</button></div>
       </section>
@@ -12708,6 +12717,16 @@ const CERT_IMG = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAICAgI
 
 let records = [];
 
+function nextBsgtOperationNo(){
+  const year=new Date().getFullYear();
+  const prefix=`BSGTX-${year}-`;
+  const highest=records.reduce((max,record)=>{
+    const match=String(record.operationNo||'').match(new RegExp(`^${prefix}(\\d+)$`));
+    return match?Math.max(max,Number(match[1])):max;
+  },0);
+  return `${prefix}${String(highest+1).padStart(4,'0')}`;
+}
+
 
 function fmtDate(d){
   if(!d) return '—';
@@ -12737,7 +12756,7 @@ function shipmentListMeta(r){
   const unit = String(r.qtyUnit || '').trim();
   const quantity = rawQty && unit && !rawQty.toLowerCase().includes(unit.toLowerCase()) ? `${rawQty} ${unit}` : rawQty;
   const invoice = String(r.invoiceNo || r.proformaNo || '').trim();
-  return [quantity ? `الكمية: ${quantity}` : '', invoice ? `فاتورة: ${invoice}` : ''].filter(Boolean).map(escapeHtml).join(' <i aria-hidden="true">·</i> ');
+  return [r.operationNo ? `ملف: ${r.operationNo}` : '', quantity ? `الكمية: ${quantity}` : '', invoice ? `فاتورة: ${invoice}` : ''].filter(Boolean).map(escapeHtml).join(' <i aria-hidden="true">·</i> ');
 }
 
 function render(){
@@ -12746,7 +12765,7 @@ function render(){
     if(!inCompanyScope(r)) return false; // بوابة BSGT: بحر سواكن فقط، وإلا: كل شركة عدا بحر سواكن
     if(isSea(r)) return false;          // البحري له تبويبه الخاص
     if(!search) return true;
-    const hay = [r.proformaNo,r.invoiceNo,r.certNo,r.billNo,r.exporter,r.consignee,
+    const hay = [r.operationNo,r.proformaNo,r.invoiceNo,r.certNo,r.billNo,r.exporter,r.consignee,
                  r.itemDesc,r.item2Desc,r.item3Desc,r.item4Desc,r.item5Desc,r.item6Desc,r.item7Desc,r.item8Desc,r.item9Desc,r.item10Desc,r.item11Desc,r.item12Desc,r.item13Desc,r.item14Desc,r.item15Desc,
                  r.portLoading,r.portDischarge,r.notes].join(' ').toLowerCase();
     return hay.includes(search);
@@ -13136,6 +13155,7 @@ function openBsgtShipForm(id){
   document.getElementById('bsgtShipTitle').textContent = r ? 'تعديل شحنة — بحر سواكن' : 'شحنة جديدة — بحر سواكن';
   fillLookupSelects();
   renderBsgtBankOptions(r ? r.bankId : '');
+  document.getElementById('bsgt_operationNo').value = r?.operationNo || nextBsgtOperationNo();
   document.getElementById('bsgt_itemDesc').value = r?.itemDesc || '';
   document.getElementById('bsgt_qty').value = r?.qty || '';
   setLookupValue(document.getElementById('bsgt_qtyUnit'), r?.qtyUnit || '');
@@ -13201,6 +13221,7 @@ async function saveBsgtShipment(){
   const shipmentTotal = amountTotal > 0 ? withCurrency(amountTotal.toFixed(2)) : withCurrency(document.getElementById('bsgt_totalAmount').value);
   const rec = Object.assign({}, prev, {
     id, shipType: prev.shipType || 'land', companyId: entry.id,
+    operationNo: prev.operationNo || document.getElementById('bsgt_operationNo').value || nextBsgtOperationNo(),
     itemDesc: document.getElementById('bsgt_itemDesc').value,
     qty: document.getElementById('bsgt_qty').value,
     qtyUnit: document.getElementById('bsgt_qtyUnit').value,
@@ -13277,6 +13298,7 @@ document.getElementById('newBtn').addEventListener('click', ()=>{
   document.getElementById('f_proformaNo').value = sharedNo;
   document.getElementById('f_billNo').value = nextBillNumber();
   document.getElementById('f_certNo').value = nextCertNumber();
+  document.getElementById('f_operationNo').value = nextBsgtOperationNo();
   if(activeCompanyId){
     Promise.all([nextCompanyNumber('invoice'), nextCompanyNumber('bill'), nextCompanyNumber('cert')])
       .then(([inv, bill, cert])=>{
@@ -13394,6 +13416,7 @@ async function saveShipment(status, opts){
     certWordCoded: certPick === 'coded-word',
     certDubaiPdf: certPick === 'dubai-pdf',
     taskRef: document.getElementById('f_taskRef').value.trim(),
+    operationNo: (prev && prev.operationNo) || document.getElementById('f_operationNo').value.trim() || nextBsgtOperationNo(),
     itemDesc: document.getElementById('f_itemDesc').value,
     qty: document.getElementById('f_qty').value,
     qtyUnit: document.getElementById('f_qtyUnit').value,
@@ -13740,12 +13763,13 @@ function renderBsgtDetail(r){
       </aside>
       <main class="bsgt-detail-main">
         <header class="bsgt-detail-head">
-          <div>${r.taskRef? '<span class="tc-ref">'+escapeHtml(r.taskRef)+'</span>' : ''}<h2>${escapeHtml(r.itemDesc||'بدون وصف')}</h2></div>
+          <div>${r.operationNo? '<span class="tc-ref">'+escapeHtml(r.operationNo)+'</span>' : (r.taskRef? '<span class="tc-ref">'+escapeHtml(r.taskRef)+'</span>' : '')}<h2>${escapeHtml(r.itemDesc||'بدون وصف')}</h2></div>
           <button class="close-x" id="closeDetail">${icon('close',16)}</button>
         </header>
 
         <section class="bsgt-detail-section" id="bsgtOverview">
           <div class="bsgt-summary-grid">
+            <div class="bsgt-summary-card"><div class="sum-top">${icon('folder',14)} ملف العملية</div><span class="sum-value">${escapeHtml(r.operationNo||'—')}</span></div>
             <div class="bsgt-summary-card"><div class="sum-top">${icon('user',14)} المرسل إليه</div><span class="sum-value">${escapeHtml(r.consignee||'—')}</span></div>
             <div class="bsgt-summary-card"><div class="sum-top">${icon('building',14)} المصدر</div><span class="sum-value">${escapeHtml(bsgtDetailSourceName(r))}</span></div>
             <div class="bsgt-summary-card"><div class="sum-top">${icon('box',14)} الكمية</div><span class="sum-value">${escapeHtml(String(quantity))}</span></div>
@@ -13810,7 +13834,7 @@ function openDetail(id){
   card.classList.toggle('bsgt-detail-card', isBsgtDetail);
   card.innerHTML = isBsgtDetail ? renderBsgtDetail(r) : `
     <div class="dh">
-      <div>${r.taskRef? '<span class="tc-ref">'+escapeHtml(r.taskRef)+'</span>' : ''}<h2>${isSea(r)? icon('anchor',17)+' ' : ''}${escapeHtml(r.itemDesc||'بدون وصف')}</h2></div>
+      <div>${r.operationNo? '<span class="tc-ref">'+escapeHtml(r.operationNo)+'</span>' : (r.taskRef? '<span class="tc-ref">'+escapeHtml(r.taskRef)+'</span>' : '')}<h2>${isSea(r)? icon('anchor',17)+' ' : ''}${escapeHtml(r.itemDesc||'بدون وصف')}</h2></div>
       <button class="close-x" id="closeDetail">${icon('close',16)}</button>
     </div>
     <div class="drow text"><span>المصدّر</span><span>${escapeHtml(r.exporter||'—')}</span></div>
@@ -13990,6 +14014,7 @@ function fillFormForEdit(r){
   setTimeout(autoOpenAdv, 0);
   document.getElementById('f_shipType').value = r.shipType || 'land';
   document.getElementById('f_taskRef').value = r.taskRef || '';
+  document.getElementById('f_operationNo').value = r.operationNo || nextBsgtOperationNo();
   setLookupValue(document.getElementById('f_itemDesc'), r.itemDesc||'');
   document.getElementById('f_qty').value = r.qty||'';
   setLookupValue(document.getElementById('f_qtyUnit'), r.qtyUnit||'');

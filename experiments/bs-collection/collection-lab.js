@@ -417,7 +417,7 @@ function renderCollectionListManager(){
   const key=field.value||'remittingBank';
   values.innerHTML=(collectionLists[key]||[]).length?(collectionLists[key]||[]).map(value=>`<span class="collection-list-value"><span title="${esc(value)}">${esc(value)}</span><button type="button" title="حذف" data-remove-list-value="${esc(value)}">×</button></span>`).join(''):'<small>لا توجد قيم محفوظة بعد.</small>';
 }
-const rowToShipment = row => Object.assign({}, row.data||{}, {id:row.id,status:row.status,companyId:row.company_id,shipmentNo:row.task_ref||row.id.slice(0,8)});
+const rowToShipment = row => Object.assign({}, row.data||{}, {id:row.id,status:row.status,companyId:row.company_id,shipmentNo:row.data?.operationNo||row.task_ref||row.id.slice(0,8)});
 function shipmentDataForUpdate(shipment){
   const data=Object.assign({},shipment);
   ['id','status','companyId','shipmentNo'].forEach(key=>delete data[key]);
@@ -756,7 +756,7 @@ function printAllCollectionDocuments(){
   const popup = window.open('', '_blank');
   if(!popup){ alert('المتصفح منع نافذة الطباعة. اسمح بالنوافذ المنبثقة ثم حاول مرة أخرى.'); return; }
   popup.opener = null;
-  popup.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>BSGT Collection Documents</title><link rel="stylesheet" href="/experiments/bs-collection/collection-lab.css?v=20260905-5"><link rel="stylesheet" href="/experiments/bs-collection/collection-lists.css?v=20260905-5"><style>${brandCss}.print-page{break-after:page;page-break-after:always}.print-page:last-child{break-after:auto;page-break-after:auto}@media screen{body{background:#eaf0f6}.print-page{padding:12mm 0}}</style></head><body>${previews.map(page=>`<section class="print-page">${page}</section>`).join('')}</body></html>`);
+  popup.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>BSGT Collection Documents</title><link rel="stylesheet" href="/experiments/bs-collection/collection-lab.css?v=20260905-6"><link rel="stylesheet" href="/experiments/bs-collection/collection-lists.css?v=20260905-6"><style>${brandCss}.print-page{break-after:page;page-break-after:always}.print-page:last-child{break-after:auto;page-break-after:auto}@media screen{body{background:#eaf0f6}.print-page{padding:12mm 0}}</style></head><body>${previews.map(page=>`<section class="print-page">${page}</section>`).join('')}</body></html>`);
   popup.document.close();
   popup.onload = ()=>setTimeout(()=>popup.print(), 450);
 }
