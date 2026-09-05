@@ -674,7 +674,7 @@
   const operationQr = (record, position) => {
     if (!record?.id || typeof qrcode !== 'function') return '';
     try {
-      const target = `${location.origin}/#v=records&id=${encodeURIComponent(record.id)}`;
+      const target = `${location.origin}/api/public-shipment?id=${encodeURIComponent(record.id)}`;
       const code = qrcode(0, 'M');
       code.addData(target);
       code.make();
