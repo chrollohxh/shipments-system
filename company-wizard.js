@@ -675,15 +675,9 @@
   const operationQr = (record, position) => {
     if (!record?.id || typeof qrcode !== 'function') return '';
     try {
-      // A compact compressed payload keeps the QR dense enough to scan reliably on paper.
-      const payload = [record.operationNo, record.status, record.invoiceNo, record.invoiceDate, record.proformaNo,
-        record.billNo || record.billOfLadingNo, record.consignee, record.consigneeAddress, record.itemDesc,
-        record.totalQty || record.qty, record.qtyUnit, record.totalAmount, record.currency, record.portLoading,
-        record.portDischarge, record.paymentTerm, record.bankName, record.bankDetails, record.notes];
-      const raw = JSON.stringify(payload);
-      const encoded = typeof LZString !== 'undefined' ? `z${LZString.compressToEncodedURIComponent(raw)}` : `b${btoa(unescape(encodeURIComponent(raw)))}`;
-      const target = `${location.origin}/public-shipment.html#d=${encoded}`;
-      const code = qrcode(0, 'M');
+      // Only the opaque shipment id is printed. This keeps the QR short and easy to scan.
+      const target = `${location.origin}/api/s?i=${encodeURIComponent(record.id)}`;
+      const code = qrcode(0, 'H');
       code.addData(target);
       code.make();
       const pos = Object.assign({ xPercent: 85, yPercent: 20, widthPercent: 12, rotate: 0 }, position || {});
