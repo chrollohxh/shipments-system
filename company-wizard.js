@@ -681,7 +681,7 @@
       code.addData(target);
       code.make();
       const pos = Object.assign({ xPercent: 85, yPercent: 20, widthPercent: 12, rotate: 0 }, position || {});
-      const width = Math.max(Number(pos.widthPercent) || 0, 11);
+      const width = Number(pos.widthPercent) || 12;
       return `<a class="operation-qr" href="${safe(target)}" target="_blank" rel="noopener" title="فتح ملف العملية ${safe(record.operationNo || '')}" style="left:${Number(pos.xPercent) || 0}%;top:${Number(pos.yPercent) || 0}%;width:${width}%;transform:rotate(${Number(pos.rotate) || 0}deg)"><img src="${code.createDataURL(4, 0)}" alt="QR: ${safe(record.operationNo || 'ملف العملية')}"><span class="operation-qr-caption"><b>للتحقق من صحة الفاتورة</b><small>Scan to verify invoice</small></span></a>`;
     } catch (error) {
       console.warn('BSGT operation QR', error);

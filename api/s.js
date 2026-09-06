@@ -54,7 +54,9 @@ module.exports = async (req, res) => {
 
     const r = Object.assign({}, row.data || {});
     const items = shipmentItems(r);
-    const amount = [r.currency, r.totalAmount].filter(Boolean).join(' ');
+    const totalText = text(r.totalAmount);
+    const currency = text(r.currency);
+    const amount = totalText && currency && !totalText.toUpperCase().startsWith(currency.toUpperCase()) ? `${currency} ${totalText}` : (totalText || currency);
     const invoiceRows = items.map((item, index) => [index + 1, item.description, item.quantity, item.packaging, item.hsCode, item.price, item.amount]);
     const packingRows = items.map((item, index) => [index + 1, item.description, item.quantity, item.packaging, item.hsCode]);
     const docs = [];
