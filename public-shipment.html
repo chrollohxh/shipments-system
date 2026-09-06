@@ -10,11 +10,22 @@
 </head>
 <body>
   <main class="sheet" id="app"></main>
+  <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
   <script>
     const esc = value => String(value ?? '').replace(/[&<>'"]/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));
     const field = (label, value) => value ? `<div class="field"><b>${esc(label)}</b><span>${esc(value)}</span></div>` : '';
     let data = null;
-    try { data = JSON.parse(decodeURIComponent(escape(atob(new URLSearchParams(location.hash.slice(1)).get('d') || '')))); } catch (_) {}
+    try {
+      const encoded = new URLSearchParams(location.hash.slice(1)).get('d') || '';
+      const raw = encoded.startsWith('z') && typeof LZString !== 'undefined'
+        ? LZString.decompressFromEncodedURIComponent(encoded.slice(1))
+        : decodeURIComponent(escape(atob(encoded.startsWith('b') ? encoded.slice(1) : encoded)));
+      data = JSON.parse(raw);
+      if (Array.isArray(data)) {
+        const [operationNo,status,invoiceNo,invoiceDate,proformaNo,billNo,consignee,consigneeAddress,itemDesc,totalQty,qtyUnit,totalAmount,currency,portLoading,portDischarge,paymentTerm,bankName,bankDetails,notes] = data;
+        data = {operationNo,status,invoiceNo,invoiceDate,proformaNo,billNo,consignee,consigneeAddress,itemDesc,totalQty,qtyUnit,totalAmount,currency,portLoading,portDischarge,paymentTerm,bankName,bankDetails,notes};
+      }
+    } catch (_) {}
     if (!data) {
       document.getElementById('app').innerHTML = '<h1>تعذر قراءة بيانات الشحنة</h1><p>امسح رمز QR من الفاتورة مرة أخرى.</p>';
     } else {
