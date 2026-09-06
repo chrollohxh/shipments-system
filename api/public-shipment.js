@@ -1,4 +1,4 @@
-const SUPABASE_URL = process.env.SUPABASE_URL || 'https://fmnxaedukduquv.supabase.co';
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://vthcmqqiexaedukduquv.supabase.co';
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
 
 const escapeHtml = value => String(value ?? '').replace(/[&<>'"]/g, char => ({
@@ -21,9 +21,11 @@ module.exports = async (req, res) => {
   if (!SERVICE_KEY) return res.status(503).send(page('إعداد العرض العام', '<h1>العرض العام غير جاهز بعد</h1><p>يلزم ربط مفتاح خادم قاعدة البيانات مرة واحدة لتظهر الشحنات من رمز QR.</p>'));
 
   try {
-    const response = await fetch(`${SUPABASE_URL}/rest/v1/shipments?select=id,status,data,created_at,updated_at&id=eq.${encodeURIComponent(id)}`, {
-      headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` }
-    });
+    const headers = { apikey: SERVICE_KEY };
+    // New Supabase secret keys use the apikey header directly. Legacy JWT keys
+    // still need Authorization, so keep both formats compatible.
+    if (!SERVICE_KEY.startsWith('sb_secret_')) headers.Authorization = `Bearer ${SERVICE_KEY}`;
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/shipments?select=id,status,data,created_at,updated_at&id=eq.${encodeURIComponent(id)}`, { headers });
     if (!response.ok) throw new Error(await response.text());
     const rows = await response.json();
     const row = rows[0];

@@ -674,7 +674,16 @@
   const operationQr = (record, position) => {
     if (!record?.id || typeof qrcode !== 'function') return '';
     try {
-      const target = `${location.origin}/api/public-shipment?id=${encodeURIComponent(record.id)}`;
+      const payload = {
+        operationNo: record.operationNo, status: record.status, invoiceNo: record.invoiceNo, invoiceDate: record.invoiceDate,
+        proformaNo: record.proformaNo, billNo: record.billNo || record.billOfLadingNo, consignee: record.consignee,
+        consigneeAddress: record.consigneeAddress, itemDesc: record.itemDesc, totalQty: record.totalQty || record.qty,
+        qtyUnit: record.qtyUnit, totalAmount: record.totalAmount, currency: record.currency, portLoading: record.portLoading,
+        portDischarge: record.portDischarge, paymentTerm: record.paymentTerm, bankName: record.bankName, bankDetails: record.bankDetails,
+        notes: record.notes
+      };
+      const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+      const target = `${location.origin}/public-shipment.html#d=${encoded}`;
       const code = qrcode(0, 'M');
       code.addData(target);
       code.make();

@@ -14790,7 +14790,14 @@ function esc(t){ return escapeHtml(t==null?'':String(t)); }
 function shipmentOperationQr(r, className, position){
   if(!r?.id || typeof qrcode !== 'function') return '';
   try{
-    const target = `${location.origin}/api/public-shipment?id=${encodeURIComponent(r.id)}`;
+    const payload = {
+      operationNo:r.operationNo,status:r.status,invoiceNo:r.invoiceNo,invoiceDate:r.invoiceDate,proformaNo:r.proformaNo,
+      billNo:r.billNo||r.billOfLadingNo,consignee:r.consignee,consigneeAddress:r.consigneeAddress,itemDesc:r.itemDesc,
+      totalQty:r.totalQty||r.qty,qtyUnit:r.qtyUnit,totalAmount:r.totalAmount,currency:r.currency,portLoading:r.portLoading,
+      portDischarge:r.portDischarge,paymentTerm:r.paymentTerm,bankName:r.bankName,bankDetails:r.bankDetails,notes:r.notes
+    };
+    const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+    const target = `${location.origin}/public-shipment.html#d=${encoded}`;
     const code = qrcode(0, 'M');
     code.addData(target);
     code.make();
@@ -17981,7 +17988,7 @@ document.getElementById('tplResetBtn').addEventListener('click', ()=>{
 })();
 </script>
 <script src="wizard.js"></script>
-<script src="company-wizard.js?v=20260905-qr3"></script>
+<script src="company-wizard.js?v=20260906-qr4"></script>
 <script src="shipment-detail.js"></script>
 </body>
 </html>
