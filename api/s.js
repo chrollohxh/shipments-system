@@ -28,7 +28,14 @@ module.exports = async (req, res) => {
     if (pdf.status === 404) {
       return res.status(404).send(messagePage('الحزمة لم تُجهز بعد', 'افتح الشحنة من النظام واختر «تجميع الحزمة الكاملة PDF» مرة واحدة، ثم امسح الرمز مجدداً.'));
     }
-    if (!pdf.ok) throw new Error(await pdf.text());
+    if (!pdf.ok) {
+      const detail = await pdf.text();
+      // Supabase Storage may return HTTP 400 while reporting a missing object as NoSuchKey.
+      if (/NoSuchKey|Object not found|not_found/i.test(detail)) {
+        return res.status(404).send(messagePage('الحزمة لم تُجهز بعد', 'افتح الشحنة من النظام واختر «تجميع الحزمة الكاملة PDF» مرة واحدة، ثم امسح الرمز مجدداً.'));
+      }
+      throw new Error(detail);
+    }
 
     const bytes = Buffer.from(await pdf.arrayBuffer());
     res.setHeader('Content-Type', 'application/pdf');
