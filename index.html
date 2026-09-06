@@ -8270,6 +8270,19 @@ async function uploadShipmentFiles(id, files, label){
   netEnd();
 }
 
+// نسخة الحزمة المطبوعة هي المصدر الذي يفتحه QR. لا نضيفها لأرشيف المرفقات حتى لا
+// تظهر كصف إضافي للمستخدم، بل تحفظ في مسار ثابت ويتم استبدالها عند كل تجهيز جديد.
+async function cacheBsgtPackageForQr(r, pdfBlob){
+  const path = `qr-packages/${r.id}/bundle.pdf`;
+  const {error} = await sb.storage.from('shipment-files').upload(path, pdfBlob, {
+    upsert:true,
+    contentType:'application/pdf',
+    cacheControl:'0'
+  });
+  if(error) throw error;
+  return path;
+}
+
 // ===== شهادة المنشأ/البوليصة المرفوعة يدوياً (بحر سواكن فقط) — تُخزَّن في نفس أرشيف
 // المستندات (shipment_files) بتصنيف ثابت، بدل توليدهما بالكود لهذه الشركة تحديداً.
 const BAHAR_DOC_LABELS = {cert:'شهادة المنشأ (بحر سواكن)', bol:'بوليصة الشحن (بحر سواكن)'};
@@ -16871,9 +16884,15 @@ async function mergeFullPackage(r, lang, triggerBtn){
     if(isBaharSwakenCompany(companyDataFor(r))){
       step = 'تجهيز صفحات BSGT داخل المتصفح';
       const blob = await mergeBsgtPackageLocally(r, lang);
+      try{
+        await cacheBsgtPackageForQr(r, blob);
+      }catch(cacheError){
+        console.warn('تعذّر حفظ نسخة QR للحزمة', cacheError);
+        toast('تم تجهيز الحزمة، لكن تعذّر حفظ نسخة المسح. أعد تجهيز الحزمة لاحقاً.', 'warn');
+      }
       const url = URL.createObjectURL(blob);
       openPdfPreview(url, 'الحزمة الكاملة المدموجة');
-      toast('تم تجهيز حزمة BSGT ودمجها بنجاح في ملف PDF واحد.', 'ok');
+      toast('تم تجهيز حزمة BSGT ودمجها وحفظها لرمز QR بنجاح.', 'ok');
       addLog('print', 'دمج حزمة BSGT محلياً في ملف واحد' + (r.invoiceNo? ` — فاتورة ${r.invoiceNo}` : ''));
       return;
     }
